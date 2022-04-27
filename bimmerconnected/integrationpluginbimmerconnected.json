@@ -19,6 +19,16 @@
                         "account"
                     ],
                     "setupMethod": "userandpassword",
+                    "paramTypes": [
+                        {
+                            "id": "863913c1-a835-4789-b06c-aa0819571395",
+                            "name": "region",
+                            "displayName": "Region",
+                            "type": "QString",
+                            "defaultValue": "Rest of world",
+                            "allowedValues": ["Rest of world", "North America", "China"]
+                        }
+                    ],
                     "stateTypes": [
                         {
                             "id": "e8f47781-e3fd-416f-a9ac-51ef942d0573",

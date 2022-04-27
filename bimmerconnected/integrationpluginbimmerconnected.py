@@ -6,6 +6,7 @@ from bimmer_connected.vehicle_status import ChargingState
 accountsMap = {}
 pollTimer = None
 
+regions = { "Rest of world": Regions.REST_OF_WORLD, "North America": Regions.NORTH_AMERICA, "China": Regions.CHINA}
 
 def findByParam(cls, param, value):
     for thing in myThings():
@@ -14,7 +15,7 @@ def findByParam(cls, param, value):
 
 
 def init():
-    logger.log("Initializing Bimmerconnected plugin")
+    logger.log("Initializing Bimmerconnected plugin")    
 
 
 def startPairing(info):
@@ -23,7 +24,8 @@ def startPairing(info):
 
 def confirmPairing(info, username, secret):
     try:
-        account = ConnectedDriveAccount(username, secret, Regions.REST_OF_WORLD)
+        region = regions[info.thing.paramValue(accountThingRegionParamTypeId)]
+        account = ConnectedDriveAccount(username, secret, region)
         account.update_vehicle_states()
         info.finish(nymea.ThingErrorNoError)
         pluginStorage().beginGroup(info.thingId)
@@ -42,13 +44,15 @@ def setupThing(info):
     if info.thing.thingClassId == accountThingClassId:
         logger.log("SetupThing for account:", info.thing.name)
 
+        region = regions[info.thing.paramValue(accountThingRegionParamTypeId)]
+
         pluginStorage().beginGroup(info.thing.id)
         username = pluginStorage().value("username")
         password = pluginStorage().value("password")
         pluginStorage().endGroup()
 
         try:
-            account = ConnectedDriveAccount(username, password, Regions.REST_OF_WORLD)
+            account = ConnectedDriveAccount(username, password, region)
             account.update_vehicle_states()
 
             accountsMap[info.thing.id] = account
