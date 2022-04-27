@@ -1,10 +1,17 @@
 import nymea
 from bimmer_connected.account import ConnectedDriveAccount
+from bimmer_connected.country_selector import Regions
+from bimmer_connected.vehicle_status import ChargingState
 
 accountsMap = {}
-vehiclesMap = {}
-
 pollTimer = None
+
+
+def findByParam(cls, param, value):
+    for thing in myThings():
+        if thing.thingClassId == cls and thing.paramValue(param) == value:
+            return thing
+
 
 def init():
     logger.log("Initializing Bimmerconnected plugin")
@@ -17,17 +24,18 @@ def startPairing(info):
 def confirmPairing(info, username, secret):
     try:
         account = ConnectedDriveAccount(username, secret, Regions.REST_OF_WORLD)
-        account.update_vehicle_states();
+        account.update_vehicle_states()
         info.finish(nymea.ThingErrorNoError)
         pluginStorage().beginGroup(info.thingId)
         pluginStorage().setValue("username", username)
         pluginStorage().setValue("password", secret)
-        pluginStorage().endGroup();
+        pluginStorage().endGroup()
         del account
 
     except Exception as e:
-        logger.warn("Error setting up BMW account:", str(e))
+        logger.warn(f"Error setting up BMW account: {str(e)}")
         info.finish(nymea.ThingErrorAuthenticationFailure)
+
 
 def setupThing(info):
     # Setup for the account
@@ -36,17 +44,17 @@ def setupThing(info):
 
         pluginStorage().beginGroup(info.thing.id)
         username = pluginStorage().value("username")
-        password = pluginStorage().value("password");
+        password = pluginStorage().value("password")
         pluginStorage().endGroup()
 
         try:
-            account = ConnectedDriveAccount(username, secret, Regions.REST_OF_WORLD)
-            account.update_vehicle_states();
-            # Login went well, finish the setup
-            info.finish(nymea.ThingErrorNoError)
+            account = ConnectedDriveAccount(username, password, Regions.REST_OF_WORLD)
+            account.update_vehicle_states()
+
+            accountsMap[info.thing.id] = account
         except Exception as e:
             # Login error
-            logger.warn("Error setting up BMW account:", str(e))
+            logger.warn(f"Error setting up BMW account: {str(e)}")
             info.finish(nymea.ThingErrorAuthenticationFailure, str(e))
             return
 
@@ -54,29 +62,30 @@ def setupThing(info):
         info.thing.setStateValue(accountLoggedInStateTypeId, True)
         info.thing.setStateValue(accountConnectedStateTypeId, True)
 
-        accountsMap[info.thing] = account
+        # Login went well, finish the setup
+        info.finish(nymea.ThingErrorNoError)
 
-        logger.log('Found {} vehicles: {}'.format(
-                   len(account.vehicles),
-                   ','.join([v.name for v in account.vehicles])))
+        logger.log(
+            f"Found {len(account.vehicles)} vehicles: {', '.join([v.name for v in account.vehicles])}"
+        )
 
         thingDescriptors = []
         for vehicle in account.vehicles:
-            logger.log('VIN: {}'.format(vehicle.vin))
-            logger.log('Mileage: {}'.format(vehicle.status.mileage))
-            logger.log('Vehicle data:')
-            logger.log(to_json(vehicle, indent=4))
-
-            found = False
-            for thing in myThings():
-                if thing.thingClassId == vehicleThingClassId and thing.paramValue(vehicleThingVinParamTypeId) == vehicle.vin:
-                    found = True
-                    break;
-            if found:
+            if any(
+                thing.thingClassId == vehicleThingClassId
+                and thing.paramValue(vehicleThingVinParamTypeId) == vehicle.vin
+                for thing in myThings()
+            ):
                 continue
 
-            logger.log("Adding new vehicle to the system with parent", info.thing.id)
-            thingDescriptor = nymea.ThingDescriptor(vehicleThingClassId, "BMW {} ({})".format(vehicle.name, vehicle.vin[-7:]), parentId=info.thing.id)
+            logger.log(
+                f"Adding new vehicle {vehicle.name} ({vehicle.vin[-7:]}) to the system with parent {info.thing.id}"
+            )
+            thingDescriptor = nymea.ThingDescriptor(
+                vehicleThingClassId,
+                "BMW {} ({})".format(vehicle.name, vehicle.vin[-7:]),
+                parentId=info.thing.id,
+            )
             thingDescriptor.params = [
                 nymea.Param(vehicleThingVinParamTypeId, vehicle.vin)
             ]
@@ -90,49 +99,68 @@ def setupThing(info):
         if pollTimer is None:
             pollTimer = nymea.PluginTimer(60 * 5, pollService)
             logger.log("timer interval @ setupThing", pollTimer.interval)
-        return
 
     # Setup for the vehicles
     if info.thing.thingClassId == vehicleThingClassId:
-        logger.log("SetupThing for vehicle:", info.thing.name)
-
-        vehiclesMap[info.thing.paramValue(vehicleThingVinParamTypeId)] = info.thing
-
-        thing.setStateValue(vehicleBatteryLevelStateTypeId, vehicle.properties.chargingState.chargePercentage)
-        thing.setStateValue(vehiclePluggedInStateTypeId, vehicle.properties.chargingState.isChargerConnected)
-        thing.setStateValue(vehicleChargingStateStateTypeId, "charging" if vehicle.properties.chargingState.state == "CHARGING" else "idle")
-
         info.finish(nymea.ThingErrorNoError)
+
+
+def postSetupThing(thing):
+    if thing.thingClassId == accountThingClassId:
+        pollService()
 
 
 def pollService():
     logger.log("Polling BMW Connect")
     for thing in myThings():
-        if thing.thingClassId == accountThingClassId:
-            try:
-                account.update_vehicle_states();
-            except:
-                logger.warn("Error refreshing vehicle states for account", thing.name)
+        if thing.thingClassId != accountThingClassId:
+            continue
 
-    for vehicle in account.vehicles:
-        logger.log("updating %s" % vehicle.vin)
-        if vehicle.vin not in vehiclesMap:
-            thingDescriptor = nymea.ThingDescriptor(vehicleThingClassId, "BMW {} ({})".format(vehicle.name, vehicle.vin[-7:]), parentId=info.thing.id)
-            thingDescriptor.params = [
-                nymea.Param(vehicleThingVinParamTypeId, vehicle.vin)
-            ]
-            thingDescriptors.append(thingDescriptor)
-            autoThingsAppeared(thingDescriptors)
-            continue;
+        account = accountsMap[thing.id]
+        try:
+            account.update_vehicle_states()
+        except:
+            logger.warn(f"Error refreshing vehicle states for account {thing.name}")
 
-        thing = vehiclesMap[vehicle.vin]
-        thing.setStateValue(vehicleBatteryLevelStateTypeId, vehicle.properties.chargingState.chargePercentage)
-        thing.setStateValue(vehiclePluggedInStateTypeId, vehicle.properties.chargingState.isChargerConnected)
-        thing.setStateValue(vehicleChargingStateStateTypeId, "charging" if vehicle.properties.chargingState.state == "CHARGING" else "idle")
+        for vehicle in account.vehicles:
+            logger.log(f"Updating vehicle with VIN {vehicle.vin}")
+
+            thing = findByParam(
+                vehicleThingClassId, vehicleThingVinParamTypeId, vehicle.vin
+            )
+
+            thing.setStateValue(
+                vehicleBatteryLevelStateTypeId,
+                vehicle.status.charging_level_hv,
+            )
+            thing.setStateValue(
+                vehiclePluggedInStateTypeId,
+                vehicle.status.connection_status == "CONNECTED",
+            )
+            thing.setStateValue(
+                vehicleChargingStateStateTypeId,
+                "charging"
+                if vehicle.status.charging_status == ChargingState.CHARGING
+                else "idle",
+            )
+
+
+def executeAction(info):
+    if info.actionTypeId == vehicleCapacityActionTypeId:
+        info.thing.setStateValue(
+            vehicleCapacityStateTypeId,
+            info.paramValue(vehicleCapacityActionCapacityParamTypeId),
+        )
+        info.finish(nymea.ThingErrorNoError)
+    else:
+        logger.error(f"Unhandled action: {info.action.id}")
 
 
 def thingRemoved(thing):
     global pollTimer
-    del vehiclesMap[thing.paramValue(vehicleThingVinParamTypeId)]
+
+    if thing.thingClassId == accountThingClassId:
+        del accountsMap[thing.id]
+
     if len(myThings()) == 0 and pollTimer is not None:
         pollTimer = None

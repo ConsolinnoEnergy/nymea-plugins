@@ -12,10 +12,14 @@
                     "id": "c90b36b2-2de4-4638-b60e-ef929d2738d6",
                     "name": "account",
                     "displayName": "BMW account",
-                    "createMethods": ["User"],
-                    "interfaces": ["account"],
+                    "createMethods": [
+                        "User"
+                    ],
+                    "interfaces": [
+                        "account"
+                    ],
                     "setupMethod": "userandpassword",
-                    "stateTypes":[
+                    "stateTypes": [
                         {
                             "id": "e8f47781-e3fd-416f-a9ac-51ef942d0573",
                             "name": "connected",
@@ -34,16 +38,18 @@
                             "defaultValue": false
                         }
                     ],
-                    "actionTypes": [
-
-                    ]
+                    "actionTypes": []
                 },
                 {
                     "id": "b7230349-97ff-4768-b929-40ab44b328b4",
                     "name": "vehicle",
                     "displayName": "Bimmer",
-                    "createMethods": ["auto"],
-                    "interfaces":["electricvehicle"],
+                    "createMethods": [
+                        "auto"
+                    ],
+                    "interfaces": [
+                        "electricvehicle"
+                    ],
                     "browsable": true,
                     "paramTypes": [
                         {
@@ -53,15 +59,17 @@
                             "type": "QString"
                         }
                     ],
-                    "stateTypes":[
+                    "stateTypes": [
                         {
                             "id": "79a8f4cb-a359-4c78-8d0f-c4ef70fc0db8",
                             "name": "capacity",
                             "displayName": "Capacity",
                             "displayNameEvent": "Capacity changed",
+                            "displayNameAction": "Set capacity",
                             "type": "double",
                             "unit": "KiloWattHour",
-                            "defaultValue": 50
+                            "defaultValue": 50,
+                            "writable": true
                         },
                         {
                             "id": "b70b2a73-4304-46ba-85ce-4ecdc68f241f",
@@ -96,7 +104,11 @@
                             "displayName": "Charging state",
                             "displayNameEvent": "Charging state",
                             "type": "QString",
-                            "possibleValues": ["idle", "charging", "discharging"],
+                            "possibleValues": [
+                                "idle",
+                                "charging",
+                                "discharging"
+                            ],
                             "defaultValue": "idle"
                         }
                     ]
