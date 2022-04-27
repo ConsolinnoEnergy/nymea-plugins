@@ -2,7 +2,7 @@
     "title": "Bimmerconnected",
     "tagline": "Get BMW vehicle status.",
     "icon": "bmw.png",
-    "stability": "consumer",
+    "stability": "community",
     "offline": false,
     "technologies": [
         "network"
