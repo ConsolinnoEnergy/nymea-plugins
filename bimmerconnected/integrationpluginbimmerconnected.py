@@ -6,7 +6,12 @@ from bimmer_connected.vehicle_status import ChargingState
 accountsMap = {}
 pollTimer = None
 
-regions = { "Rest of world": Regions.REST_OF_WORLD, "North America": Regions.NORTH_AMERICA, "China": Regions.CHINA}
+regions = {
+    "Rest of world": Regions.REST_OF_WORLD,
+    "North America": Regions.NORTH_AMERICA,
+    "China": Regions.CHINA,
+}
+
 
 def findByParam(cls, param, value):
     for thing in myThings():
@@ -15,7 +20,7 @@ def findByParam(cls, param, value):
 
 
 def init():
-    logger.log("Initializing Bimmerconnected plugin")    
+    logger.log("Initializing Bimmerconnected plugin")
 
 
 def startPairing(info):
@@ -24,7 +29,7 @@ def startPairing(info):
 
 def confirmPairing(info, username, secret):
     try:
-        region = regions[info.thing.paramValue(accountThingRegionParamTypeId)]
+        region = regions[info.paramValue(accountThingRegionParamTypeId)]
         account = ConnectedDriveAccount(username, secret, region)
         account.update_vehicle_states()
         info.finish(nymea.ThingErrorNoError)
@@ -45,7 +50,6 @@ def setupThing(info):
         logger.log("SetupThing for account:", info.thing.name)
 
         region = regions[info.thing.paramValue(accountThingRegionParamTypeId)]
-
         pluginStorage().beginGroup(info.thing.id)
         username = pluginStorage().value("username")
         password = pluginStorage().value("password")
@@ -80,6 +84,12 @@ def setupThing(info):
                 and thing.paramValue(vehicleThingVinParamTypeId) == vehicle.vin
                 for thing in myThings()
             ):
+                continue
+
+            if not vehicle.has_hv_battery:
+                logger.log(
+                    f"Ignoring combustion vehicle {vehicle.name} ({vehicle.vin[-7:]})"
+                )
                 continue
 
             logger.log(
