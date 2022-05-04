@@ -1,3 +1,38 @@
+nymea-plugins (1.1.0) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * WIP: New Plugin: nymea owlets
+
+  [ Simon Stürz ]
+  * New plugin: USB-RLY82 relay with 2 relays and 8 analog/digital
+    inputs.
+
+  [ Jenkins ]
+  * New plugin - Daikin Airco
+
+  [ Michael Zanetti ]
+  * MecElectronics: Return proper error code on wrong authentication
+  * DateTime: Fix time parsing and HTTP redirects
+  * Update project packaging
+
+  [ Simon Stürz ]
+  * GoE: Add smartmeterconsumer interface due to interface update
+
+  [ Michael Zanetti ]
+  * New plugin: Meross
+
+  [ Simon Stürz ]
+  * TcpCommander: Add TCP server broadcast functionality to send data to
+    all connected clients
+  * NetworkDetector: Make use of the internal network device monitor
+
+  [ Michael Zanetti ]
+  * OneWire: Make owfs more robust against occational read errors
+  * Update dependencies
+  * New Plugin: Bimmer connected
+
+ -- jenkins <developer@nymea.io>  Wed, 04 May 2022 11:48:59 +0200
+
 nymea-plugins (1.0.0) xenial; urgency=medium
 
   [ Simon Stürz ]
