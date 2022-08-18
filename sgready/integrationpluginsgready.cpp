@@ -81,14 +81,21 @@ void IntegrationPluginSgReady::setupThing(ThingSetupInfo *info)
         bool gpioEnabled2 = thing->stateValue(sgReadyInterfaceGpio2StateStateTypeId).toBool();
 
         SgReadyInterface *sgReadyInterface = new SgReadyInterface(gpioNumber1, gpioNumber2, this);
-        if (!sgReadyInterface->setup(gpioEnabled1, gpioEnabled2)) {
-            qCWarning(dcSgReady()) << "Setup" << thing << "failed because the GPIO could not be set up correctly.";
-            //: Error message if SG ready GPIOs setup failed
-            info->finish(Thing::ThingErrorHardwareFailure, QT_TR_NOOP("Failed to set up the GPIO hardware interface."));
-            return;
+
+        // Intially set values according to relais states
+        thing->setStateValue(sgReadyInterfaceGpio1StateStateTypeId, sgReadyInterface->gpio1()->value() == Gpio::ValueHigh);
+        thing->setStateValue(sgReadyInterfaceGpio2StateStateTypeId, sgReadyInterface->gpio2()->value() == Gpio::ValueHigh);
+        if (  sgReadyInterface->sgReadyMode() == SgReadyInterface::SgReadyModeOff ) {
+             thing->setStateValue(sgReadyInterfaceSgReadyModeStateTypeId, "Off");
+        } else if (sgReadyInterface->sgReadyMode() == SgReadyInterface::SgReadyModeLow) {
+             thing->setStateValue(sgReadyInterfaceSgReadyModeStateTypeId, "Low");
+        } else if (sgReadyInterface->sgReadyMode() == SgReadyInterface::SgReadyModeHigh) {
+              thing->setStateValue(sgReadyInterfaceSgReadyModeStateTypeId, "High");
+        } else {
+              thing->setStateValue(sgReadyInterfaceSgReadyModeStateTypeId, "Standard");
         }
 
-        // Reflect the SG states
+        // Reflect the SG states on change
         connect(sgReadyInterface, &SgReadyInterface::sgReadyModeChanged, this, [thing, sgReadyInterface](SgReadyInterface::SgReadyMode mode){
             Q_UNUSED(mode)
             thing->setStateValue(sgReadyInterfaceGpio1StateStateTypeId, sgReadyInterface->gpio1()->value() == Gpio::ValueHigh);
@@ -103,6 +110,7 @@ void IntegrationPluginSgReady::setupThing(ThingSetupInfo *info)
                 thing->setStateValue(sgReadyInterfaceSgReadyModeStateTypeId, "Standard");
             }
         });
+        
 
         m_sgReadyInterfaces.insert(thing, sgReadyInterface);
         info->finish(Thing::ThingErrorNoError);
