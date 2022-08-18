@@ -14,8 +14,8 @@ stages:
   - apt update
   - DEBIAN_FRONTEND=noninteractive apt-get install -y git findutils
   - git clone --branch add-other-distro-support https://$GL_UPLOADER_USER:$GL_UPLOADER_PASSWORD@gitlab.consolinno-it.de/leafletfirmware/package-upload.git
-  - ls -1 $PWD/build/buster/*.deb | xargs ./package-upload/debupload.sh snapshot buster 
-  - ls -1 $PWD/build/focal/*.deb | xargs ./package-upload/debupload.sh snapshot focal 
+  - ls -1 $PWD/build/buster/*.deb | xargs -L 10 ./package-upload/debupload.sh snapshot buster 
+  - ls -1 $PWD/build/focal/*.deb | xargs -L 10 ./package-upload/debupload.sh snapshot focal 
 
 build:buster:
   extends: .snapshot
