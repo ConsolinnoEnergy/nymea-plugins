@@ -93,7 +93,15 @@ void IntegrationPluginSgReady::setupThing(ThingSetupInfo *info)
             Q_UNUSED(mode)
             thing->setStateValue(sgReadyInterfaceGpio1StateStateTypeId, sgReadyInterface->gpio1()->value() == Gpio::ValueHigh);
             thing->setStateValue(sgReadyInterfaceGpio2StateStateTypeId, sgReadyInterface->gpio2()->value() == Gpio::ValueHigh);
-            thing->setStateValue(sgReadyInterfaceSgReadyModeStateTypeId, sgReadyInterface->sgReadyMode());
+            if ( mode == SgReadyInterface::SgReadyModeOff ) {
+               thing->setStateValue(sgReadyInterfaceSgReadyModeStateTypeId, "Off");
+            } else if (mode == SgReadyInterface::SgReadyModeLow) {
+                thing->setStateValue(sgReadyInterfaceSgReadyModeStateTypeId, "Low");
+            } else if (mode == SgReadyInterface::SgReadyModeHigh) {
+                thing->setStateValue(sgReadyInterfaceSgReadyModeStateTypeId, "High");
+            } else {
+                thing->setStateValue(sgReadyInterfaceSgReadyModeStateTypeId, "Standard");
+            }
         });
 
         m_sgReadyInterfaces.insert(thing, sgReadyInterface);
