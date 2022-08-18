@@ -81,6 +81,12 @@ void IntegrationPluginSgReady::setupThing(ThingSetupInfo *info)
         bool gpioEnabled2 = thing->stateValue(sgReadyInterfaceGpio2StateStateTypeId).toBool();
 
         SgReadyInterface *sgReadyInterface = new SgReadyInterface(gpioNumber1, gpioNumber2, this);
+        if (!sgReadyInterface->setup(gpioEnabled1, gpioEnabled2)) {
+            qCWarning(dcSgReady()) << "Setup" << thing << "failed because the GPIO could not be set up correctly.";
+            //: Error message if SG ready GPIOs setup failed
+            info->finish(Thing::ThingErrorHardwareFailure, QT_TR_NOOP("Failed to set up the GPIO hardware interface."));
+            return;
+        }
 
         // Intially set values according to relais states
         thing->setStateValue(sgReadyInterfaceGpio1StateStateTypeId, sgReadyInterface->gpio1()->value() == Gpio::ValueHigh);
