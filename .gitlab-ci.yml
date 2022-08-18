@@ -12,10 +12,10 @@ stages:
    - add-ci
 .deploy_template: &deploy_script_templ
   - apt update
-  - DEBIAN_FRONTEND=noninteractive apt-get install -y git
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y git findutils
   - git clone --branch add-other-distro-support https://$GL_UPLOADER_USER:$GL_UPLOADER_PASSWORD@gitlab.consolinno-it.de/leafletfirmware/package-upload.git
-  - ./package-upload/debupload.sh snapshot buster $PWD/build/buster/*.deb
-  - ./package-upload/debupload.sh snapshot focal $PWD/build/focal/*.deb
+  - ls -1 $PWD/build/buster/*.deb | xargs ./package-upload/debupload.sh snapshot buster 
+  - ls -1 $PWD/build/focal/*.deb | xargs ./package-upload/debupload.sh snapshot focal 
 
 build:buster:
   extends: .snapshot
