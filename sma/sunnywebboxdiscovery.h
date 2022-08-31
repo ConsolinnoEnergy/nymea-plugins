@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 *
-* Copyright 2013 - 2020, nymea GmbH
+* Copyright 2013 - 2022, nymea GmbH
 * Contact: contact@nymea.io
 *
 * This file is part of nymea.
@@ -28,30 +28,44 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef INTEGRATIONPLUGINPUSHNOTIFICATIONS_H
-#define INTEGRATIONPLUGINPUSHNOTIFICATIONS_H
+#ifndef SUNNYWEBBOXDISCOVERY_H
+#define SUNNYWEBBOXDISCOVERY_H
 
-#include "integrations/integrationplugin.h"
+#include <QObject>
 
-#include "extern-plugininfo.h"
+#include <network/networkaccessmanager.h>
+#include <network/networkdevicediscovery.h>
 
-class IntegrationPluginPushNotifications: public IntegrationPlugin
+class SunnyWebBoxDiscovery : public QObject
 {
     Q_OBJECT
-
-    Q_PLUGIN_METADATA(IID "io.nymea.IntegrationPlugin" FILE "integrationpluginpushnotifications.json")
-    Q_INTERFACES(IntegrationPlugin)
-
 public:
-    explicit IntegrationPluginPushNotifications(QObject *parent = nullptr);
-    ~IntegrationPluginPushNotifications() override;
+    explicit SunnyWebBoxDiscovery(NetworkAccessManager *networkAccessManager, NetworkDeviceDiscovery *networkDeviceDiscovery, QObject *parent = nullptr);
 
-    void setupThing(ThingSetupInfo *info) override;
-    void executeAction(ThingActionInfo *info) override;
+    void startDiscovery();
+
+    NetworkDeviceInfos discoveryResults() const;
+
+signals:
+    void discoveryFinished();
+
+private slots:
+    void checkNetworkDevice(const NetworkDeviceInfo &networkDeviceInfo);
+    void cleanupPendingReplies();
+    void finishDiscovery();
 
 private:
-    QHash<ThingClassId, ParamTypeId> m_tokenParamTypeIds;
-    QByteArray m_firebaseServerToken;
+    NetworkAccessManager *m_networkAccessManager = nullptr;
+    NetworkDeviceDiscovery *m_networkDeviceDiscovery = nullptr;
+    NetworkDeviceDiscoveryReply *m_discoveryReply = nullptr;
+
+    NetworkDeviceInfos m_discoveryResults;
+    NetworkDeviceInfos m_discoveredNetworkDeviceInfos;
+    NetworkDeviceInfos m_verifiedNetworkDeviceInfos;
+
+    QDateTime m_startDateTime;
+    QList<QNetworkReply *> m_pendingReplies;
+
 };
 
-#endif
+#endif // SUNNYWEBBOXDISCOVERY_H
