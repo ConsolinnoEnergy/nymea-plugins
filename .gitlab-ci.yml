@@ -26,7 +26,7 @@ build:buster:
   script:
     - dpkg -l | grep nymea
     - apt-get update
-    - apt-get upgrade
+    - apt-get -y upgrade
     - apt-get install -y git-buildpackage python
     - gbp dch -S -a --snapshot-number=`date +"%s"` --ignore-branch
     - CONFIG_SITE=/etc/dpkg-cross/cross-config.armhf  gosu root dpkg-buildpackage -b -aarmhf -Pcross,nocheck && mkdir -p build/buster && gosu root mv ../*.deb build/buster/
@@ -44,7 +44,7 @@ build:focal:
   script:
     - dpkg -l | grep nymea
     - apt-get update
-    - apt-get upgrade
+    - apt-get -y upgrade
     - apt-get install -y git-buildpackage python
     - gbp dch -S -a --snapshot-number=`date +"%s"` --ignore-branch
     - |
