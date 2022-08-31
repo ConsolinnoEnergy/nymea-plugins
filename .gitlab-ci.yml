@@ -19,7 +19,9 @@ stages:
 
 build:buster:
   extends: .snapshot
-  image: registry.consolinno-it.de/leafletfirmware/nymea/dockcross-nymea:dc-armv7-nymea-d10-latest
+  image: 
+    name: registry.consolinno-it.de/leafletfirmware/nymea/dockcross-nymea:dc-armv7-nymea-d10-latest
+    pull-policy: always
   stage: build
   script:
     - apt-get update
@@ -32,7 +34,9 @@ build:buster:
 
 build:focal:
   extends: .snapshot
-  image: registry.consolinno-it.de/leafletfirmware/nymea/dockcross-nymea:dc-amd64-nymea-focal-latest #TODO
+  image: 
+    name: registry.consolinno-it.de/leafletfirmware/nymea/dockcross-nymea:dc-amd64-nymea-focal-latest #TODO
+    pull-policy: always
   needs: ["build:buster"]
   stage: build
   script:
