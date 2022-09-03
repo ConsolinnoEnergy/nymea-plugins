@@ -6,7 +6,7 @@ stages:
   - deploy
 
 include:
-  - local: '.gitlab/develop_ci.yml'
-  - local: '.gitlab/testing_ci.yml'
-  - local: '.gitlab/production_ci.yml'
+  - local: '/.gitlab/develop_ci.yml'
+  - local: '/.gitlab/testing_ci.yml'
+  - local: '/.gitlab/production_ci.yml'
 
