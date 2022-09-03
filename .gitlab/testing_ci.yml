@@ -51,5 +51,5 @@ deploy:testing:
   before_script:
     - apt-get update
     - apt-get install -y curl
-  script:
-    - *deploy_script_templ_testing
+  #script:
+  #  - *deploy_script_templ_testing
