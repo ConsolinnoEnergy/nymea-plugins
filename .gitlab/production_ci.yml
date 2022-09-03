@@ -9,7 +9,7 @@
   - ls -1 $PWD/build/buster/*.deb | xargs -L 10 ./package-upload/debupload.sh live buster 
   - ls -1 $PWD/build/focal/*.deb | xargs -L 10 ./package-upload/debupload.sh live focal 
 
-build:buster:
+build:buster:prod:
   extends: .live
   image: 
     name: registry.consolinno-it.de/leafletfirmware/nymea/dockcross-nymea:dc-armv7-nymea-d10-latest
@@ -25,12 +25,12 @@ build:buster:
     paths:
       - build/buster/*.deb
 
-build:focal:
+build:focal:prod:
   extends: .live
   image: 
     name: registry.consolinno-it.de/leafletfirmware/nymea/dockcross-nymea:dc-amd64-nymea-focal-latest #TODO
     #pull-policy: always
-  needs: ["build:buster"]
+  needs: ["build:buster:prod"]
   stage: build
   script:
     - dpkg -l | grep nymea
@@ -45,7 +45,7 @@ build:focal:
     paths:
       - build/focal/*.deb
 
-deploy:
+deploy:prod:
   extends: .live
   stage: deploy
   before_script:
