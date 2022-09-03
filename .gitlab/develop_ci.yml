@@ -1,7 +1,7 @@
 ##### Development snapshots #####
 .snapshot:
-  only:
-   - main
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
 .deploy_template: &deploy_script_templ_snapshot
   - apt update
   - DEBIAN_FRONTEND=noninteractive apt-get install -y git findutils
