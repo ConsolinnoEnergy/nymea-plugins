@@ -1,10 +1,7 @@
 ##### Testing build #####
 .testing:
   rules:
-   - if: $CI_COMMIT_BRANCH == "testing" && $CI_PIPELINE_SOURCE == "merge_request_event" 
-   - if: $CI_COMMIT_BRANCH == "testing" && $CI_PIPELINE_SOURCE == "schedule" 
-   - if: $CI_PIPELINE_SOURCE == "push"
-     when: never
+   - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "testing" 
 
 .deploy_template: &deploy_script_templ_testing
   - apt update
