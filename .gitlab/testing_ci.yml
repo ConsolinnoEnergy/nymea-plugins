@@ -55,5 +55,6 @@ deploy:testing:
   before_script:
     - apt-get update
     - apt-get install -y curl
-  #script:
+  script:
   #  - *deploy_script_templ_testing
+     - echo "Skipping.."
