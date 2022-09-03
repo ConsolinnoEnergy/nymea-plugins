@@ -1,7 +1,11 @@
 ##### Testing build #####
 .testing:
-  only:
-   - if: $CI_COMMIT_BRANCH == "testing"
+  rules:
+   - if: $CI_COMMIT_BRANCH != "testing"
+     when: never
+   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+   - if: $CI_PIPELINE_SOURCE == "schedule"
+
 .deploy_template: &deploy_script_templ_testing
   - apt update
   - DEBIAN_FRONTEND=noninteractive apt-get install -y git findutils
