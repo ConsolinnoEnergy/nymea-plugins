@@ -2,7 +2,7 @@
 .testing:
   only:
    - testing
-.deploy_template: &deploy_script_templ
+.deploy_template: &deploy_script_templ_testing
   - apt update
   - DEBIAN_FRONTEND=noninteractive apt-get install -y git findutils
   - git clone --branch add-other-distro-support https://$GL_UPLOADER_USER:$GL_UPLOADER_PASSWORD@gitlab.consolinno-it.de/leafletfirmware/package-upload.git
@@ -52,4 +52,4 @@ deploy:
     - apt-get update
     - apt-get install -y curl
   script:
-    - *deploy_script_templ
+    - *deploy_script_templ_testing
