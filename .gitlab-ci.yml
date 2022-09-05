@@ -1,9 +1,4 @@
-# Defines stages which are to be executed
-stages:  
-  - build
-  - deploy
-
 include:
-  - local: '/.gitlab/develop_ci.yml'
-  - local: '/.gitlab/testing_ci.yml'
-  - local: '/.gitlab/production_ci.yml'
+  - project: 'consolinno/iot-cloud-edge-embedded/edge/hems-ci'
+    file: '/nymea/development.yml'
+    ref: main # TODO klären
