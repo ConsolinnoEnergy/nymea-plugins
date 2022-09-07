@@ -1,6 +1,8 @@
 # SG-Ready
 
-Theis plugin allowes to create an SG ready interface based on 2 GPIO pins connected to a SG-Ready heat pump.
+**Attention: This version of the SG ready interface is only working with Leaflet 1U0022.**
+
+This plugin allows to create an SG ready interface based on 2 GPIO pins connected to a SG-Ready heat pump.
 
 The GPIO need to be connected to the SG ready interface of the heat pump.
 
