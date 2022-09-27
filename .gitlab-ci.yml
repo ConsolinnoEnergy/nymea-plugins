@@ -1,4 +1,4 @@
 include:
-  - local: '.gitlab/develop_ci.yml'
-  - local: '.gitlab/testing_ci.yml'
-  - local: '.gitlab/production_ci.yml'
+  - project: 'leafletfirmware/nymea/nymea-ci'
+    file: '/nymea/pipeline.yml'
+    ref: main
