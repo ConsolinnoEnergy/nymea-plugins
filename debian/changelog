@@ -1,4 +1,4 @@
-nymea-plugins (1.4.0) jammy; urgency=medium
+nymea-plugins (1.4.0-1) qa; urgency=medium
 
   [ Michael Zanetti ]
   * Tasmota: Allow configuring the TelePeriod

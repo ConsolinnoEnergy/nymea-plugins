@@ -75,8 +75,8 @@ void IntegrationPluginSgReady::setupThing(ThingSetupInfo *info)
             // Continue with normal setup...
         }
 
-        int gpioNumber1 = thing->paramValue(sgReadyInterfaceThingGpioNumber1ParamTypeId).toUInt();
-        int gpioNumber2 = thing->paramValue(sgReadyInterfaceThingGpioNumber2ParamTypeId).toUInt();
+        int gpioNumber1 = thing->setting(sgReadyInterfaceSettingsGpioNumber1ParamTypeId).toUInt();
+        int gpioNumber2 = thing->setting(sgReadyInterfaceSettingsGpioNumber2ParamTypeId).toUInt();
         bool gpioEnabled1 = thing->stateValue(sgReadyInterfaceGpio1StateStateTypeId).toBool();
         bool gpioEnabled2 = thing->stateValue(sgReadyInterfaceGpio2StateStateTypeId).toBool();
 
