@@ -1,0 +1,67 @@
+{
+    "name": "SimpleSmartconsumer",
+    "displayName": "Simple Smartconsumer",
+    "id": "d6ebcc81-eb3e-4f5f-8670-66ea2e76ed3d",
+    "vendors": [
+        {
+            "name": "consolinno",
+            "displayName": "Consolinno",
+            "id": "a99d6b56-4024-49dd-97f1-feb5485fcf9b",
+            "thingClasses": [
+                {
+                    "id": "feb728a2-0f84-4825-bbbf-83bcbfe53230",
+                    "name": "simpleSmartconsumer",
+                    "displayName": "Simple Smartconsumer",
+                    "createMethods": ["user"],
+                    "interfaces": [ "power" ],
+                    "paramTypes": [
+                        {
+                            "id": "59ba7207-aee0-4274-b191-945f4ac436da",
+                            "name": "gpioNumber",
+                            "displayName": "GPIO number",
+                            "type": "int",
+                            "defaultValue": 498
+                        },
+                        {
+                            "id": "11d960c0-3a04-4d86-9b17-e2536dfdca9c",
+                            "name": "inverted",
+                            "displayName": "inverted",
+                            "type": "bool",
+                            "defaultValue": false
+                        },
+                        {
+                            "id": "af52f3a8-1d04-4b5b-aeac-8248d9097bb9",
+                            "name": "consumption",
+                            "displayName": "consumption",
+                            "type": "int",
+                            "defaultValue": 3000
+                        }
+                    ],
+                    "settingsTypes": [
+                        {
+                            "id": "65d47f77-8a6b-4d33-bc74-72deea8d1f56",
+                            "name": "pvSurplus",
+                            "displayName": "PV-Surplus",
+                            "type": "bool",
+                            "defaultValue": true
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "6941d293-2fbe-42f2-a6ce-2afc94856261",
+                            "name": "power",
+                            "displayName": "Consumer enabled",
+                            "displayNameEvent": "Consumer status changed",
+                            "displayNameAction": "Set consumer enabled",
+                            "type": "bool",
+                            "writable": true,
+                            "defaultValue": false,
+                            "suggestLogging": true,
+                            "cached": true
+                        },
+                    ]
+                }
+            ]
+        }
+    ]
+}
