@@ -69,7 +69,7 @@ void IntegrationPluginSimpleSmartconsumer::setupThing(ThingSetupInfo *info)
 
     if (thing->thingClassId() == simpleSmartconsumerThingClassId) {
         if (m_simpleSmartconsumers.contains(thing)) {
-            // Rreconfigure...
+            // Reconfigure...
             SimpleSmartconsumerInterface *interface = m_simpleSmartconsumers.take(thing);
             delete interface;
             // Continue with normal setup...
@@ -77,47 +77,21 @@ void IntegrationPluginSimpleSmartconsumer::setupThing(ThingSetupInfo *info)
 
         int gpioNumber = thing->paramValue(simpleSmartconsumerThingGpioNumberParamTypeId).toUInt();
         bool inverted = thing->paramValue(simpleSmartconsumerThingInvertedParamTypeId).toBool();
-        int consumption = thing->paramValue(simpleSmartconsumerThingConsumptionParamTypeId).toUInt();
+        //int consumption = thing->paramValue(simpleSmartconsumerThingConsumptionParamTypeId).toUInt();
         //bool pvSurplus = thing->setting(simpleSmartconsumerSettingsPvSurplusParamTypeId).toBool();
         bool initialValue = thing->stateValue(simpleSmartconsumerPowerStateTypeId).toBool();
 
-        SimpleSmartconsumerInterface *simpleSmartconsumer = new SimpleSmartconsumerInterface(gpioNumber, gpioNumber2, this);(int gpioNumber, bool inverted, int consumption, QObject *parent = nullptr)
-        if (!simpleSmartconsumer->setup(gpioEnabled1, gpioEnabled2)) {
+        SimpleSmartconsumerInterface *simpleSmartconsumer = new SimpleSmartconsumerInterface(inverted, this);
+        if (!simpleSmartconsumer->setup(gpioNumber, initialValue)) {
             qCWarning(dcSimpleSmartconsumer()) << "Setup" << thing << "failed because the GPIO could not be set up correctly.";
-            //: Error message if SG ready GPIOs setup failed
+            //: Error message if GPIOs setup failed
             info->finish(Thing::ThingErrorHardwareFailure, QT_TR_NOOP("Failed to set up the GPIO hardware interface."));
             return;
         }
 
-        // Intially set values according to relais states
-        thing->setStateValue(simpleSmartconsumerGpio1StateStateTypeId, simpleSmartconsumer->gpio1()->value() == Gpio::ValueHigh);
-        thing->setStateValue(simpleSmartconsumerGpio2StateStateTypeId, simpleSmartconsumer->gpio2()->value() == Gpio::ValueHigh);
-        if (  simpleSmartconsumer->sgReadyMode() == SimpleSmartconsumerInterface::SimpleSmartconsumerModeOff ) {
-             thing->setStateValue(simpleSmartconsumerSimpleSmartconsumerModeStateTypeId, "Off");
-        } else if (simpleSmartconsumer->sgReadyMode() == SimpleSmartconsumerInterface::SimpleSmartconsumerModeLow) {
-             thing->setStateValue(simpleSmartconsumerSimpleSmartconsumerModeStateTypeId, "Low");
-        } else if (simpleSmartconsumer->sgReadyMode() == SimpleSmartconsumerInterface::SimpleSmartconsumerModeHigh) {
-              thing->setStateValue(simpleSmartconsumerSimpleSmartconsumerModeStateTypeId, "High");
-        } else {
-              thing->setStateValue(simpleSmartconsumerSimpleSmartconsumerModeStateTypeId, "Standard");
-        }
-
-        // Reflect the SG states on change
-        connect(simpleSmartconsumer, &SimpleSmartconsumerInterface::sgReadyModeChanged, this, [thing, simpleSmartconsumer](SimpleSmartconsumerInterface::SimpleSmartconsumerMode mode){
-            Q_UNUSED(mode)
-            thing->setStateValue(simpleSmartconsumerGpio1StateStateTypeId, simpleSmartconsumer->gpio1()->value() == Gpio::ValueHigh);
-            thing->setStateValue(simpleSmartconsumerGpio2StateStateTypeId, simpleSmartconsumer->gpio2()->value() == Gpio::ValueHigh);
-            if ( mode == SimpleSmartconsumerInterface::SimpleSmartconsumerModeOff ) {
-               thing->setStateValue(simpleSmartconsumerSimpleSmartconsumerModeStateTypeId, "Off");
-            } else if (mode == SimpleSmartconsumerInterface::SimpleSmartconsumerModeLow) {
-                thing->setStateValue(simpleSmartconsumerSimpleSmartconsumerModeStateTypeId, "Low");
-            } else if (mode == SimpleSmartconsumerInterface::SimpleSmartconsumerModeHigh) {
-                thing->setStateValue(simpleSmartconsumerSimpleSmartconsumerModeStateTypeId, "High");
-            } else {
-                thing->setStateValue(simpleSmartconsumerSimpleSmartconsumerModeStateTypeId, "Standard");
-            }
+        connect(simpleSmartconsumer, &SimpleSmartconsumerInterface::activatedChanged, this, [thing](bool deviceOn){
+            thing->setStateValue(simpleSmartconsumerPowerStateTypeId, deviceOn);
         });
-        
 
         m_simpleSmartconsumers.insert(thing, simpleSmartconsumer);
         info->finish(Thing::ThingErrorNoError);
@@ -150,24 +124,12 @@ void IntegrationPluginSimpleSmartconsumer::executeAction(ThingActionInfo *info)
             return;
         }
 
-        // FIXME: the modes have timing constrains we need to take care off.
+        if (info->action().actionTypeId() == simpleSmartconsumerPowerActionTypeId) {
+            bool deviceOn = info->action().paramValue(simpleSmartconsumerPowerActionTypeId).toBool();
+            qCDebug(dcSimpleSmartconsumer()) << "Set power of" << thing << "to" << deviceOn;
 
-        if (info->action().actionTypeId() == simpleSmartconsumerSimpleSmartconsumerModeActionTypeId) {
-            QString sgReadyModeString = info->action().paramValue(simpleSmartconsumerSimpleSmartconsumerModeActionSimpleSmartconsumerModeParamTypeId).toString();
-            qCDebug(dcSimpleSmartconsumer()) << "Set SG ready mode from" << thing << "to" << sgReadyModeString;
-            SimpleSmartconsumerInterface::SimpleSmartconsumerMode mode;
-            if (sgReadyModeString == "Off") {
-                mode = SimpleSmartconsumerInterface::SimpleSmartconsumerModeOff;
-            } else if (sgReadyModeString == "Low") {
-                mode = SimpleSmartconsumerInterface::SimpleSmartconsumerModeLow;
-            } else if (sgReadyModeString == "High") {
-                mode = SimpleSmartconsumerInterface::SimpleSmartconsumerModeHigh;
-            } else {
-                mode = SimpleSmartconsumerInterface::SimpleSmartconsumerModeStandard;
-            }
-
-            if (!simpleSmartconsumer->setSimpleSmartconsumerMode(mode)) {
-                qCWarning(dcSimpleSmartconsumer()) << "Failed to set the sg ready mode on" << thing << "to" << sgReadyModeString;
+            if (!simpleSmartconsumer->turnOnDevice(deviceOn)) {
+                qCWarning(dcSimpleSmartconsumer()) << "Failed to set power of" << thing << "to" << deviceOn;
                 info->finish(Thing::ThingErrorHardwareFailure);
                 return;
             }

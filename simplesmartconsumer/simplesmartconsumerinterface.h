@@ -39,27 +39,19 @@ class SimpleSmartconsumerInterface : public QObject
 {
     Q_OBJECT
 public:
-    explicit SimpleSmartconsumerInterface(int gpioNumber, bool inverted, int consumption, QObject *parent = nullptr);
+    explicit SimpleSmartconsumerInterface(bool inverted, QObject *parent = nullptr);
 
-    SgReadyMode sgReadyMode() const;
     bool turnOnDevice(bool turnOn);
 
-    bool setup(bool gpio1Enabled, bool gpio2Enabled);
+    bool setup(int gpioNumber, bool gpioEnabled);
     bool isValid() const;
-
-    Gpio *gpio() const;
 
 signals:
     void activatedChanged(bool activated);
 
 private:
-    bool m_activated = false;
     bool m_inverted = false;
-    int m_gpioNumber = -1;
-    int m_consumption = -1;
-
     Gpio *m_gpio = nullptr;
-
     Gpio *setupGpio(int gpioNumber, bool initialValue);
 };
 
