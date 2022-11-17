@@ -31,16 +31,11 @@
 #include "simplesmartconsumerinterface.h"
 #include "extern-plugininfo.h"
 
-SimpleSmartconsumerInterface::SimpleSmartconsumerInterface(int gpioNumber, QObject *parent) :
-    QObject(parent),
-    m_gpioNumber(gpioNumber)
+SimpleSmartconsumerInterface::SimpleSmartconsumerInterface(bool inverted, QObject *parent) :
+    QObject{parent},
+    m_inverted{inverted}
 {
 
-}
-
-SgReadyInterface::SgReadyMode SgReadyInterface::sgReadyMode() const
-{
-    return m_sgReadyMode;
 }
 
 bool SimpleSmartconsumerInterface::turnOnDevice(bool turnOn)
@@ -48,73 +43,48 @@ bool SimpleSmartconsumerInterface::turnOnDevice(bool turnOn)
     if (!isValid())
         return false;
 
-    /* https://www.waermepumpe.de/normen-technik/sg-ready/
-     *
-     * Off: 1,0
-     * Low: 0,0
-     * Standard: 0,1
-     * High: 1,1
-     */
-
-    QPair<bool, bool> gpioSettings;
-    switch (sgReadyMode) {
-    case SgReadyModeOff:
-        gpioSettings.first = true;
-        gpioSettings.second = false;
-        break;
-    case SgReadyModeLow:
-        gpioSettings.first = false;
-        gpioSettings.second = false;
-        break;
-    case SgReadyModeStandard:
-        gpioSettings.first = false;
-        gpioSettings.second = true;
-        break;
-    case SgReadyModeHigh:
-        gpioSettings.first = true;
-        gpioSettings.second = true;
-        break;
+    bool toGpio{turnOn};
+    if (m_inverted) {
+        toGpio = !turnOn;
     }
 
-    if (!m_gpio1->setValue(gpioSettings.first ? Gpio::ValueHigh : Gpio::ValueLow)) {
-        qCWarning(dcSimpleSmartconsumer()) << "Could not switch GPIO 1 for setting" << sgReadyMode;
+    if (!m_gpio->setValue(toGpio ? Gpio::ValueHigh : Gpio::ValueLow)) {
+        qCWarning(dcSimpleSmartconsumer()) << "Could not switch GPIO";
         return false;
     }
 
-    if (!m_gpio2->setValue(gpioSettings.second ? Gpio::ValueHigh : Gpio::ValueLow)) {
-        qCWarning(dcSimpleSmartconsumer()) << "Could not switch GPIO 2 for setting" << sgReadyMode;
-        return false;
-    }
-
-    if (m_sgReadyMode != sgReadyMode) {
-        m_sgReadyMode = sgReadyMode;
-        emit sgReadyModeChanged(m_sgReadyMode);
-    }
+    emit activatedChanged(turnOn);
 
     return true;
 }
 
-bool SimpleSmartconsumerInterface::setup(bool gpioEnabled)
+bool SimpleSmartconsumerInterface::setup(int gpioNumber, bool gpioEnabled)
 {
-    m_gpio = setupGpio(m_gpioNumber, gpioEnabled);
+    if (gpioNumber < 0) {
+        m_gpio = nullptr;
+        return false;
+    }
+    bool toGpio{gpioEnabled};
+    if (m_inverted) {
+        toGpio = !gpioEnabled;
+    }
+    m_gpio = setupGpio(gpioNumber, toGpio);
     if (!m_gpio) {
-        qCWarning(dcSgReady()) << "Failed to set up SG ready interface gpio 1" << m_gpioNumber1;
+        qCWarning(dcSimpleSmartconsumer()) << "Failed to set up GPIO" << gpioNumber;
         return false;
     }
 
-    emit activatedChanged(m_sgReadyMode);
+    emit activatedChanged(gpioEnabled);
 
     return true;
 }
 
 bool SimpleSmartconsumerInterface::isValid() const
 {
-    return m_gpioNumber1 >= 0 && m_gpioNumber2 >= 0 && m_gpio1 && m_gpio2;
-}
-
-Gpio *SimpleSmartconsumerInterface::gpio() const
-{
-    return m_gpio;
+    if (m_gpio) {
+        return true;
+    }
+    return false;
 }
 
 Gpio *SimpleSmartconsumerInterface::setupGpio(int gpioNumber, bool initialValue)

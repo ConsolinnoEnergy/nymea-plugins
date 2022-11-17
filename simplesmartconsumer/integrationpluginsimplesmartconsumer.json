@@ -58,7 +58,7 @@
                             "defaultValue": false,
                             "suggestLogging": true,
                             "cached": true
-                        },
+                        }
                     ]
                 }
             ]

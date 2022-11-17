@@ -52,7 +52,7 @@ public:
     void executeAction(ThingActionInfo *info) override;
 
 private:
-    QHash<Thing *, SimpleSmartconsumerInterface *> m_simpleSmartconsumerInterfaces;
+    QHash<Thing *, SimpleSmartconsumerInterface *> m_simpleSmartconsumers;
 
 };
 
