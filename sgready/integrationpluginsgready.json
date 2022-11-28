@@ -15,23 +15,24 @@
                     "createMethods": ["user"],
                     "interfaces": [ "smartgridheatpump" ],
                     "settingsTypes": [
-                    ],
-                    "paramTypes": [
                         {
                             "id": "8de25aef-d868-4410-abd3-3bec9c46aba3",
                             "name": "gpioNumber1",
                             "displayName": "GPIO number 1",
                             "type": "int",
-                            "defaultValue": -1
+                            "defaultValue": 496
                         },
                         {
                             "id": "113ba124-a392-4bc3-861a-f7feaab82fc4",
                             "name": "gpioNumber2",
                             "displayName": "GPIO number 2",
                             "type": "int",
-                            "defaultValue": -1
+                            "defaultValue": 497
                         }
+
                     ],
+                    "paramTypes": [
+                                            ],
                     "stateTypes": [
                         {
                             "id": "91008e09-2702-4bd5-942e-398513ae3d15",
