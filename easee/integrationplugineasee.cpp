@@ -147,16 +147,16 @@ void IntegrationPluginEasee::getSiteAndCircuit(Thing *thing){
  connect(reply, &QNetworkReply::finished, thing, [=](){
      QByteArray response_data = reply->readAll();
      QJsonDocument json = QJsonDocument::fromJson(response_data);
-      qCDebug(dcEasee()) << json.object().value("siteId").toString(); //This is not working for some reason
-           QString site = json.object().value("siteId").toString();
-     QString circuit =(json.object().find("circuitPanelId").operator +(1)).value().toString(); //This is also non functional
+     QJsonDocument siteJson = QJsonDocument::fromVariant (json.object().value("circuits").toVariant()); // This is not working
+     QString site = siteJson.object().value("siteId").toString();
+     QString circuit =siteJson.object().value("id").toString();
 
       pluginStorage()->beginGroup(chargerId+"SiteAndCircuit");
       pluginStorage()->setValue("site", site);
       pluginStorage()->setValue("circuit", circuit);
       pluginStorage()->endGroup();
-
-       // qCDebug(dcEasee()) << circuit;
+ qCDebug(dcEasee()) << site;
+        qCDebug(dcEasee()) << circuit;
 
 });
 
