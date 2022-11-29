@@ -63,6 +63,7 @@ void IntegrationPluginEasee::confirmPairing(ThingPairingInfo *info, const QStrin
             QByteArray response_data = reply->readAll();
             QJsonDocument json = QJsonDocument::fromJson(response_data);
              accessKey = json.object().value("accessToken").toString();
+                //     reply->deleteLater();
 
     });
 
@@ -75,16 +76,42 @@ void IntegrationPluginEasee::setupThing(ThingSetupInfo *info)
     // the required setup (e.g. connect to the device) and call info->finish() when done.
 
     qCDebug(dcEasee()) << "Setup thing" << info->thing();
-    if (QString::compare (accessKey,"") == 0){
+    if (QString::compare (accessKey,"") != 0){
          info->thing()->setStateValue(wallboxConnectedStateTypeId, true);
 
     }
+    else {
+        refresh(info->thing());
+    }
     info->finish(Thing::ThingErrorNoError);
+
+
 }
 void IntegrationPluginEasee::postSetupThing(Thing *thing)
 {
+    Q_UNUSED(thing)
 
-                refresh(thing);
+       if (!m_timer) {
+           m_timer = hardwareManager()->pluginTimerManager()->registerTimer(1);
+           connect(m_timer, &PluginTimer::timeout, this, [this](){
+               foreach (Thing *thing, myThings()) {
+                    QString chargerId = thing->paramValue(wallboxThingChargerIdParamTypeId).toString();
+                   pluginStorage()->beginGroup(chargerId+"SiteAndCircuit");
+                   QString site = pluginStorage()->value("site").toString();
+                   QString circuit = pluginStorage()->value("circuit").toString();
+                   pluginStorage()->endGroup();
+                   if (QString::compare (accessKey,"") != 0 &&QString::compare (site,"") == 0 && QString::compare (circuit,"") == 0 ){
+                  getSiteAndCircuit(thing);
+               } else if (QString::compare (accessKey,"") == 0) {
+                       refresh(thing);
+                   }
+                   else {
+                    //Get Current and write limit
+                   }
+               }
+           });
+       }
+
 
 
 }
@@ -105,12 +132,34 @@ void IntegrationPluginEasee::refresh(Thing *thing)
        QByteArray response_data = reply->readAll();
        QJsonDocument json = QJsonDocument::fromJson(response_data);
        accessKey = json.object().value("accessToken").toString();
+           if (QString::compare (accessKey,"") != 0){
+                thing->setStateValue(wallboxConnectedStateTypeId, true);
 
+           }
        });
 
-       if (QString::compare (accessKey,"") == 0){
-            thing->setStateValue(wallboxConnectedStateTypeId, true);
-       }
+
+}
+void IntegrationPluginEasee::getSiteAndCircuit(Thing *thing){
+ QString chargerId = thing->paramValue(wallboxThingChargerIdParamTypeId).toString();
+ QNetworkRequest header = composeSiteAndCircuitRequest(chargerId);
+ QNetworkReply *reply = hardwareManager()->networkManager()->get(header);
+ connect(reply, &QNetworkReply::finished, thing, [=](){
+     QByteArray response_data = reply->readAll();
+     QJsonDocument json = QJsonDocument::fromJson(response_data);
+      qCDebug(dcEasee()) << json.object().value("siteId").toString(); //This is not working for some reason
+           QString site = json.object().value("siteId").toString();
+     QString circuit =(json.object().find("circuitPanelId").operator +(1)).value().toString(); //This is also non functional
+
+      pluginStorage()->beginGroup(chargerId+"SiteAndCircuit");
+      pluginStorage()->setValue("site", site);
+      pluginStorage()->setValue("circuit", circuit);
+      pluginStorage()->endGroup();
+
+       // qCDebug(dcEasee()) << circuit;
+
+});
+
 }
 
 void IntegrationPluginEasee::executeAction(ThingActionInfo *info)
@@ -138,5 +187,12 @@ QNetworkRequest IntegrationPluginEasee::composeApiKeyRequest()
     return request;
 }
 
-
+QNetworkRequest IntegrationPluginEasee::composeSiteAndCircuitRequest(const QString &chargerId)
+{
+    QUrl url("https://api.easee.cloud/api/chargers/"+ chargerId +"/site");
+    QNetworkRequest request(url);
+    QString headerData = "Bearer " + accessKey;
+    request.setRawHeader("Authorization", headerData.toLocal8Bit());
+    return request;
+}
 

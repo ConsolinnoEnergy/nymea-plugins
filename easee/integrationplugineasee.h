@@ -23,7 +23,7 @@
 
 #include "integrations/integrationplugin.h"
 #include <QString>
-
+class PluginTimer;
 #include <QNetworkRequest>
 
 class IntegrationPluginEasee: public IntegrationPlugin
@@ -51,13 +51,16 @@ public:
 
     void thingRemoved(Thing *thing) override;
 
+
 private slots:
     void refresh(Thing *thing);
+    void getSiteAndCircuit(Thing *thing);
 
 private:
     QNetworkRequest composeApiKeyRequest();
+    QNetworkRequest composeSiteAndCircuitRequest(const QString &chargerId);
     QString accessKey;
-
+    PluginTimer *m_timer = nullptr;
 };
 
 #endif // INTEGRATIONPLUGINEASEE_H
