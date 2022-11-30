@@ -61,6 +61,8 @@ private:
     QNetworkRequest composeSiteAndCircuitRequest(const QString &chargerId);
     QString accessKey;
     PluginTimer *m_timer = nullptr;
+    double siteId = 0;
+    double circuitId = 0;
 };
 
 #endif // INTEGRATIONPLUGINEASEE_H

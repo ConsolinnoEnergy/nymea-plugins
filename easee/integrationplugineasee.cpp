@@ -95,17 +95,14 @@ void IntegrationPluginEasee::postSetupThing(Thing *thing)
            m_timer = hardwareManager()->pluginTimerManager()->registerTimer(1);
            connect(m_timer, &PluginTimer::timeout, this, [this](){
                foreach (Thing *thing, myThings()) {
-                    QString chargerId = thing->paramValue(wallboxThingChargerIdParamTypeId).toString();
-                   pluginStorage()->beginGroup(chargerId+"SiteAndCircuit");
-                   QString site = pluginStorage()->value("site").toString();
-                   QString circuit = pluginStorage()->value("circuit").toString();
-                   pluginStorage()->endGroup();
-                   if (QString::compare (accessKey,"") != 0 &&QString::compare (site,"") == 0 && QString::compare (circuit,"") == 0 ){
+
+                   if (QString::compare (accessKey,"") != 0 && (siteId == 0 || circuitId == 0 ) ){
                   getSiteAndCircuit(thing);
                } else if (QString::compare (accessKey,"") == 0) {
                        refresh(thing);
                    }
                    else {
+                      qCDebug(dcEasee()) << "Yay we have everything!" <<siteId;
                     //Get Current and write limit
                    }
                }
@@ -147,16 +144,12 @@ void IntegrationPluginEasee::getSiteAndCircuit(Thing *thing){
  connect(reply, &QNetworkReply::finished, thing, [=](){
      QByteArray response_data = reply->readAll();
      QJsonDocument json = QJsonDocument::fromJson(response_data);
-     QJsonDocument siteJson = QJsonDocument::fromVariant (json.object().value("circuits").toVariant()); // This is not working
-     QString site = siteJson.object().value("siteId").toString();
-     QString circuit =siteJson.object().value("id").toString();
-
-      pluginStorage()->beginGroup(chargerId+"SiteAndCircuit");
-      pluginStorage()->setValue("site", site);
-      pluginStorage()->setValue("circuit", circuit);
-      pluginStorage()->endGroup();
- qCDebug(dcEasee()) << site;
-        qCDebug(dcEasee()) << circuit;
+     QJsonArray subJson = json.object().value("circuits").toArray();
+     QJsonDocument siteJson = QJsonDocument::fromVariant(subJson.at(0).toVariant());
+     double site = siteJson.object().value("siteId").toDouble();
+     double circuit =siteJson.object().value("id").toDouble();
+        siteId = site;
+        circuitId = circuit;
 
 });
 
