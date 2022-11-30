@@ -66,6 +66,7 @@ private:
     QNetworkRequest composeCurrentLimitRequest();
     QString accessKey;
     PluginTimer *m_timer = nullptr;
+        PluginTimer *access_timer = nullptr;
     double siteId = 0;
     double circuitId = 0;
 };

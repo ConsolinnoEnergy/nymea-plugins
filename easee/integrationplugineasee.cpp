@@ -92,7 +92,7 @@ void IntegrationPluginEasee::postSetupThing(Thing *thing)
     Q_UNUSED(thing)
     // Update the AccessKey every 20 hours or so
        if (!m_timer) {
-           m_timer = hardwareManager()->pluginTimerManager()->registerTimer(1);
+           m_timer = hardwareManager()->pluginTimerManager()->registerTimer(5);
            connect(m_timer, &PluginTimer::timeout, this, [this](){
                foreach (Thing *thing, myThings()) {
 
@@ -102,7 +102,7 @@ void IntegrationPluginEasee::postSetupThing(Thing *thing)
                        refresh(thing);
                    }
                    else {
-                      qCDebug(dcEasee()) << "Yay we have everything!" <<siteId;
+                      qCDebug(dcEasee()) << "Credentials Retrieved from the Cloud" <<siteId;
                    getCurrentPower(thing);
                    writeCurrentLimit(thing);
                    }
@@ -110,8 +110,14 @@ void IntegrationPluginEasee::postSetupThing(Thing *thing)
            });
        }
 
-
-
+    if (!access_timer){
+        access_timer = hardwareManager()->pluginTimerManager()->registerTimer(8600);
+        connect(access_timer, &PluginTimer::timeout, this, [this](){
+            foreach (Thing *thing, myThings()) {
+                 refresh(thing);
+    }
+   });
+    }
 }
 void IntegrationPluginEasee::refresh(Thing *thing)
 {
