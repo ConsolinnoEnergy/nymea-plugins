@@ -90,7 +90,7 @@ void IntegrationPluginEasee::setupThing(ThingSetupInfo *info)
 void IntegrationPluginEasee::postSetupThing(Thing *thing)
 {
     Q_UNUSED(thing)
-
+    // Update the AccessKey every 20 hours or so
        if (!m_timer) {
            m_timer = hardwareManager()->pluginTimerManager()->registerTimer(1);
            connect(m_timer, &PluginTimer::timeout, this, [this](){
@@ -103,7 +103,8 @@ void IntegrationPluginEasee::postSetupThing(Thing *thing)
                    }
                    else {
                       qCDebug(dcEasee()) << "Yay we have everything!" <<siteId;
-                    //Get Current and write limit
+                   getCurrentPower(thing);
+                   writeCurrentLimit(thing);
                    }
                }
            });
@@ -155,6 +156,49 @@ void IntegrationPluginEasee::getSiteAndCircuit(Thing *thing){
 
 }
 
+void IntegrationPluginEasee::getCurrentPower(Thing *thing){
+ QString chargerId = thing->paramValue(wallboxThingChargerIdParamTypeId).toString();
+ QNetworkRequest header = composeCurrentPowerRequest(chargerId);
+ QNetworkReply *reply = hardwareManager()->networkManager()->get(header);
+ connect(reply, &QNetworkReply::finished, thing, [=](){
+     QByteArray response_data = reply->readAll();
+     QJsonDocument json = QJsonDocument::fromJson(response_data);
+     double totalPower = json.object().value("totalPower").toDouble();
+     double phaseMode = json.object().value("outputPhase").toDouble();
+     if (phaseMode > 10) {thing->setStateValue(wallboxPhaseCountStateTypeId,3);}
+     else {thing->setStateValue(wallboxPhaseCountStateTypeId,1);}
+      thing->setStateValue(wallboxCurrentPowerStateTypeId,totalPower);
+      qCDebug(dcEasee()) << json.object().value("dynamicChargerCurrent").toDouble();
+      qCDebug(dcEasee()) << phaseMode;
+      if (totalPower > 10){
+          thing->setStateValue(wallboxPluggedInStateTypeId,true);
+          thing->setStateValue(wallboxChargingStateTypeId,true);
+
+      } else {
+          thing->setStateValue(wallboxPluggedInStateTypeId,false);
+          thing->setStateValue(wallboxChargingStateTypeId,false);
+      }
+
+});
+
+}
+
+void IntegrationPluginEasee::writeCurrentLimit(Thing *thing)
+{
+       QNetworkRequest header = composeCurrentLimitRequest();
+       int limit = thing->state("maxChargingCurrent").value().toInt();
+       QJsonObject param;
+       param.insert("phase1", QJsonValue::fromVariant(limit));
+       param.insert("phase2", QJsonValue::fromVariant(limit));
+       param.insert("phase3", QJsonValue::fromVariant(limit));
+       param.insert("timeToLive", QJsonValue::fromVariant(1));
+       QNetworkReply *reply = hardwareManager()->networkManager()->post(header,QJsonDocument(param).toJson(QJsonDocument::Compact));
+       connect(reply, &QNetworkReply::finished, thing, [=](){
+       });
+
+
+}
+
 void IntegrationPluginEasee::executeAction(ThingActionInfo *info)
 {
     // An action is being executed. Use info->action() to get details about the action,
@@ -189,3 +233,20 @@ QNetworkRequest IntegrationPluginEasee::composeSiteAndCircuitRequest(const QStri
     return request;
 }
 
+QNetworkRequest IntegrationPluginEasee::composeCurrentPowerRequest(const QString &chargerId)
+{
+    QUrl url("https://api.easee.cloud/api/chargers/"+ chargerId +"/state");
+    QNetworkRequest request(url);
+    QString headerData = "Bearer " + accessKey;
+    request.setRawHeader("Authorization", headerData.toLocal8Bit());
+    return request;
+}
+QNetworkRequest IntegrationPluginEasee::composeCurrentLimitRequest()
+{
+    QUrl url("https://api.easee.cloud/api/sites/"+ QString::number((int)siteId,10) +"/circuits/" +  QString::number((int)circuitId,10) +"/dynamicCurrent");
+    QNetworkRequest request(url);
+    qCDebug(dcEasee()) << url;
+    QString headerData = "Bearer " + accessKey;
+    request.setRawHeader("Authorization", headerData.toLocal8Bit());
+    return request;
+}

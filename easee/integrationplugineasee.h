@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Copyright (C) 2020 Tim Stöcker <t.stoecker@consolinno.de>                 *
+ *  Copyright (C) 2022 Tim Stöcker <t.stoecker@consolinno.de>                 *
  *                                                                         *
  *  This library is free software; you can redistribute it and/or          *
  *  modify it under the terms of the GNU Lesser General Public             *
@@ -41,11 +41,11 @@ public:
 
     void startPairing(ThingPairingInfo *info) override;
 
-     void confirmPairing(ThingPairingInfo *info, const QString &username, const QString &secret) override;
+    void confirmPairing(ThingPairingInfo *info, const QString &username, const QString &secret) override;
 
     void setupThing(ThingSetupInfo *info) override;
 
-        void postSetupThing(Thing *thing) override;
+    void postSetupThing(Thing *thing) override;
 
     void executeAction(ThingActionInfo *info) override;
 
@@ -55,10 +55,15 @@ public:
 private slots:
     void refresh(Thing *thing);
     void getSiteAndCircuit(Thing *thing);
+    void getCurrentPower(Thing *thing);
+    void writeCurrentLimit(Thing *thing);
+
 
 private:
     QNetworkRequest composeApiKeyRequest();
     QNetworkRequest composeSiteAndCircuitRequest(const QString &chargerId);
+    QNetworkRequest composeCurrentPowerRequest(const QString &chargerId);
+    QNetworkRequest composeCurrentLimitRequest();
     QString accessKey;
     PluginTimer *m_timer = nullptr;
     double siteId = 0;
