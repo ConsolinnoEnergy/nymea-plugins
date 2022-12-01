@@ -125,4 +125,3 @@ for(plugin, PLUGINS) {
     }
 }
 
-SUBDIRS += \
