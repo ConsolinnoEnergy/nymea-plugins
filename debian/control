@@ -690,6 +690,16 @@ Description: nymea integration plugin for simple heat pumps
  This package contains the nymea integration plugin for simple heat pumps.
 
 
+Package: nymea-plugin-simplesmartconsumer
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         libnymea-gpio,
+Conflicts: nymea-plugins-translations (< 1.0.1)
+Description: nymea integration plugin for a simple smart consumer based on GPIOs
+ This package contains the nymea integration plugin for a simple smart consumer based on GPIOs.
+
+
 Package: nymea-plugin-somfytahoma
 Architecture: any
 Depends: ${shlibs:Depends},

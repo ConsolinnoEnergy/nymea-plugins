@@ -46,7 +46,7 @@ void IntegrationPluginSimpleSmartconsumer::discoverThings(ThingDiscoveryInfo *in
     // Check if GPIOs are available on this platform
     if (!Gpio::isAvailable()) {
         qCWarning(dcSimpleSmartconsumer()) << "There are no GPIOs available on this plattform";
-        //: Error discovering SG ready GPIOs
+        //: Error discovering GPIOs
         return info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP("No GPIOs available on this system."));
     }
 
