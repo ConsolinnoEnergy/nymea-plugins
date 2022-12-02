@@ -34,13 +34,7 @@ bool FemsConnection::busy() const{
  * @return a FemsNetworkReply
  */
 FemsNetworkReply *FemsConnection::isAvailable(){
-    return this->getFemsDataPoint("_sum/data");
-}
-
-FemsNetworkReply FemsConnection::getFemsDataPoint(QString extraPath){
-    FemsNetworkReply* reply;
-    m_request_Queue.enqueue(reply);
-
+    FemsNetworkReply* reply = getFemsDataPoint("_sum/data");
     connect(reply, &FemsNetworkReply::finished, this, [=](){
         if (reply->networkReply()->error() == QNetworkReply::NoError) {
             // Reply was successfully, we can communicate
@@ -63,6 +57,12 @@ FemsNetworkReply FemsConnection::getFemsDataPoint(QString extraPath){
         }
     });
 
+    return reply;
+}
+
+FemsNetworkReply FemsConnection::getFemsDataPoint(QString extraPath){
+    FemsNetworkReply* reply;
+    m_request_Queue.enqueue(reply);
     sendNextRequest();
     return reply;
 }
