@@ -22,6 +22,13 @@
 #define INTEGRATIONPLUGINFEMS_H
 
 #include "integrations/integrationplugin.h"
+#include "femsconnection.h"
+#include <QHash>
+#include <QNetworkReply>
+#include <QTimer>
+#include <QUuid>
+
+class PluginTimer;
 
 class IntegrationPluginFems: public IntegrationPlugin
 {
@@ -43,6 +50,14 @@ public:
     void thingRemoved(Thing *thing) override;
 
 private:
+    PluginTimer *m_connectionRefreshTimer = nullptr;
+    QHash<FemsConnection*, Thing *> m_femsConnections;
+    void refreshConnection(FroniusSolarConnection *connection);
+
+    void updateSumState(FemsConnection *connection);
+    void updateMeters(FemsConnection *connection);
+    void updateStorages(FemsConnection *connection);
+
 
 };
 
