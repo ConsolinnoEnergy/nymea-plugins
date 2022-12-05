@@ -34,7 +34,7 @@ bool FemsConnection::busy() const{
  * @return a FemsNetworkReply
  */
 FemsNetworkReply *FemsConnection::isAvailable(){
-    FemsNetworkReply* reply = getFemsDataPoint("_sum/data");
+    FemsNetworkReply* reply = getFemsDataPoint("_sum/State");
     connect(reply, &FemsNetworkReply::finished, this, [=](){
         if (reply->networkReply()->error() == QNetworkReply::NoError) {
             // Reply was successfully, we can communicate
