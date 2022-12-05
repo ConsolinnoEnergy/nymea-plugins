@@ -387,7 +387,7 @@
                         },
                         {
                             "id": "dcfd468e-e2cf-468a-bb61-a1c2ed429667",
-                            "name": "totalEnergyProduced",
+                            "name": "totalEnergyProducedDc",
                             "displayName": "Energy produced dc",
                             "displayNameEvent": "Energy production dc changed",
                             "type": "double",

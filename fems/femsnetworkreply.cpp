@@ -29,15 +29,16 @@ return m_networkReply;
 }
 
 
-FemsNetworkReply::FemsNetworkReply(const QNetworkRequest &request, QObject *parent) :
-    QObject(parent),
-            m_request(request){}
+
 FemsNetworkReply::FemsNetworkReply(const QNetworkRequest &request, QObject *parent, QString usr, QString pwd): QObject(parent){
-    QString concat = usr + ";" + pwd;
-    QByteArray data = concat.toLocal8Bit().toBase64();
-    QString header = "Basic " + data;
-    request.setRawHeader("Authorization", header.toLocal8Bit());
-    m_request(request);
+  m_request = request;
+  if(!(usr =="" || pwd == "")){
+  QString concat = usr + ";" + pwd;
+  QByteArray data = concat.toLocal8Bit().toBase64();
+  QString header = "Basic " + data;
+    this->m_request.setRawHeader("Authorization", header.toLocal8Bit());
+  }
+
 }
 
 
