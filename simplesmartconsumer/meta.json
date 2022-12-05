@@ -1,0 +1,14 @@
+{
+    "title": "SimpleSmartconsumer",
+    "tagline": "Control smart consumer using GPIOs.",
+    "icon": "simplesmartconsumer.png",
+    "stability": "community",
+    "offline": true,
+    "technologies": [
+        "gpio"
+    ],
+    "categories": [
+        "heating"
+    ]
+}
+
