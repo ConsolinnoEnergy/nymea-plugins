@@ -23,6 +23,7 @@ PLUGIN_DIRS = \
     elgato              \
     eq-3                \
     fastcom             \
+    fems                \
     flowercare          \
     fronius             \
     garadget            \
