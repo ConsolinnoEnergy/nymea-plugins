@@ -43,23 +43,22 @@ public:
   void init() override;
 
   void setupThing(ThingSetupInfo *info) override;
-  void postSetupThing(Thing* thing) override;
+  void postSetupThing(Thing *thing) override;
   void executeAction(ThingActionInfo *info) override;
 
   void thingRemoved(Thing *thing) override;
 
-
 private:
-
-  enum ValueType{
-      QSTRING = 0,
-      DOUBLE = 1,
-      MY_BOOLEAN = 2,
-      MY_INT = 3,
+  enum ValueType {
+    QSTRING = 0,
+    DOUBLE = 1,
+    MY_BOOLEAN = 2,
+    MY_INT = 3,
 
   };
   PluginTimer *m_connectionRefreshTimer = nullptr;
-  Thing* GetThingByParentAndClassId(Thing* parentThing, ThingClassId identifier);
+  Thing *GetThingByParentAndClassId(Thing *parentThing,
+                                    ThingClassId identifier);
   QHash<FemsConnection *, Thing *> m_femsConnections;
   void refreshConnection(FemsConnection *connection);
   void updateSumState(FemsConnection *connection);
@@ -75,17 +74,16 @@ private:
   QString getValueOfRequestedData(QJsonDocument *json);
 
   void addValueToThing(Thing *parentThing, ThingClassId identifier,
-                       StateTypeId stateName,
-                       const QVariant *value,
+                       StateTypeId stateName, const QVariant *value,
                        ValueType valueType, int scale);
 
   void addValueToThing(Thing *childThing, StateTypeId stateName,
-                       const QVariant *value, ValueType valueType, int scale = 0);
+                       const QVariant *value, ValueType valueType,
+                       int scale = 0);
 
-  QString batteryState = "idle";
+  QString batteryState;
 
   QString meter;
-
 };
 
 #endif // INTEGRATIONPLUGINFEMS_H
