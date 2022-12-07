@@ -22,14 +22,15 @@ QNetworkRequest FemsNetworkReply::request() const { return m_request; }
 QNetworkReply *FemsNetworkReply::networkReply() const { return m_networkReply; }
 
 FemsNetworkReply::FemsNetworkReply(const QNetworkRequest &request,
-                                   QObject *parent, QString usr, QString pwd)
+                                   QObject *parent, QString usr, QString pwd, bool useEdge)
     : QObject(parent) {
   m_request = request;
-  if (!(usr == "" || pwd == "")) {
-    QString concat = usr + ";" + pwd;
-    QByteArray data = concat.toLocal8Bit().toBase64();
-    QString header = "Basic " + data;
-    this->m_request.setRawHeader("Authorization", header.toLocal8Bit());
+  qInfo() << useEdge;
+  if (useEdge) {
+
+      qInfo() <<    "Basic " + QString("%1:%2").arg(usr).arg(pwd).toUtf8().toBase64();
+
+    this->m_request.setRawHeader("Authorization", "Basic " + QString("%1:%2").arg(usr).arg(pwd).toUtf8().toBase64());
   }
 }
 

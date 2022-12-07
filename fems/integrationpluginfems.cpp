@@ -1,6 +1,7 @@
 ﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Copyright (C) 2020 a <a@a.com>                 *
+ *  Copyright (C) 2022 Consolinno Energy GmbH                              *
+ * <felix.stoecker@consolinno.de>                                          *
  *                                                                         *
  *  This library is free software; you can redistribute it and/or          *
  *  modify it under the terms of the GNU Lesser General Public             *
@@ -31,6 +32,12 @@
 #include <QUrlQuery>
 #include <math.h>
 
+static int id_increment = 0;
+// use this to determine which connection to refresh -> connectionSwitch % 2 0
+// == battery 1 == meter 2 == sum
+int connectionSwitch = 0;
+bool batteryCreated = false;
+bool meterCreated = false;
 static const QString DATA_ACCESS_STRING_FEMS = "value";
 static const QString SUM_STATE = "_sum/State";
 
@@ -95,7 +102,9 @@ static const QString METER_2 = "meter2";
 static const QString SKIP = "Skipping_No_Meter_Found";
 
 IntegrationPluginFems::IntegrationPluginFems(QObject *parent)
-    : IntegrationPlugin(parent) {}
+    : IntegrationPlugin(parent) {
+  this->ownId = id_increment++;
+}
 
 void IntegrationPluginFems::init() {
   // Initialisation can be done here.
@@ -104,10 +113,29 @@ void IntegrationPluginFems::init() {
   qCDebug(dcFems()) << "Plugin initialized.";
 }
 
+/*void IntegrationPluginFems::startPairing(ThingPairingInfo *info)
+{
+    info->finish(Thing::ThingErrorNoError, QT_TR_NOOP("Please enter the login
+credentials for your FEMS device."));
+}*/
+
+/*void IntegrationPluginFems::confirmPairing(ThingPairingInfo *info, const
+QString &username, const QString &password){
+
+    pluginStorage()->beginGroup(info->thingId().toString());
+    pluginStorage()->setValue("username", username);
+    pluginStorage()->setValue("password", password);
+    pluginStorage()->endGroup();
+    info->finish(Thing::ThingErrorNoError);
+
+}*/
+
 void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
 
+  qInfo() << "Setting up Thing";
   Thing *thing = info->thing();
   qCDebug(dcFems()) << "Setting up" << thing;
+  qInfo() << "Thing is " << thing;
 
   if (thing->thingClassId() == connectionThingClassId) {
 
@@ -124,18 +152,26 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
     // Create the connection
     FemsConnection *connection = new FemsConnection(
         hardwareManager()->networkManager(), address, thing,
-        thing->paramValue(connectionThingUserParamTypeId).toString(),
+        // pluginStorage()->value("username").toString(),
+        // pluginStorage()->value("password").toString(),
+        thing->paramValue(connectionThingUsernameParamTypeId).toString(),
         thing->paramValue(connectionThingPasswordParamTypeId).toString(),
         thing->paramValue(connectionThingEdgeParamTypeId).toBool(),
         thing->paramValue(connectionThingPortParamTypeId).toString());
+    qInfo() << "Creating isAvailableDevice By Checking _sum/State";
     FemsNetworkReply *reply = connection->isAvailable();
+    qInfo() << "Connecting Signal and Slot";
     connect(reply, &FemsNetworkReply::finished, info, [=] {
+      qInfo() << "Callback called";
       QByteArray data = reply->networkReply()->readAll();
+      qInfo() << "reply data";
+      qInfo() << data;
       if (reply->networkReply()->error() != QNetworkReply::NoError) {
         // no URL bc URL contains uname and pwd
         // qcWarning(dcFems() << "Network request error:") <<
         // reply->networkReply()->error() <<
         // reply->networkReply()->errorString();
+        qInfo() << "Error: " << reply->networkReply()->error();
         if (reply->networkReply()->error() ==
             QNetworkReply::ContentNotFoundError) {
           info->finish(
@@ -159,33 +195,55 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
         info->finish(Thing::ThingErrorHardwareFailure,
                      QT_TR_NOOP("The data received from the device could not "
                                 "be processed because the format is unknown."));
-        reply->deleteLater();
-        connection->deleteLater();
         return;
       }
 
+      // NOT POSSIBLE -> PARENT HERE NOT CHILDREN!
       QVariantMap responseMap = jsonDoc.toVariant().toMap();
       qint8 status = responseMap.value("value", -1).toInt();
+      /*
       if (status >= 0) {
         // 0 == ok, 1 == info, 2 == Warning, 3 == fault (todo change to strings)
-        thing->setStateValue(connectionStatusStateTypeId, status);
+        thing->setStateValue(femsstatusStatusStateTypeId, status);
       }
-      qCDebug(dcFems()) << "Fems Status"
-                        << responseMap.value("value").toString();
+      qCDebug(dcFems()) << "Fems Status" <<
+      responseMap.value("value").toString();*/
       // STATE Connection
-      m_femsConnections.insert(connection, thing);
-      info->finish(Thing::ThingErrorNoError);
-      thing->setStateValue("connected", true);
-      reply->deleteLater();
-      connection->deleteLater();
+      qInfo() << "Adding new Connection";
+      if (status >= 0) {
+        m_femsConnections.insert(connection, thing);
+        qInfo() << "Connection added "
+                << this->m_femsConnections.contains(connection);
+        info->finish(Thing::ThingErrorNoError);
+        thing->setStateValue("connected", true);
+      } else {
+        info->finish(Thing::ThingErrorHardwareFailure);
+        thing->setStateValue("connected", false);
+      }
     });
+    connect(connection, &FemsConnection::availableChanged, this,
+            [=](bool available) {
+              qCDebug(dcFems()) << thing << "Available changed" << available;
+              thing->setStateValue("connected", available);
+
+              if (!available) {
+                // Update all child things, they will be set to available once
+                // the connection starts working again
+                foreach (Thing *childThing,
+                         myThings().filterByParentId(thing->id())) {
+                  childThing->setStateValue("connected", false);
+                }
+              }
+            });
+    qInfo() << "Here is line after callback declaration";
   } else if ((thing->thingClassId() == meterThingClassId) ||
              (thing->thingClassId() == batteryThingClassId)) {
+    qInfo() << "This line appears because Parent was setup and now children "
+               "are created";
     Thing *parentThing = myThings().findById(thing->parentId());
     if (!parentThing) {
       qCWarning(dcFems()) << "Could not find the parent for" << thing;
       info->finish(Thing::ThingErrorHardwareNotAvailable);
-      parentThing->deleteLater();
       return;
     }
     FemsConnection *connection = m_femsConnections.key(parentThing);
@@ -193,36 +251,38 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
       qCWarning(dcFems()) << "Could not find the parent connection for"
                           << thing;
       info->finish(Thing::ThingErrorHardwareNotAvailable);
-      connection->deleteLater();
-      parentThing->deleteLater();
-      thing->deleteLater();
       return;
     }
     info->finish(Thing::ThingErrorNoError);
-    connection->deleteLater();
-    parentThing->deleteLater();
-    thing->deleteLater();
   } else {
     Q_ASSERT_X(false, "setupThing",
                QString("Unhandled thingClassId: %1")
                    .arg(thing->thingClassId().toString())
                    .toUtf8());
   }
-  thing->deleteLater();
 }
 
 void IntegrationPluginFems::postSetupThing(Thing *thing) {
 
   qCDebug(dcFems()) << "Post setup" << thing->name();
+  qInfo() << "Post Setup";
 
   if (thing->thingClassId() == connectionThingClassId) {
+    qInfo() << "ConnectionClass sets up Timer";
     if (!m_connectionRefreshTimer) {
-      hardwareManager()->pluginTimerManager()->registerTimer(10);
+      qInfo() << "Creating Timer";
+      m_connectionRefreshTimer =
+          hardwareManager()->pluginTimerManager()->registerTimer(60);
+      qInfo() << "connecting RefreshTimer and TimeOut";
+      qInfo() << "Size Of Connections: " << m_femsConnections.keys().length();
+
       connect(m_connectionRefreshTimer, &PluginTimer::timeout, this, [this]() {
+        qInfo() << "Refreshing each connection";
         foreach (FemsConnection *connection, m_femsConnections.keys()) {
           refreshConnection(connection);
         }
       });
+      qInfo() << "Connection Refresh Timer Start";
       m_connectionRefreshTimer->start();
     }
 
@@ -230,7 +290,6 @@ void IntegrationPluginFems::postSetupThing(Thing *thing) {
     if (connection) {
       refreshConnection(connection);
     }
-    connection->deleteLater();
   }
 }
 
@@ -264,9 +323,53 @@ void IntegrationPluginFems::refreshConnection(FemsConnection *connection) {
   Thing *connectionThing = m_femsConnections.value(connection);
   if (!connectionThing)
     return;
-  this->updateSumState(connection);
-  this->updateMeters(connection);
-  this->updateStorages(connection);
+  qInfo() << "Updating States";
+  switch (connectionSwitch) {
+  case 0:
+    qInfo() << "Updating Storages";
+    if (myThings()
+                .filterByParentId(m_femsConnections.value(connection)->id())
+                .filterByThingClassId(batteryThingClassId)
+                .length() != 1 &&
+        !batteryCreated) {
+      qInfo() << "Creating ESS";
+      ThingDescriptor descriptor(batteryThingClassId, "FEMS Battery", QString(),
+                                 m_femsConnections.value(connection)->id());
+      ParamList params;
+      params.append(Param(meterThingIdParamTypeId, "battery"));
+      descriptor.setParams(params);
+      emit autoThingsAppeared(ThingDescriptors() << descriptor);
+      batteryCreated = true;
+    }
+    this->updateStorages(connection);
+    break;
+  case 1:
+    qInfo() << "Updating Meters";
+    this->updateMeters(connection);
+    if (myThings()
+                .filterByParentId(m_femsConnections.value(connection)->id())
+                .filterByThingClassId(meterThingClassId)
+                .length() != 1 &&
+        !meterCreated) {
+
+      ThingDescriptor descriptor(batteryThingClassId, "FEMS Meter", QString(),
+                                 m_femsConnections.value(connection)->id());
+      ParamList params;
+      params.append(Param(meterThingIdParamTypeId, "meter"));
+      descriptor.setParams(params);
+      emit autoThingsAppeared(ThingDescriptors() << descriptor);
+      meterCreated = true;
+    }
+    break;
+  case 2:
+    qInfo() << "Updating Sum";
+
+    this->updateSumState(connection);
+
+  default:
+    break;
+  }
+  connectionSwitch = (connectionSwitch + 1) % 2;
 }
 
 void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
@@ -286,64 +389,86 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
   FemsNetworkReply *essActiveChargeEnergy =
       connection->getFemsDataPoint(ESS_ACTIVE_CHARGE_ENERGY);
 
-  connect(essActiveChargeEnergy, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(essActiveChargeEnergy)) {
-      essActiveChargeEnergy->deleteLater();
-      return;
-    }
-    QByteArray data = essActiveChargeEnergy->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+  connect(essActiveChargeEnergy, &FemsNetworkReply::finished, this,
+          [this, essActiveChargeEnergy, parentThing]() {
+            qInfo() << "Checking ESS ACTIVE ENERGY";
+            if (connectionError(essActiveChargeEnergy)) {
+              qInfo() << "Connection error at ESS Active Energy";
+              return;
+            }
+            QByteArray data = essActiveChargeEnergy->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
-      essActiveChargeEnergy->deleteLater();
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    // GET "value" of data
-    this->addValueToThing(parentThing, batteryThingClassId,
-                          batteryChargingEnergyStateTypeId, var, DOUBLE, 0);
-    var = NULL;
-    delete var;
-    essActiveChargeEnergy->deleteLater();
-    this->checkBatteryState(parentThing);
-  });
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qInfo() << "JSON ERROR at ESS ACTIVE ENERGY";
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
+              return;
+            }
+            qInfo() << "Getting Variant for ESS ACTIVE ENERGY";
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            // GET "value" of data
+            qInfo() << "Value of ESS ACTIVE ENERGY received: "
+                    << var->toString();
+            qInfo() << "Value of things: " << batteryThingClassId << " and"
+                    << batteryChargingEnergyStateTypeId;
+
+            // qInfo() << "addValueToThing is called with parentThing etc";
+            Thing *child = this->GetThingByParentAndClassId(
+                parentThing, batteryThingClassId);
+            qInfo() << "Child: " << child;
+            if (child != nullptr) {
+              qInfo() << "calling child ValueToAddThing";
+              this->addValueToThing(child, batteryChargingEnergyStateTypeId,
+                                    var, DOUBLE, 0);
+            }
+            // addValueToThing(parentThing, batteryThingClassId,
+            //              batteryChargingEnergyStateTypeId, var, DOUBLE, 0);
+            qInfo() << "Add Value to thing done";
+            var = NULL;
+            delete var;
+
+            checkBatteryState(parentThing);
+          });
 
   // DischargingEnergy(Nymea)
   // EssActiveDischargeEnergy(OpenEMS)
   FemsNetworkReply *essActiveDischargeEnergy =
       connection->getFemsDataPoint(ESS_ACTIVE_DISCHARGE_ENERGY);
 
-  connect(essActiveDischargeEnergy, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(essActiveDischargeEnergy)) {
-      essActiveDischargeEnergy->deleteLater();
-      return;
-    }
-    QByteArray data = essActiveDischargeEnergy->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+  connect(essActiveDischargeEnergy, &FemsNetworkReply::finished, this,
+          [this, essActiveDischargeEnergy, parentThing]() {
+            if (this->connectionError(essActiveDischargeEnergy)) {
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
-      essActiveDischargeEnergy->deleteLater();
-      return;
-    }
-    // GET "value" of data
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, batteryThingClassId,
-                          batteryDischarginEnergyStateTypeId, var, DOUBLE, 0);
-    var = NULL;
-    delete var;
-    essActiveDischargeEnergy->deleteLater();
-    this->checkBatteryState(parentThing);
-  });
+              return;
+            }
+            QByteArray data =
+                essActiveDischargeEnergy->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+
+            // Check JSON Reply
+            bool jsonE = this->jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
+
+              return;
+            }
+            // GET "value" of data
+            QVariant *var =
+                new QVariant((this->getValueOfRequestedData(&jsonDoc)));
+            this->addValueToThing(parentThing, batteryThingClassId,
+                                  batteryDischarginEnergyStateTypeId, var,
+                                  DOUBLE, 0);
+            var = NULL;
+            delete var;
+
+            this->checkBatteryState(parentThing);
+          });
 
   // CurrentPower(Nymea)
   // EssActivePower(OpenEMS)
@@ -351,31 +476,32 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
   FemsNetworkReply *essActivePower =
       connection->getFemsDataPoint(ESS_ACTIVE_POWER);
 
-  connect(essActivePower, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(essActivePower)) {
-      essActivePower->deleteLater();
-      return;
-    }
-    QByteArray data = essActivePower->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+  connect(
+      essActivePower, &FemsNetworkReply::finished, this,
+      [this, essActivePower, parentThing]() {
+        if (this->connectionError(essActivePower)) {
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
-      essActivePower->deleteLater();
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    // GET "value" of data
-    this->addValueToThing(parentThing, batteryThingClassId,
-                          batteryCurrentPowerStateTypeId, var, DOUBLE, 0);
-    var = NULL;
-    delete var;
-    essActivePower->deleteLater();
-  });
+          return;
+        }
+        QByteArray data = essActivePower->networkReply()->readAll();
+        QJsonParseError error;
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+
+        // Check JSON Reply
+        bool jsonE = this->jsonError(data);
+        if (jsonE) {
+          qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                              << ":" << error.errorString();
+
+          return;
+        }
+        QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
+        // GET "value" of data
+        this->addValueToThing(parentThing, batteryThingClassId,
+                              batteryCurrentPowerStateTypeId, var, DOUBLE, 0);
+        var = NULL;
+        delete var;
+      });
 
   // CurrentPowerA
   // EssActivePowerL1
@@ -385,7 +511,7 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
 
   connect(essActivePowerL1, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(essActivePowerL1)) {
-     essActivePowerL1-> deleteLater();
+
       return;
     }
     QByteArray data = essActivePowerL1->networkReply()->readAll();
@@ -397,7 +523,7 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      essActivePowerL1->deleteLater();
+
       return;
     }
     QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -406,7 +532,6 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
                           batteryCurrentPowerAStateTypeId, var, DOUBLE, 0);
     var = NULL;
     delete var;
-    essActivePowerL1->deleteLater();
   });
 
   // CurrentPowerB
@@ -417,7 +542,7 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
 
   connect(essActivePowerL2, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(essActivePowerL2)) {
-      essActivePowerL2->deleteLater();
+
       return;
     }
     QByteArray data = essActivePowerL2->networkReply()->readAll();
@@ -429,7 +554,7 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      essActivePowerL2->deleteLater();
+
       return;
     }
     QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -438,7 +563,6 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
                           batteryCurrentPowerBStateTypeId, var, DOUBLE, 0);
     var = NULL;
     delete var;
-    essActivePowerL2->deleteLater();
   });
 
   // CurrentPowerC
@@ -449,7 +573,7 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
 
   connect(essActivePowerL3, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(essActivePowerL3)) {
-     essActivePowerL3-> deleteLater();
+
       return;
     }
     QByteArray data = essActivePowerL3->networkReply()->readAll();
@@ -461,7 +585,7 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      essActivePowerL3->deleteLater();
+
       return;
     }
     QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -470,7 +594,6 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
                           batteryCurrentPowerCStateTypeId, var, DOUBLE, 0);
     var = NULL;
     delete var;
-    essActivePowerL3->deleteLater();
   });
 
   // Capacity
@@ -479,7 +602,7 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
 
   connect(essCapacity, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(essCapacity)) {
-      essCapacity->deleteLater();
+
       return;
     }
     QByteArray data = essCapacity->networkReply()->readAll();
@@ -491,7 +614,7 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      essCapacity->deleteLater();
+
       return;
     }
     QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -500,16 +623,15 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
                           batteryCapacityStateTypeId, var, DOUBLE, 0);
     var = NULL;
     delete var;
-    essCapacity->deleteLater();
   });
 
   // BatteryLevel (SoC)
   // EssSoc
   FemsNetworkReply *essBatteryLevel = connection->getFemsDataPoint(ESS_SOC);
 
-  connect(essCapacity, &FemsNetworkReply::finished, this, [=]() {
+  connect(essBatteryLevel, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(essBatteryLevel)) {
-      essCapacity->deleteLater();
+
       return;
     }
     QByteArray data = essBatteryLevel->networkReply()->readAll();
@@ -521,7 +643,7 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      essCapacity->deleteLater();
+
       return;
     }
     QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -530,7 +652,7 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
                           batteryBatteryLevelStateTypeId, var, DOUBLE, 0);
     var = NULL;
     delete var;
-    essCapacity->deleteLater();
+
     // TODO StateOfHealt
     this->calculateStateOfHealth(parentThing);
   });
@@ -540,9 +662,9 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
   FemsNetworkReply *essTemperature =
       connection->getFemsDataPoint("ess0/Temperature");
 
-  connect(essCapacity, &FemsNetworkReply::finished, this, [=]() {
+  connect(essTemperature, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(essTemperature)) {
-      essCapacity->deleteLater();
+
       return;
     }
     QByteArray data = essTemperature->networkReply()->readAll();
@@ -554,7 +676,7 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      essCapacity->deleteLater();
+
       return;
     }
     QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -563,7 +685,6 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
                           batteryCellTemperatureStateTypeId, var, DOUBLE, 0);
     var = NULL;
     delete var;
-    essCapacity->deleteLater();
   });
 }
 
@@ -579,7 +700,7 @@ void IntegrationPluginFems::updateSumState(FemsConnection *connection) {
 
   connect(sumState, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(sumState)) {
-      sumState->deleteLater();
+
       return;
     }
     QByteArray data = sumState->networkReply()->readAll();
@@ -591,13 +712,13 @@ void IntegrationPluginFems::updateSumState(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      sumState->deleteLater();
+
       return;
     }
     QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
     // GET "value" of data
     this->addValueToThing(parentThing, connectionThingClassId,
-                          connectionStatusStateTypeId, var, MY_INT, 0);
+                          femsstatusStatusStateTypeId, var, MY_INT, 0);
 
     if (var != nullptr) {
       QVariant *varBool = new QVariant(true);
@@ -605,10 +726,18 @@ void IntegrationPluginFems::updateSumState(FemsConnection *connection) {
       if (var->toInt() == 3) {
         varBool->setValue(false);
       }
-      this->addValueToThing(parentThing, meterThingClassId,
-                            meterConnectedStateTypeId, varBool, MY_BOOLEAN, 0);
-      this->addValueToThing(parentThing, batteryThingClassId,
-                            batteryConnectedStateTypeId, varBool, MY_BOOLEAN,
+      if (meterCreated) {
+        this->addValueToThing(parentThing, meterThingClassId,
+                              meterConnectedStateTypeId, varBool, MY_BOOLEAN,
+                              0);
+      }
+      if (batteryCreated) {
+        this->addValueToThing(parentThing, batteryThingClassId,
+                              batteryConnectedStateTypeId, varBool, MY_BOOLEAN,
+                              0);
+      }
+      this->addValueToThing(parentThing, femsstatusThingClassId,
+                            femsstatusConnectedStateTypeId, varBool, MY_BOOLEAN,
                             0);
       varBool = NULL;
       delete varBool;
@@ -616,7 +745,6 @@ void IntegrationPluginFems::updateSumState(FemsConnection *connection) {
     var = NULL;
     delete var;
   });
-  parentThing->deleteLater();
 }
 
 void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
@@ -636,7 +764,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
 
   connect(currentGridPowerReply, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(currentGridPowerReply)) {
-      currentGridPowerReply->deleteLater();
+
       return;
     }
     QByteArray data = currentGridPowerReply->networkReply()->readAll();
@@ -648,7 +776,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      currentGridPowerReply->deleteLater();
+
       return;
     }
     QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -656,7 +784,6 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           meterCurrentGridPowerStateTypeId, var, DOUBLE, 0);
     var = NULL;
     delete var;
-    currentGridPowerReply->deleteLater();
   });
 
   // ProductionActivePower
@@ -664,7 +791,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
       connection->getFemsDataPoint(PRODCUTION_ACTIVE_POWER);
   connect(currentPowerProduction, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(currentPowerProduction)) {
-      currentPowerProduction->deleteLater();
+
       return;
     }
     QByteArray data = currentPowerProduction->networkReply()->readAll();
@@ -676,7 +803,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      currentPowerProduction->deleteLater();
+
       return;
     }
 
@@ -686,7 +813,6 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           0);
     var = NULL;
     delete var;
-    currentGridPowerReply->deleteLater();
   });
 
   // ProductionAcActivePower
@@ -694,7 +820,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
       connection->getFemsDataPoint(PRODUCTION_ACTIVE_AC_POWER);
   connect(currentPowerProductionAc, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(currentPowerProductionAc)) {
-      currentPowerProductionAc->deleteLater();
+
       return;
     }
     QByteArray data = currentPowerProductionAc->networkReply()->readAll();
@@ -706,7 +832,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      currentPowerProductionAc->deleteLater();
+
       return;
     }
 
@@ -716,7 +842,6 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           0);
     var = NULL;
     delete var;
-    currentPowerProductionAc->deleteLater();
   });
 
   // ProductionDcActivePower
@@ -724,7 +849,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
       connection->getFemsDataPoint(PRODUCTION_ACTIVE_DC_POWER);
   connect(currentPowerProductionDc, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(currentPowerProductionDc)) {
-      currentPowerProductionDc->deleteLater();
+
       return;
     }
     QByteArray data = currentPowerProductionDc->networkReply()->readAll();
@@ -736,7 +861,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      currentPowerProductionDc->deleteLater();
+
       return;
     }
     QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -745,14 +870,13 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           0);
     var = NULL;
     delete var;
-    currentPowerProductionAc->deleteLater();
   });
   // CurrentPower
   FemsNetworkReply *currentPower =
       connection->getFemsDataPoint(CONSUMPTION_ACTIVE_POWER);
   connect(currentPower, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(currentPower)) {
-      currentPower->deleteLater();
+
       return;
     }
     QByteArray data = currentPower->networkReply()->readAll();
@@ -764,7 +888,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      currentPower->deleteLater();
+
       return;
     }
     QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -772,14 +896,13 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           meterCurrentPowerStateTypeId, var, DOUBLE, 0);
     var = NULL;
     delete var;
-    currentPower->deleteLater();
   });
   // ProductionActiveEnergy
   FemsNetworkReply *totalEnergyProduced =
       connection->getFemsDataPoint(GRID_PRODUCTION_ACTIVE_ENERGY);
   connect(totalEnergyProduced, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(totalEnergyProduced)) {
-      totalEnergyProduced->deleteLater();
+
       return;
     }
     QByteArray data = totalEnergyProduced->networkReply()->readAll();
@@ -790,7 +913,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      totalEnergyProduced->deleteLater();
+
       return;
     }
 
@@ -799,14 +922,13 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           meterTotalEnergyProducedStateTypeId, var, DOUBLE, -3);
     var = NULL;
     delete var;
-    totalEnergyProduced->deleteLater();
   });
   // ConsumptionActiveEnergy
   FemsNetworkReply *totalEnergyConsumed =
       connection->getFemsDataPoint(GRID_CONSUMPTION_ACTIVE_ENERGY);
   connect(totalEnergyConsumed, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(totalEnergyConsumed)) {
-      totalEnergyConsumed->deleteLater();
+
       return;
     }
     QByteArray data = totalEnergyConsumed->networkReply()->readAll();
@@ -818,7 +940,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      totalEnergyConsumed->deleteLater();
+
       return;
     }
 
@@ -827,14 +949,13 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           meterTotalEnergyConsumedStateTypeId, var, DOUBLE, -3);
     var = NULL;
     delete var;
-    totalEnergyConsumed->deleteLater();
   });
   // Grid BUY
   FemsNetworkReply *currentGridBuyEnergy =
       connection->getFemsDataPoint(GRID_BUY_ACTIVE_ENERGY);
   connect(currentGridBuyEnergy, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(currentGridBuyEnergy)) {
-      currentGridBuyEnergy->deleteLater();
+
       return;
     }
     QByteArray data = currentGridBuyEnergy->networkReply()->readAll();
@@ -846,7 +967,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      currentGridBuyEnergy->deleteLater();
+
       return;
     }
 
@@ -856,14 +977,13 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           -3);
     var = NULL;
     delete var;
-    currentGridBuyEnergy->deleteLater();
   });
   // Grid SELL
   FemsNetworkReply *currentGridSellEnergy =
       connection->getFemsDataPoint(GRID_SELL_ACTIVE_ENERGY);
   connect(currentGridSellEnergy, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(currentGridSellEnergy)) {
-      currentGridSellEnergy->deleteLater();
+
       return;
     }
     QByteArray data = currentGridSellEnergy->networkReply()->readAll();
@@ -875,7 +995,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      currentGridSellEnergy->deleteLater();
+
       return;
     }
 
@@ -885,7 +1005,6 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           -3);
     var = NULL;
     delete var;
-    currentGridSellEnergy->deleteLater();
   });
 
   // GridActivePowerL1
@@ -893,7 +1012,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
       connection->getFemsDataPoint(GRID_ACTIVE_POWER_L1);
   connect(currentPowerPhaseA, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(currentPowerPhaseA)) {
-      currentPowerPhaseA->deleteLater();
+
       return;
     }
     QByteArray data = currentPowerPhaseA->networkReply()->readAll();
@@ -905,7 +1024,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      currentPowerPhaseA->deleteLater();
+
       return;
     }
 
@@ -914,7 +1033,6 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           meterCurrentPowerPhaseAStateTypeId, var, DOUBLE, -3);
     var = NULL;
     delete var;
-    currentPowerPhaseA->deleteLater();
   });
 
   // GridActivePowerL2
@@ -922,7 +1040,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
       connection->getFemsDataPoint(GRID_ACTIVE_POWER_L2);
   connect(currentPowerPhaseB, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(currentPowerPhaseB)) {
-      currentPowerPhaseB->deleteLater();
+
       return;
     }
     QByteArray data = currentPowerPhaseB->networkReply()->readAll();
@@ -934,7 +1052,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      currentPowerPhaseB->deleteLater();
+
       return;
     }
 
@@ -943,7 +1061,6 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           meterCurrentPowerPhaseBStateTypeId, var, DOUBLE, -3);
     var = NULL;
     delete var;
-    currentPowerPhaseB->deleteLater();
   });
 
   // GridActivePowerL3
@@ -951,7 +1068,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
       connection->getFemsDataPoint(GRID_ACTIVE_POWER_L3);
   connect(currentPowerPhaseC, &FemsNetworkReply::finished, this, [=]() {
     if (this->connectionError(currentPowerPhaseC)) {
-      currentPowerPhaseC->deleteLater();
+
       return;
     }
     QByteArray data = currentPowerPhaseC->networkReply()->readAll();
@@ -963,7 +1080,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     if (jsonE) {
       qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                           << error.errorString();
-      currentPowerPhaseC->deleteLater();
+
       return;
     }
 
@@ -972,7 +1089,6 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                           meterCurrentPowerPhaseCStateTypeId, var, DOUBLE, -3);
     var = NULL;
     delete var;
-    currentPowerPhaseC->deleteLater();
   });
 
   // HERE TEST CONNECTION! if Meter asymmetric -> check meter0 first -> if
@@ -989,7 +1105,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     connect(currentPhaseA, &FemsNetworkReply::finished, this, [=]() {
       if (this->connectionError(currentPhaseA)) {
         this->changeMeterString();
-        currentPhaseA->deleteLater();
+
         return;
       }
       QByteArray data = currentPhaseA->networkReply()->readAll();
@@ -1002,7 +1118,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
         qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                             << error.errorString();
         this->changeMeterString();
-        currentPhaseA->deleteLater();
+
         return;
       }
       QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -1010,14 +1126,13 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                             meterCurrentPhaseAStateTypeId, var, DOUBLE, -3);
       var = NULL;
       delete var;
-      currentPhaseA->deleteLater();
     });
     // Current L2
     FemsNetworkReply *currentPhaseB = connection->getFemsDataPoint(PhaseB);
     connect(currentPhaseB, &FemsNetworkReply::finished, this, [=]() {
       if (this->connectionError(currentPhaseB)) {
         this->changeMeterString();
-        currentPhaseB->deleteLater();
+
         return;
       }
       QByteArray data = currentPhaseB->networkReply()->readAll();
@@ -1030,7 +1145,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
         qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                             << error.errorString();
         this->changeMeterString();
-        currentPhaseB->deleteLater();
+
         return;
       }
 
@@ -1039,14 +1154,13 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                             meterCurrentPhaseBStateTypeId, var, DOUBLE, -3);
       var = NULL;
       delete var;
-      currentPhaseB->deleteLater();
     });
     // Current L3
     FemsNetworkReply *currentPhaseC = connection->getFemsDataPoint(PhaseC);
     connect(currentPhaseC, &FemsNetworkReply::finished, this, [=]() {
       if (this->connectionError(currentPhaseC)) {
         this->changeMeterString();
-        currentPhaseC->deleteLater();
+
         return;
       }
       QByteArray data = currentPhaseC->networkReply()->readAll();
@@ -1059,7 +1173,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
         qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                             << error.errorString();
         this->changeMeterString();
-        currentPhaseC->deleteLater();
+
         return;
       }
       QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -1067,7 +1181,6 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                             meterCurrentPhaseCStateTypeId, var, DOUBLE, -3);
       var = NULL;
       delete var;
-      currentPhaseC->deleteLater();
     });
 
     // Frequency
@@ -1075,7 +1188,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     connect(frequency, &FemsNetworkReply::finished, this, [=]() {
       if (this->connectionError(frequency)) {
         this->changeMeterString();
-        frequency->deleteLater();
+
         return;
       }
       QByteArray data = frequency->networkReply()->readAll();
@@ -1088,7 +1201,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
         qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
                             << error.errorString();
         this->changeMeterString();
-        frequency->deleteLater();
+
         return;
       }
       QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
@@ -1096,10 +1209,8 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
                             meterFrequencyStateTypeId, var, DOUBLE, -3);
       var = NULL;
       delete var;
-      frequency->deleteLater();
     });
   }
-  parentThing->deleteLater();
 }
 
 bool IntegrationPluginFems::connectionError(FemsNetworkReply *reply) {
@@ -1121,13 +1232,10 @@ void IntegrationPluginFems::addValueToThing(Thing *parentThing,
                                             StateTypeId stateName,
                                             const QVariant *value,
                                             ValueType valueType, int scale) {
-
+  qInfo() << "addValueToThing is called with parentThing etc";
   Thing *child = this->GetThingByParentAndClassId(parentThing, identifier);
   if (child != nullptr) {
     this->addValueToThing(child, stateName, value, valueType, scale);
-    child->deleteLater();
-  } else {
-    delete child;
   }
 }
 
@@ -1135,9 +1243,13 @@ void IntegrationPluginFems::addValueToThing(Thing *childThing,
                                             StateTypeId stateName,
                                             const QVariant *value,
                                             ValueType valueType, int scale) {
+  qInfo() << "Add Value to thing called";
 
+  qInfo() << "Adding Value : " << value->toString()
+          << " to child: " << childThing->id() << " with state: " << stateName;
   // void setStateValue(const QString &stateName, const QVariant &value);
-  if (value != nullptr) {
+  if (value != nullptr && value->toString() != "null" &&
+      value->toString() != "") {
     if (valueType == DOUBLE) {
       double doubleValue = (value->toDouble()) * pow(10, scale);
       childThing->setStateValue(stateName, doubleValue);
@@ -1170,10 +1282,22 @@ void IntegrationPluginFems::changeMeterString() {
 Thing *
 IntegrationPluginFems::GetThingByParentAndClassId(Thing *parentThing,
                                                   ThingClassId identifier) {
+  qInfo() << "Calling Thing By Parent And Class Id";
+  qInfo() << "parentThing Id: " << parentThing->id();
+  qInfo() << "thingClass identifier" << identifier;
+  qInfo() << "general myThings size: " << myThings().length();
+  qInfo() << "ThingsSize without classId"
+          << myThings().filterByParentId(parentThing->id()).size();
+  if (myThings().length() > 0) {
+    qInfo() << "Id of first My Things" << myThings().first()->id();
+    qInfo() << "Parent ID: " << parentThing->id();
+  }
   Things valueToAddThings = myThings()
                                 .filterByParentId(parentThing->id())
                                 .filterByThingClassId(identifier);
+  qInfo() << "Things in my Things found: " << valueToAddThings.length();
   if (valueToAddThings.count() == 1) {
+    qInfo() << "Returning Thing: " << valueToAddThings.first()->id();
     return valueToAddThings.first();
   }
   return nullptr;
@@ -1182,6 +1306,7 @@ IntegrationPluginFems::GetThingByParentAndClassId(Thing *parentThing,
 void IntegrationPluginFems::checkBatteryState(Thing *parentThing) {
   // ChargingState -> this should be done seperately when comparing charing and
   // discharging energy idle, charging, discharging
+  qInfo() << "Checking Battery State";
   Thing *thing = GetThingByParentAndClassId(parentThing, batteryThingClassId);
   if (thing != nullptr) {
     QVariant chargingEnergy =
@@ -1202,11 +1327,6 @@ void IntegrationPluginFems::checkBatteryState(Thing *parentThing) {
     this->addValueToThing(thing, batteryChargingStateStateTypeId, &var, QSTRING,
                           0);
   }
-  if (thing != nullptr) {
-    thing->deleteLater();
-  } else {
-    delete thing;
-  }
 }
 
 void IntegrationPluginFems::calculateStateOfHealth(Thing *parentThing) {
@@ -1225,7 +1345,7 @@ void IntegrationPluginFems::calculateStateOfHealth(Thing *parentThing) {
     ;
     this->addValueToThing(thing, batteryBatteryCriticalStateTypeId, &var,
                           MY_BOOLEAN, 0);
-    thing->deleteLater();
+
   } else {
     delete thing;
   }
