@@ -68,6 +68,7 @@ private:
   bool connectionError(FemsNetworkReply *reply);
   void changeMeterString();
   void checkBatteryState(Thing *parentThing);
+  void calculateStateOfHealth(Thing *parentThing);
 
   bool jsonError(QByteArray data);
 

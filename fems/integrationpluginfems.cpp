@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Copyright (C) 2020 a <a@a.com>                 *
  *                                                                         *
@@ -44,7 +44,6 @@ static const QString  ESS_ACTIVE_CHARGE_ENERGY = "_sum/EssActiveChargeEnergy";
 static const QString  ESS_ACTIVE_DISCHARGE_ENERGY = "_sum/EssActiveDischargeEnergy";
 
 static const QString  ESS_CAPACITY = "ess0/Capacity";
-static const QString  ESS_BATTERY_CRITICAL = "ess0/SoH";
 
 static const QString  GRID_ACTIVE_POWER = "_sum/GridActivePower";
 static const QString  GRID_ACTIVE_POWER_L1 = "_sum/GridActivePowerL1";
@@ -475,6 +474,8 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection){
        this->addValueToThing(parentThing, batteryThingClassId,
                              batteryBatteryLevelStateTypeId,
                              var, DOUBLE,0);
+        //TODO StateOfHealt
+        this->calculateStateOfHealth(parentThing);
     });
 
 
@@ -504,40 +505,6 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection){
                              var, DOUBLE,0);
     });
 
-    //BatteryCritical -> is a bool -> use either SoC or SoH and if SoH is low -> set true
-    //ess0/SoH
-    FemsNetworkReply *essCritical = connection->getFemsDataPoint(ESS_BATTERY_CRITICAL);
-
-    connect(essCapacity, &FemsNetworkReply::finished, this, [=](){
-
-        if(this->connectionError(essCritical)){
-            return;
-        }
-        QByteArray data = essCritical->networkReply()->readAll();
-        QJsonParseError error;
-        QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
-
-        //Check JSON Reply
-        bool jsonE = this->jsonError(data);
-        if(jsonE){
-        qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":" << error.errorString();
-                return;
-    }
-        QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-       if(var != nullptr){
-           var->setValue((var->toInt() < 20));
-       }
-    /* void IntegrationPluginFems::addValueToThing(Thing *childThing, StateTypeId stateName,
-                                                const QVariant *value, ValueType valueType, int scale){
-
-        QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-        this->addValueToThing(parentThing, meterThingClassId,
-                              meterCurrentGridPowerStateTypeId,
-                              var, DOUBLE,0);*/
-       this->addValueToThing(parentThing, batteryThingClassId,
-                             batteryBatteryCriticalStateTypeId,
-                             var, MY_BOOLEAN,0);
-    });
 }
 
 void IntegrationPluginFems::updateSumState(FemsConnection *connection){
@@ -1083,5 +1050,21 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection){
         }
              QVariant var = this->batteryState;
             this->addValueToThing(thing, batteryChargingStateStateTypeId, &var, QSTRING, 0);
+        }
+    }
+
+    void IntegrationPluginFems::calculateStateOfHealth(Thing *parentThing){
+        //StateOfHealth -> when reaching 10% ESS -> Tell the System Critical ESS State
+
+        Thing* thing = GetThingByParentAndClassId(parentThing, batteryThingClassId);
+        if(thing!=nullptr){
+        QVariant socStateValue = thing->stateValue(batteryBatteryLevelStateTypeId);
+        int soc = socStateValue.toInt();
+        bool critical = false;
+        if(soc <= 10){
+            critical = true;
+        }
+            QVariant *var = new QVariant(critical);
+            this->addValueToThing(thing, batteryBatteryCriticalStateTypeId, var, MY_BOOLEAN, 0);
         }
     }
