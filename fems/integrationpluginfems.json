@@ -12,7 +12,7 @@
                     "name": "connection",
                     "displayName": "Fems System",
                     "id": "2649f540-8f17-462d-93f7-79aa9cfc3734",
-                    "setupMethod": "userandpassword",
+                    "setupMethod": "JustAdd",
                     "createMethods": ["user"],
                     "interfaces": [ "connectable"],
                     "paramTypes": [
@@ -32,19 +32,18 @@
                         "defaultValue": "80"
                     },
                     {
-                        "id": "c3a520b1-b063-44c9-b9eb-8570605041aa",
-                        "name": "user",
-                        "displayName": "user",
+                        "id": "baf7e75f-3887-47a4-8d77-6b750a66393b",
+                        "name": "username",
+                        "displayName": "Username",
                         "type": "QString",
-                        "defaultValue": "user"
+                        "defaultValue": "Admin"
                     },
                     {
-                        "id": "c069cad9-29dc-43ef-bdfc-a80ba9bc4352",
+                        "id": "0c23b0af-8341-4a14-9b6f-0d6ab602c5e2",
                         "name": "password",
-                        "displayName": "password",
-                        "inputType":"Password",
+                        "displayName": "Passwort",
                         "type": "QString",
-                        "defaultValue": "user"
+                        "defaultValue": "admin"
                     },
                     {
 
@@ -63,16 +62,7 @@
                         "displayNameEvent": "Reachable changed",
                         "type": "bool",
                         "defaultValue": false
-                    },
-                    {
-                        "id": "40798af8-43bb-49c5-8962-1acc5cef0839",
-                        "name": "status",
-                        "displayName": "Fems Status",
-                        "displayNameEvent": "Status changed",
-                        "type": "int",
-                        "defaultValue": false
                     }
-
                     ],
                     "actionTypes": [
 
@@ -80,6 +70,41 @@
                     "eventTypes": [
 
                     ]
+                },
+                {
+
+                "id": "02b61fba-8a08-46ff-bccc-3a4dfcddf351",
+                "name": "femsstatus",
+                "displayName": "Fems Status",
+                "createMethods": ["auto"],
+                "interfaces" : ["connectable"],
+                "paramTypes": [{
+                        "id": "c8dbc321-6c04-412c-a9ee-a06d187f9e76",
+                        "name": "id",
+                        "displayName": "Device ID",
+                        "type": "QString",
+                        "readOnly": true
+                        }
+                      ],
+                "stateTypes": [
+                      {
+                          "id": "37f2eaa7-11da-4868-b945-1dc518ffd6b0",
+                          "name": "connected",
+                          "displayName": "Reachable",
+                          "displayNameEvent": "Reachable changed",
+                          "type": "bool",
+                          "defaultValue": false
+                      },
+                      {
+                          "id": "d0c8d4c7-3e6c-4ac0-80ae-247cec9fc4b0",
+                          "name": "status",
+                          "displayName": "Fems Status",
+                          "displayNameEvent": "Status changed",
+                          "type": "int",
+                          "defaultValue": false
+                      }
+
+                      ]
                 },
 
                 {

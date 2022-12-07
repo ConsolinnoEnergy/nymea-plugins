@@ -23,7 +23,7 @@ signals:
 private:
   explicit FemsNetworkReply(const QNetworkRequest &request,
                             QObject *parent = nullptr, QString usr = "",
-                            QString pwd = "");
+                            QString pwd = "", bool useEdge = false);
 
   QNetworkRequest m_request;
   QNetworkReply *m_networkReply = nullptr;

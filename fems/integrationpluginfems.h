@@ -41,7 +41,9 @@ public:
   explicit IntegrationPluginFems(QObject *parent = nullptr);
 
   void init() override;
-
+  //void startPairing(ThingPairingInfo *info) override;
+  //void confirmPairing(ThingPairingInfo *info, const QString &username,
+  //                    const QString &secret) override;
   void setupThing(ThingSetupInfo *info) override;
   void postSetupThing(Thing *thing) override;
   void executeAction(ThingActionInfo *info) override;
@@ -56,6 +58,7 @@ private:
     MY_INT = 3,
 
   };
+
   PluginTimer *m_connectionRefreshTimer = nullptr;
   Thing *GetThingByParentAndClassId(Thing *parentThing,
                                     ThingClassId identifier);
@@ -68,6 +71,7 @@ private:
   void changeMeterString();
   void checkBatteryState(Thing *parentThing);
   void calculateStateOfHealth(Thing *parentThing);
+  int ownId = 0;
 
   bool jsonError(QByteArray data);
 
