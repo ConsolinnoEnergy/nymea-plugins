@@ -241,7 +241,7 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
              (thing->thingClassId() == batteryThingClassId)) {
     qInfo() << "This line appears because Parent was setup and now children "
                "are created";
-    Thing *parentThing = myThings().findById(thing-> parentId());
+    Thing *parentThing = myThings().findById(thing->parentId());
     if (!parentThing) {
       qCWarning(dcFems()) << "Could not find the parent for" << thing;
       info->finish(Thing::ThingErrorHardwareNotAvailable);
@@ -327,6 +327,9 @@ void IntegrationPluginFems::refreshConnection(FemsConnection *connection) {
   qInfo() << "Updating States";
   switch (connectionSwitch) {
   case 0:
+    qInfo() << "#############################################################";
+    qInfo() << "#############################################################";
+    qInfo() << "#############################################################";
     qInfo() << "Updating Storages";
     if (myThings()
                 .filterByParentId(m_femsConnections.value(connection)->id())
@@ -345,13 +348,17 @@ void IntegrationPluginFems::refreshConnection(FemsConnection *connection) {
     this->updateStorages(connection);
     break;
   case 1:
+    qInfo() << "#############################################################";
+    qInfo() << "#############################################################";
+    qInfo() << "#############################################################";
     qInfo() << "Updating Meters";
 
     this->updateMeters(connection);
     if (myThings()
-        .filterByParentId(m_femsConnections.value(connection)->id())
-        .filterByThingClassId(meterThingClassId)
-        .length() < 1 && !meterCreated) {
+                .filterByParentId(m_femsConnections.value(connection)->id())
+                .filterByThingClassId(meterThingClassId)
+                .length() < 1 &&
+        !meterCreated) {
 
       ThingDescriptor descriptor(meterThingClassId, "FEMS Meter", QString(),
                                  connectionThing->id());
@@ -362,12 +369,17 @@ void IntegrationPluginFems::refreshConnection(FemsConnection *connection) {
       meterCreated = true;
     }
     break;
+  case 2:
   default:
-      qInfo() << "Updating Sum";
-      this->updateSumState(connection);
+    qInfo() << "#############################################################";
+    qInfo() << "#############################################################";
+    qInfo() << "#############################################################";
+    qInfo() << "#############################################################";
+    qInfo() << "Updating Sum";
+    this->updateSumState(connection);
     break;
   }
-  connectionSwitch = (connectionSwitch + 1) % 2;
+  connectionSwitch = (connectionSwitch + 1) % 3;
 }
 
 void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
@@ -751,15 +763,18 @@ void IntegrationPluginFems::updateSumState(FemsConnection *connection) {
         }
         QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
         // GET "value" of data
+        qInfo() << "Adding SUM STATE";
         addValueToThing(parentThing, connectionThingClassId,
                         femsstatusStatusStateTypeId, var, MY_INT, 0);
 
         if (var != nullptr) {
+            qInfo() << "Checking fo Updating States";
           QVariant *varBool = new QVariant(true);
           // FEMS STATE == FAULT on 3
           if (var->toInt() == 3) {
             varBool->setValue(false);
           }
+          qInfo() << "ADDING CONNECTION STATE: " << varBool;
           addValueToThing(parentThing, meterThingClassId,
                           meterConnectedStateTypeId, varBool, MY_BOOLEAN, 0);
 
@@ -778,7 +793,7 @@ void IntegrationPluginFems::updateSumState(FemsConnection *connection) {
 }
 
 void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
-
+  qInfo() << "STARTING METERS";
   Thing *parentThing = m_femsConnections.value(connection);
   // Get everything from the sum that is meter related.
   // most states are available at the "sum"
@@ -1166,7 +1181,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     FemsNetworkReply *currentPhaseA = connection->getFemsDataPoint(PhaseA);
     connect(currentPhaseA, &FemsNetworkReply::finished, this,
             [this, currentPhaseA, parentThing]() {
-        qInfo() << "current Phase A";
+              qInfo() << "current Phase A";
               if (connectionError(currentPhaseA)) {
                 changeMeterString();
 
@@ -1197,7 +1212,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     FemsNetworkReply *currentPhaseB = connection->getFemsDataPoint(PhaseB);
     connect(currentPhaseB, &FemsNetworkReply::finished, this,
             [this, currentPhaseB, parentThing]() {
-        qInfo() << "Current Phase B";
+              qInfo() << "Current Phase B";
               if (connectionError(currentPhaseB)) {
                 changeMeterString();
 
@@ -1227,7 +1242,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     FemsNetworkReply *currentPhaseC = connection->getFemsDataPoint(PhaseC);
     connect(currentPhaseC, &FemsNetworkReply::finished, this,
             [this, currentPhaseC, parentThing]() {
-        qInfo() << "current Phase C";
+              qInfo() << "current Phase C";
               if (connectionError(currentPhaseC)) {
                 this->changeMeterString();
 
@@ -1257,7 +1272,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     FemsNetworkReply *frequency = connection->getFemsDataPoint(Frequency);
     connect(frequency, &FemsNetworkReply::finished, this,
             [this, frequency, parentThing]() {
-        qInfo() << "Frequency";
+              qInfo() << "Frequency";
               if (connectionError(frequency)) {
                 changeMeterString();
 
@@ -1283,6 +1298,7 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
               delete var;
             });
   }
+  qInfo() << "METERS DONE";
 }
 
 bool IntegrationPluginFems::connectionError(FemsNetworkReply *reply) {
