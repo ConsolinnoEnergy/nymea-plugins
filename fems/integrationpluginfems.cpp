@@ -210,6 +210,7 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
       responseMap.value("value").toString();*/
       // STATE Connection
       qInfo() << "Adding new Connection";
+      qInfo() << "status: " << status;
       if (status >= 0) {
         m_femsConnections.insert(connection, thing);
         qInfo() << "Connection added "
@@ -240,7 +241,7 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
              (thing->thingClassId() == batteryThingClassId)) {
     qInfo() << "This line appears because Parent was setup and now children "
                "are created";
-    Thing *parentThing = myThings().findById(thing->parentId());
+    Thing *parentThing = myThings().findById(thing-> parentId());
     if (!parentThing) {
       qCWarning(dcFems()) << "Could not find the parent for" << thing;
       info->finish(Thing::ThingErrorHardwareNotAvailable);
@@ -330,11 +331,11 @@ void IntegrationPluginFems::refreshConnection(FemsConnection *connection) {
     if (myThings()
                 .filterByParentId(m_femsConnections.value(connection)->id())
                 .filterByThingClassId(batteryThingClassId)
-                .length() != 1 &&
+                .length() < 1 &&
         !batteryCreated) {
       qInfo() << "Creating ESS";
       ThingDescriptor descriptor(batteryThingClassId, "FEMS Battery", QString(),
-                                 m_femsConnections.value(connection)->id());
+                                 connectionThing->id());
       ParamList params;
       params.append(Param(meterThingIdParamTypeId, "battery"));
       descriptor.setParams(params);
@@ -345,15 +346,15 @@ void IntegrationPluginFems::refreshConnection(FemsConnection *connection) {
     break;
   case 1:
     qInfo() << "Updating Meters";
+
     this->updateMeters(connection);
     if (myThings()
-                .filterByParentId(m_femsConnections.value(connection)->id())
-                .filterByThingClassId(meterThingClassId)
-                .length() != 1 &&
-        !meterCreated) {
+        .filterByParentId(m_femsConnections.value(connection)->id())
+        .filterByThingClassId(meterThingClassId)
+        .length() < 1 && !meterCreated) {
 
-      ThingDescriptor descriptor(batteryThingClassId, "FEMS Meter", QString(),
-                                 m_femsConnections.value(connection)->id());
+      ThingDescriptor descriptor(meterThingClassId, "FEMS Meter", QString(),
+                                 connectionThing->id());
       ParamList params;
       params.append(Param(meterThingIdParamTypeId, "meter"));
       descriptor.setParams(params);
@@ -361,12 +362,9 @@ void IntegrationPluginFems::refreshConnection(FemsConnection *connection) {
       meterCreated = true;
     }
     break;
-  case 2:
-    qInfo() << "Updating Sum";
-
-    this->updateSumState(connection);
-
   default:
+      qInfo() << "Updating Sum";
+      this->updateSumState(connection);
     break;
   }
   connectionSwitch = (connectionSwitch + 1) % 2;
@@ -441,12 +439,82 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
 
   connect(essActiveDischargeEnergy, &FemsNetworkReply::finished, this,
           [this, essActiveDischargeEnergy, parentThing]() {
-            if (this->connectionError(essActiveDischargeEnergy)) {
+            qInfo() << "Checking essACtiveDischargeEnergy";
+            if (connectionError(essActiveDischargeEnergy)) {
 
               return;
             }
             QByteArray data =
                 essActiveDischargeEnergy->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
+
+              return;
+            }
+            // GET "value" of data
+            QVariant *var =
+                new QVariant((this->getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, batteryThingClassId,
+                            batteryDischarginEnergyStateTypeId, var, DOUBLE, 0);
+            var = NULL;
+            delete var;
+            checkBatteryState(parentThing);
+          });
+
+  // CurrentPower(Nymea)
+  // EssActivePower(OpenEMS)
+
+  FemsNetworkReply *essActivePower =
+      connection->getFemsDataPoint(ESS_ACTIVE_POWER);
+
+  connect(essActivePower, &FemsNetworkReply::finished, this,
+          [this, essActivePower, parentThing]() {
+            qInfo() << "Ess Active Power";
+            if (connectionError(essActivePower)) {
+
+              return;
+            }
+            QByteArray data = essActivePower->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
+
+              return;
+            }
+            QVariant *var =
+                new QVariant((this->getValueOfRequestedData(&jsonDoc)));
+            // GET "value" of data
+            addValueToThing(parentThing, batteryThingClassId,
+                            batteryCurrentPowerStateTypeId, var, DOUBLE, 0);
+            var = NULL;
+            delete var;
+          });
+
+  // CurrentPowerA
+  // EssActivePowerL1
+
+  FemsNetworkReply *essActivePowerL1 =
+      connection->getFemsDataPoint(ESS_ACTIVE_POWER_L1);
+
+  connect(essActivePowerL1, &FemsNetworkReply::finished, this,
+          [this, essActivePowerL1, parentThing]() {
+            qInfo() << "essActivePowerL1";
+            if (connectionError(essActivePowerL1)) {
+
+              return;
+            }
+            QByteArray data = essActivePowerL1->networkReply()->readAll();
             QJsonParseError error;
             QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
@@ -458,32 +526,65 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
 
               return;
             }
-            // GET "value" of data
             QVariant *var =
                 new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-            this->addValueToThing(parentThing, batteryThingClassId,
-                                  batteryDischarginEnergyStateTypeId, var,
-                                  DOUBLE, 0);
+            // GET "value" of data
+            addValueToThing(parentThing, batteryThingClassId,
+                            batteryCurrentPowerAStateTypeId, var, DOUBLE, 0);
             var = NULL;
             delete var;
-
-            this->checkBatteryState(parentThing);
           });
 
-  // CurrentPower(Nymea)
-  // EssActivePower(OpenEMS)
+  // CurrentPowerB
+  // EssActivePowerL2
 
-  FemsNetworkReply *essActivePower =
-      connection->getFemsDataPoint(ESS_ACTIVE_POWER);
+  FemsNetworkReply *essActivePowerL2 =
+      connection->getFemsDataPoint(ESS_ACTIVE_POWER_L2);
+
+  connect(essActivePowerL2, &FemsNetworkReply::finished, this,
+          [this, essActivePowerL2, parentThing]() {
+            qInfo() << "Ess Active Power L2";
+            if (connectionError(essActivePowerL2)) {
+
+              return;
+            }
+            QByteArray data = essActivePowerL2->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
+
+              return;
+            }
+            QVariant *var =
+                new QVariant((this->getValueOfRequestedData(&jsonDoc)));
+            // GET "value" of data
+            addValueToThing(parentThing, batteryThingClassId,
+                            batteryCurrentPowerBStateTypeId, var, DOUBLE, 0);
+            var = NULL;
+            delete var;
+          });
+
+  // CurrentPowerC
+  // EssActivePowerL3
+
+  FemsNetworkReply *essActivePowerL3 =
+      connection->getFemsDataPoint(ESS_ACTIVE_POWER_L3);
 
   connect(
-      essActivePower, &FemsNetworkReply::finished, this,
-      [this, essActivePower, parentThing]() {
-        if (this->connectionError(essActivePower)) {
+      essActivePowerL3, &FemsNetworkReply::finished, this,
+      [this, essActivePowerL3, parentThing]() {
+        qInfo() << "Ess Active Power L3";
+
+        if (this->connectionError(essActivePowerL3)) {
 
           return;
         }
-        QByteArray data = essActivePower->networkReply()->readAll();
+        QByteArray data = essActivePowerL3->networkReply()->readAll();
         QJsonParseError error;
         QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
@@ -498,194 +599,124 @@ void IntegrationPluginFems::updateStorages(FemsConnection *connection) {
         QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
         // GET "value" of data
         this->addValueToThing(parentThing, batteryThingClassId,
-                              batteryCurrentPowerStateTypeId, var, DOUBLE, 0);
+                              batteryCurrentPowerCStateTypeId, var, DOUBLE, 0);
         var = NULL;
         delete var;
       });
-
-  // CurrentPowerA
-  // EssActivePowerL1
-
-  FemsNetworkReply *essActivePowerL1 =
-      connection->getFemsDataPoint(ESS_ACTIVE_POWER_L1);
-
-  connect(essActivePowerL1, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(essActivePowerL1)) {
-
-      return;
-    }
-    QByteArray data = essActivePowerL1->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
-
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
-
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    // GET "value" of data
-    this->addValueToThing(parentThing, batteryThingClassId,
-                          batteryCurrentPowerAStateTypeId, var, DOUBLE, 0);
-    var = NULL;
-    delete var;
-  });
-
-  // CurrentPowerB
-  // EssActivePowerL2
-
-  FemsNetworkReply *essActivePowerL2 =
-      connection->getFemsDataPoint(ESS_ACTIVE_POWER_L2);
-
-  connect(essActivePowerL2, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(essActivePowerL2)) {
-
-      return;
-    }
-    QByteArray data = essActivePowerL2->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
-
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
-
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    // GET "value" of data
-    this->addValueToThing(parentThing, batteryThingClassId,
-                          batteryCurrentPowerBStateTypeId, var, DOUBLE, 0);
-    var = NULL;
-    delete var;
-  });
-
-  // CurrentPowerC
-  // EssActivePowerL3
-
-  FemsNetworkReply *essActivePowerL3 =
-      connection->getFemsDataPoint(ESS_ACTIVE_POWER_L3);
-
-  connect(essActivePowerL3, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(essActivePowerL3)) {
-
-      return;
-    }
-    QByteArray data = essActivePowerL3->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
-
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
-
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    // GET "value" of data
-    this->addValueToThing(parentThing, batteryThingClassId,
-                          batteryCurrentPowerCStateTypeId, var, DOUBLE, 0);
-    var = NULL;
-    delete var;
-  });
 
   // Capacity
   // Try ess0/Capacity
   FemsNetworkReply *essCapacity = connection->getFemsDataPoint(ESS_CAPACITY);
 
-  connect(essCapacity, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(essCapacity)) {
+  connect(essCapacity, &FemsNetworkReply::finished, this,
+          [this, essCapacity, parentThing]() {
+            qInfo() << "Ess Capacity";
+            if (connectionError(essCapacity)) {
 
-      return;
-    }
-    QByteArray data = essCapacity->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = essCapacity->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    // GET "value" of data
-    this->addValueToThing(parentThing, batteryThingClassId,
-                          batteryCapacityStateTypeId, var, DOUBLE, 0);
-    var = NULL;
-    delete var;
-  });
+              return;
+            }
+            QVariant *var =
+                new QVariant((this->getValueOfRequestedData(&jsonDoc)));
+            // GET "value" of data
+            addValueToThing(parentThing, batteryThingClassId,
+                            batteryCapacityStateTypeId, var, DOUBLE, 0);
+            var = NULL;
+            delete var;
+          });
 
   // BatteryLevel (SoC)
   // EssSoc
   FemsNetworkReply *essBatteryLevel = connection->getFemsDataPoint(ESS_SOC);
 
-  connect(essBatteryLevel, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(essBatteryLevel)) {
+  connect(essBatteryLevel, &FemsNetworkReply::finished, this,
+          [this, essBatteryLevel, parentThing]() {
+            qInfo() << "ess Battery Level";
+            if (connectionError(essBatteryLevel)) {
 
-      return;
-    }
-    QByteArray data = essBatteryLevel->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = essBatteryLevel->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    // GET "value" of data
-    this->addValueToThing(parentThing, batteryThingClassId,
-                          batteryBatteryLevelStateTypeId, var, DOUBLE, 0);
-    var = NULL;
-    delete var;
+              return;
+            }
+            QVariant *var =
+                new QVariant((this->getValueOfRequestedData(&jsonDoc)));
+            // GET "value" of data
+            addValueToThing(parentThing, batteryThingClassId,
+                            batteryBatteryLevelStateTypeId, var, DOUBLE, 0);
+            var = NULL;
+            delete var;
 
-    // TODO StateOfHealt
-    this->calculateStateOfHealth(parentThing);
-  });
+            // Calc state of Health
+            Thing *thing =
+                GetThingByParentAndClassId(parentThing, batteryThingClassId);
+            if (thing != nullptr) {
+              QVariant socStateValue =
+                  thing->stateValue(batteryBatteryLevelStateTypeId);
+              int soc = socStateValue.toInt();
+              bool critical = false;
+              if (soc <= 10) {
+                critical = true;
+              }
+              QVariant var = critical ? "true" : "false";
+              ;
+              addValueToThing(thing, batteryBatteryCriticalStateTypeId, &var,
+                              MY_BOOLEAN, 0);
+            }
+          });
 
   // CellTemperature <- mostly not available
   // try but ....ye ess0/Temperature
   FemsNetworkReply *essTemperature =
       connection->getFemsDataPoint("ess0/Temperature");
 
-  connect(essTemperature, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(essTemperature)) {
+  connect(essTemperature, &FemsNetworkReply::finished, this,
+          [this, essTemperature, parentThing]() {
+            qInfo() << "ESS Temperature";
+            if (this->connectionError(essTemperature)) {
 
-      return;
-    }
-    QByteArray data = essTemperature->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = essTemperature->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = this->jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    // GET "value" of data
-    this->addValueToThing(parentThing, batteryThingClassId,
-                          batteryCellTemperatureStateTypeId, var, DOUBLE, 0);
-    var = NULL;
-    delete var;
-  });
+              return;
+            }
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            // GET "value" of data
+            addValueToThing(parentThing, batteryThingClassId,
+                            batteryCellTemperatureStateTypeId, var, DOUBLE, 0);
+            var = NULL;
+            delete var;
+          });
+  qInfo() << "Battery Done";
 }
 
 void IntegrationPluginFems::updateSumState(FemsConnection *connection) {
@@ -698,53 +729,52 @@ void IntegrationPluginFems::updateSumState(FemsConnection *connection) {
   // EssActiveChargeEnergy(OpenEMS)
   FemsNetworkReply *sumState = connection->getFemsDataPoint(SUM_STATE);
 
-  connect(sumState, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(sumState)) {
+  connect(
+      sumState, &FemsNetworkReply::finished, this,
+      [this, sumState, parentThing]() {
+        qInfo() << "sumState";
+        if (connectionError(sumState)) {
 
-      return;
-    }
-    QByteArray data = sumState->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+          return;
+        }
+        QByteArray data = sumState->networkReply()->readAll();
+        QJsonParseError error;
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+        // Check JSON Reply
+        bool jsonE = jsonError(data);
+        if (jsonE) {
+          qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                              << ":" << error.errorString();
 
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    // GET "value" of data
-    this->addValueToThing(parentThing, connectionThingClassId,
-                          femsstatusStatusStateTypeId, var, MY_INT, 0);
+          return;
+        }
+        QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
+        // GET "value" of data
+        addValueToThing(parentThing, connectionThingClassId,
+                        femsstatusStatusStateTypeId, var, MY_INT, 0);
 
-    if (var != nullptr) {
-      QVariant *varBool = new QVariant(true);
-      // FEMS STATE == FAULT on 3
-      if (var->toInt() == 3) {
-        varBool->setValue(false);
-      }
-      if (meterCreated) {
-        this->addValueToThing(parentThing, meterThingClassId,
-                              meterConnectedStateTypeId, varBool, MY_BOOLEAN,
-                              0);
-      }
-      if (batteryCreated) {
-        this->addValueToThing(parentThing, batteryThingClassId,
-                              batteryConnectedStateTypeId, varBool, MY_BOOLEAN,
-                              0);
-      }
-      this->addValueToThing(parentThing, femsstatusThingClassId,
-                            femsstatusConnectedStateTypeId, varBool, MY_BOOLEAN,
-                            0);
-      varBool = NULL;
-      delete varBool;
-    }
-    var = NULL;
-    delete var;
-  });
+        if (var != nullptr) {
+          QVariant *varBool = new QVariant(true);
+          // FEMS STATE == FAULT on 3
+          if (var->toInt() == 3) {
+            varBool->setValue(false);
+          }
+          addValueToThing(parentThing, meterThingClassId,
+                          meterConnectedStateTypeId, varBool, MY_BOOLEAN, 0);
+
+          addValueToThing(parentThing, batteryThingClassId,
+                          batteryConnectedStateTypeId, varBool, MY_BOOLEAN, 0);
+
+          addValueToThing(parentThing, femsstatusThingClassId,
+                          femsstatusConnectedStateTypeId, varBool, MY_BOOLEAN,
+                          0);
+          varBool = NULL;
+          delete varBool;
+        }
+        var = NULL;
+        delete var;
+      });
 }
 
 void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
@@ -762,334 +792,366 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
   FemsNetworkReply *currentGridPowerReply =
       connection->getFemsDataPoint(GRID_ACTIVE_POWER);
 
-  connect(currentGridPowerReply, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(currentGridPowerReply)) {
+  connect(currentGridPowerReply, &FemsNetworkReply::finished, this,
+          [this, currentGridPowerReply, parentThing]() {
+            qInfo() << "Current Grid Power";
+            if (connectionError(currentGridPowerReply)) {
 
-      return;
-    }
-    QByteArray data = currentGridPowerReply->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = currentGridPowerReply->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterCurrentGridPowerStateTypeId, var, DOUBLE, 0);
-    var = NULL;
-    delete var;
-  });
+              return;
+            }
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterCurrentGridPowerStateTypeId, var, DOUBLE, 0);
+            var = NULL;
+            delete var;
+          });
 
   // ProductionActivePower
   FemsNetworkReply *currentPowerProduction =
       connection->getFemsDataPoint(PRODCUTION_ACTIVE_POWER);
-  connect(currentPowerProduction, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(currentPowerProduction)) {
+  connect(currentPowerProduction, &FemsNetworkReply::finished, this,
+          [this, currentPowerProduction, parentThing]() {
+            qInfo() << "Current Power Production";
+            if (connectionError(currentPowerProduction)) {
 
-      return;
-    }
-    QByteArray data = currentPowerProduction->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = currentPowerProduction->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
+              return;
+            }
 
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterCurrentPowerProductionStateTypeId, var, DOUBLE,
-                          0);
-    var = NULL;
-    delete var;
-  });
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterCurrentPowerProductionStateTypeId, var, DOUBLE,
+                            0);
+            var = NULL;
+            delete var;
+          });
 
   // ProductionAcActivePower
   FemsNetworkReply *currentPowerProductionAc =
       connection->getFemsDataPoint(PRODUCTION_ACTIVE_AC_POWER);
-  connect(currentPowerProductionAc, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(currentPowerProductionAc)) {
+  connect(currentPowerProductionAc, &FemsNetworkReply::finished, this,
+          [this, currentPowerProductionAc, parentThing]() {
+            qInfo() << "current power production ac";
+            if (connectionError(currentPowerProductionAc)) {
 
-      return;
-    }
-    QByteArray data = currentPowerProductionAc->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data =
+                currentPowerProductionAc->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
+              return;
+            }
 
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterCurrentPowerProductionAcStateTypeId, var, DOUBLE,
-                          0);
-    var = NULL;
-    delete var;
-  });
+            QVariant *var =
+                new QVariant((this->getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterCurrentPowerProductionAcStateTypeId, var,
+                            DOUBLE, 0);
+            var = NULL;
+            delete var;
+          });
 
   // ProductionDcActivePower
   FemsNetworkReply *currentPowerProductionDc =
       connection->getFemsDataPoint(PRODUCTION_ACTIVE_DC_POWER);
-  connect(currentPowerProductionDc, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(currentPowerProductionDc)) {
+  connect(currentPowerProductionDc, &FemsNetworkReply::finished, this,
+          [this, currentPowerProductionDc, parentThing]() {
+            qInfo() << "Current Power Production DC";
+            if (connectionError(currentPowerProductionDc)) {
 
-      return;
-    }
-    QByteArray data = currentPowerProductionDc->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data =
+                currentPowerProductionDc->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterCurrentPowerProductionDcStateTypeId, var, DOUBLE,
-                          0);
-    var = NULL;
-    delete var;
-  });
+              return;
+            }
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterCurrentPowerProductionDcStateTypeId, var,
+                            DOUBLE, 0);
+            var = NULL;
+            delete var;
+          });
   // CurrentPower
   FemsNetworkReply *currentPower =
       connection->getFemsDataPoint(CONSUMPTION_ACTIVE_POWER);
-  connect(currentPower, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(currentPower)) {
+  connect(currentPower, &FemsNetworkReply::finished, this,
+          [this, currentPower, parentThing]() {
+            qInfo() << "Current Power";
+            if (connectionError(currentPower)) {
 
-      return;
-    }
-    QByteArray data = currentPower->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = currentPower->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterCurrentPowerStateTypeId, var, DOUBLE, 0);
-    var = NULL;
-    delete var;
-  });
+              return;
+            }
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterCurrentPowerStateTypeId, var, DOUBLE, 0);
+            var = NULL;
+            delete var;
+          });
   // ProductionActiveEnergy
   FemsNetworkReply *totalEnergyProduced =
       connection->getFemsDataPoint(GRID_PRODUCTION_ACTIVE_ENERGY);
-  connect(totalEnergyProduced, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(totalEnergyProduced)) {
+  connect(totalEnergyProduced, &FemsNetworkReply::finished, this,
+          [this, totalEnergyProduced, parentThing]() {
+            qInfo() << "Total Energy Produced";
+            if (connectionError(totalEnergyProduced)) {
 
-      return;
-    }
-    QByteArray data = totalEnergyProduced->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = totalEnergyProduced->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
+              return;
+            }
 
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterTotalEnergyProducedStateTypeId, var, DOUBLE, -3);
-    var = NULL;
-    delete var;
-  });
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterTotalEnergyProducedStateTypeId, var, DOUBLE,
+                            -3);
+            var = NULL;
+            delete var;
+          });
   // ConsumptionActiveEnergy
   FemsNetworkReply *totalEnergyConsumed =
       connection->getFemsDataPoint(GRID_CONSUMPTION_ACTIVE_ENERGY);
-  connect(totalEnergyConsumed, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(totalEnergyConsumed)) {
+  connect(totalEnergyConsumed, &FemsNetworkReply::finished, this,
+          [this, totalEnergyConsumed, parentThing]() {
+            qInfo() << "Total Energy Consumed";
+            if (connectionError(totalEnergyConsumed)) {
 
-      return;
-    }
-    QByteArray data = totalEnergyConsumed->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = totalEnergyConsumed->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
+              return;
+            }
 
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterTotalEnergyConsumedStateTypeId, var, DOUBLE, -3);
-    var = NULL;
-    delete var;
-  });
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterTotalEnergyConsumedStateTypeId, var, DOUBLE,
+                            -3);
+            var = NULL;
+            delete var;
+          });
   // Grid BUY
   FemsNetworkReply *currentGridBuyEnergy =
       connection->getFemsDataPoint(GRID_BUY_ACTIVE_ENERGY);
-  connect(currentGridBuyEnergy, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(currentGridBuyEnergy)) {
+  connect(currentGridBuyEnergy, &FemsNetworkReply::finished, this,
+          [this, currentGridBuyEnergy, parentThing]() {
+            qInfo() << "Current Grid Buy Energy";
+            if (connectionError(currentGridBuyEnergy)) {
 
-      return;
-    }
-    QByteArray data = currentGridBuyEnergy->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = currentGridBuyEnergy->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
+              return;
+            }
 
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterCurrentGridBuyEnergyStateTypeId, var, DOUBLE,
-                          -3);
-    var = NULL;
-    delete var;
-  });
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterCurrentGridBuyEnergyStateTypeId, var, DOUBLE,
+                            -3);
+            var = NULL;
+            delete var;
+          });
   // Grid SELL
   FemsNetworkReply *currentGridSellEnergy =
       connection->getFemsDataPoint(GRID_SELL_ACTIVE_ENERGY);
-  connect(currentGridSellEnergy, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(currentGridSellEnergy)) {
+  connect(currentGridSellEnergy, &FemsNetworkReply::finished, this,
+          [this, currentGridSellEnergy, parentThing]() {
+            qInfo() << "Current Grid Sell Energy";
+            if (connectionError(currentGridSellEnergy)) {
 
-      return;
-    }
-    QByteArray data = currentGridSellEnergy->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = currentGridSellEnergy->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
+              return;
+            }
 
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterCurrentGridSellEnergyStateTypeId, var, DOUBLE,
-                          -3);
-    var = NULL;
-    delete var;
-  });
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterCurrentGridSellEnergyStateTypeId, var, DOUBLE,
+                            -3);
+            var = NULL;
+            delete var;
+          });
 
   // GridActivePowerL1
   FemsNetworkReply *currentPowerPhaseA =
       connection->getFemsDataPoint(GRID_ACTIVE_POWER_L1);
-  connect(currentPowerPhaseA, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(currentPowerPhaseA)) {
+  connect(currentPowerPhaseA, &FemsNetworkReply::finished, this,
+          [this, currentPowerPhaseA, parentThing]() {
+            qInfo() << "Current Power Phase A";
+            if (connectionError(currentPowerPhaseA)) {
 
-      return;
-    }
-    QByteArray data = currentPowerPhaseA->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = currentPowerPhaseA->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
+              return;
+            }
 
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterCurrentPowerPhaseAStateTypeId, var, DOUBLE, -3);
-    var = NULL;
-    delete var;
-  });
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterCurrentPowerPhaseAStateTypeId, var, DOUBLE,
+                            -3);
+            var = NULL;
+            delete var;
+          });
 
   // GridActivePowerL2
   FemsNetworkReply *currentPowerPhaseB =
       connection->getFemsDataPoint(GRID_ACTIVE_POWER_L2);
-  connect(currentPowerPhaseB, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(currentPowerPhaseB)) {
+  connect(currentPowerPhaseB, &FemsNetworkReply::finished, this,
+          [this, currentPowerPhaseB, parentThing]() {
+            qInfo() << "Current Power Phase B";
+            if (connectionError(currentPowerPhaseB)) {
 
-      return;
-    }
-    QByteArray data = currentPowerPhaseB->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = currentPowerPhaseB->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
+              return;
+            }
 
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterCurrentPowerPhaseBStateTypeId, var, DOUBLE, -3);
-    var = NULL;
-    delete var;
-  });
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterCurrentPowerPhaseBStateTypeId, var, DOUBLE,
+                            -3);
+            var = NULL;
+            delete var;
+          });
 
   // GridActivePowerL3
   FemsNetworkReply *currentPowerPhaseC =
       connection->getFemsDataPoint(GRID_ACTIVE_POWER_L3);
-  connect(currentPowerPhaseC, &FemsNetworkReply::finished, this, [=]() {
-    if (this->connectionError(currentPowerPhaseC)) {
+  connect(currentPowerPhaseC, &FemsNetworkReply::finished, this,
+          [this, currentPowerPhaseC, parentThing]() {
+            qInfo() << "Current Power Phase C";
+            if (connectionError(currentPowerPhaseC)) {
 
-      return;
-    }
-    QByteArray data = currentPowerPhaseC->networkReply()->readAll();
-    QJsonParseError error;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+              return;
+            }
+            QByteArray data = currentPowerPhaseC->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-    // Check JSON Reply
-    bool jsonE = this->jsonError(data);
-    if (jsonE) {
-      qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                          << error.errorString();
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data
+                                  << ":" << error.errorString();
 
-      return;
-    }
+              return;
+            }
 
-    QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-    this->addValueToThing(parentThing, meterThingClassId,
-                          meterCurrentPowerPhaseCStateTypeId, var, DOUBLE, -3);
-    var = NULL;
-    delete var;
-  });
+            QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, meterThingClassId,
+                            meterCurrentPowerPhaseCStateTypeId, var, DOUBLE,
+                            -3);
+            var = NULL;
+            delete var;
+          });
 
   // HERE TEST CONNECTION! if Meter asymmetric -> check meter0 first -> if
   // normally connection available -> test meter0 if no conn. test meter1 up to
@@ -1102,114 +1164,124 @@ void IntegrationPluginFems::updateMeters(FemsConnection *connection) {
     QString Frequency = this->meter + "/" + FREQUENCY;
     // CurrentL1
     FemsNetworkReply *currentPhaseA = connection->getFemsDataPoint(PhaseA);
-    connect(currentPhaseA, &FemsNetworkReply::finished, this, [=]() {
-      if (this->connectionError(currentPhaseA)) {
-        this->changeMeterString();
+    connect(currentPhaseA, &FemsNetworkReply::finished, this,
+            [this, currentPhaseA, parentThing]() {
+        qInfo() << "current Phase A";
+              if (connectionError(currentPhaseA)) {
+                changeMeterString();
 
-        return;
-      }
-      QByteArray data = currentPhaseA->networkReply()->readAll();
-      QJsonParseError error;
-      QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+                return;
+              }
+              QByteArray data = currentPhaseA->networkReply()->readAll();
+              QJsonParseError error;
+              QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-      // Check JSON Reply
-      bool jsonE = this->jsonError(data);
-      if (jsonE) {
-        qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                            << error.errorString();
-        this->changeMeterString();
+              // Check JSON Reply
+              bool jsonE = this->jsonError(data);
+              if (jsonE) {
+                qCWarning(dcFems()) << "Meter: Failed to parse JSON data"
+                                    << data << ":" << error.errorString();
+                this->changeMeterString();
 
-        return;
-      }
-      QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-      this->addValueToThing(parentThing, meterThingClassId,
-                            meterCurrentPhaseAStateTypeId, var, DOUBLE, -3);
-      var = NULL;
-      delete var;
-    });
+                return;
+              }
+              QVariant *var =
+                  new QVariant((this->getValueOfRequestedData(&jsonDoc)));
+              this->addValueToThing(parentThing, meterThingClassId,
+                                    meterCurrentPhaseAStateTypeId, var, DOUBLE,
+                                    -3);
+              var = NULL;
+              delete var;
+            });
     // Current L2
     FemsNetworkReply *currentPhaseB = connection->getFemsDataPoint(PhaseB);
-    connect(currentPhaseB, &FemsNetworkReply::finished, this, [=]() {
-      if (this->connectionError(currentPhaseB)) {
-        this->changeMeterString();
+    connect(currentPhaseB, &FemsNetworkReply::finished, this,
+            [this, currentPhaseB, parentThing]() {
+        qInfo() << "Current Phase B";
+              if (connectionError(currentPhaseB)) {
+                changeMeterString();
 
-        return;
-      }
-      QByteArray data = currentPhaseB->networkReply()->readAll();
-      QJsonParseError error;
-      QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+                return;
+              }
+              QByteArray data = currentPhaseB->networkReply()->readAll();
+              QJsonParseError error;
+              QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-      // Check JSON Reply
-      bool jsonE = this->jsonError(data);
-      if (jsonE) {
-        qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                            << error.errorString();
-        this->changeMeterString();
+              // Check JSON Reply
+              bool jsonE = jsonError(data);
+              if (jsonE) {
+                qCWarning(dcFems()) << "Meter: Failed to parse JSON data"
+                                    << data << ":" << error.errorString();
+                changeMeterString();
 
-        return;
-      }
+                return;
+              }
 
-      QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-      this->addValueToThing(parentThing, meterThingClassId,
-                            meterCurrentPhaseBStateTypeId, var, DOUBLE, -3);
-      var = NULL;
-      delete var;
-    });
+              QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+              addValueToThing(parentThing, meterThingClassId,
+                              meterCurrentPhaseBStateTypeId, var, DOUBLE, -3);
+              var = NULL;
+              delete var;
+            });
     // Current L3
     FemsNetworkReply *currentPhaseC = connection->getFemsDataPoint(PhaseC);
-    connect(currentPhaseC, &FemsNetworkReply::finished, this, [=]() {
-      if (this->connectionError(currentPhaseC)) {
-        this->changeMeterString();
+    connect(currentPhaseC, &FemsNetworkReply::finished, this,
+            [this, currentPhaseC, parentThing]() {
+        qInfo() << "current Phase C";
+              if (connectionError(currentPhaseC)) {
+                this->changeMeterString();
 
-        return;
-      }
-      QByteArray data = currentPhaseC->networkReply()->readAll();
-      QJsonParseError error;
-      QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+                return;
+              }
+              QByteArray data = currentPhaseC->networkReply()->readAll();
+              QJsonParseError error;
+              QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-      // Check JSON Reply
-      bool jsonE = this->jsonError(data);
-      if (jsonE) {
-        qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                            << error.errorString();
-        this->changeMeterString();
+              // Check JSON Reply
+              bool jsonE = jsonError(data);
+              if (jsonE) {
+                qCWarning(dcFems()) << "Meter: Failed to parse JSON data"
+                                    << data << ":" << error.errorString();
+                changeMeterString();
 
-        return;
-      }
-      QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-      this->addValueToThing(parentThing, meterThingClassId,
-                            meterCurrentPhaseCStateTypeId, var, DOUBLE, -3);
-      var = NULL;
-      delete var;
-    });
+                return;
+              }
+              QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+              addValueToThing(parentThing, meterThingClassId,
+                              meterCurrentPhaseCStateTypeId, var, DOUBLE, -3);
+              var = NULL;
+              delete var;
+            });
 
     // Frequency
     FemsNetworkReply *frequency = connection->getFemsDataPoint(Frequency);
-    connect(frequency, &FemsNetworkReply::finished, this, [=]() {
-      if (this->connectionError(frequency)) {
-        this->changeMeterString();
+    connect(frequency, &FemsNetworkReply::finished, this,
+            [this, frequency, parentThing]() {
+        qInfo() << "Frequency";
+              if (connectionError(frequency)) {
+                changeMeterString();
 
-        return;
-      }
-      QByteArray data = frequency->networkReply()->readAll();
-      QJsonParseError error;
-      QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+                return;
+              }
+              QByteArray data = frequency->networkReply()->readAll();
+              QJsonParseError error;
+              QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
 
-      // Check JSON Reply
-      bool jsonE = this->jsonError(data);
-      if (jsonE) {
-        qCWarning(dcFems()) << "Meter: Failed to parse JSON data" << data << ":"
-                            << error.errorString();
-        this->changeMeterString();
+              // Check JSON Reply
+              bool jsonE = jsonError(data);
+              if (jsonE) {
+                qCWarning(dcFems()) << "Meter: Failed to parse JSON data"
+                                    << data << ":" << error.errorString();
+                changeMeterString();
 
-        return;
-      }
-      QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
-      this->addValueToThing(parentThing, meterThingClassId,
-                            meterFrequencyStateTypeId, var, DOUBLE, -3);
-      var = NULL;
-      delete var;
-    });
+                return;
+              }
+              QVariant *var = new QVariant((getValueOfRequestedData(&jsonDoc)));
+              addValueToThing(parentThing, meterThingClassId,
+                              meterFrequencyStateTypeId, var, DOUBLE, -3);
+              var = NULL;
+              delete var;
+            });
   }
 }
 
@@ -1251,32 +1323,40 @@ void IntegrationPluginFems::addValueToThing(Thing *childThing,
   if (value != nullptr && value->toString() != "null" &&
       value->toString() != "") {
     if (valueType == DOUBLE) {
+
       double doubleValue = (value->toDouble()) * pow(10, scale);
+      qInfo() << "Value will be added: " << doubleValue;
       childThing->setStateValue(stateName, doubleValue);
     } else if (valueType == QSTRING) {
       QString myString = value->toString();
+      qInfo() << "Value will be added: " << myString;
       childThing->setStateValue(stateName, myString);
     } else if (valueType == MY_BOOLEAN) {
       bool booleanValue = value->toBool();
+      qInfo() << "Value will be added: " << booleanValue;
       childThing->setStateValue(stateName, booleanValue);
     } else if (valueType == MY_INT) {
       int intValue = (value->toInt()) * pow(10, scale);
+      qInfo() << "Value will be added: " << intValue;
       childThing->setStateValue(stateName, intValue);
     }
   }
 }
 
 void IntegrationPluginFems::changeMeterString() {
-
-  if (this->meter == METER_0) {
-    this->meter = METER_1;
-  } else if (this->meter == METER_1) {
-    this->meter = METER_2;
-  } else if (this->meter == METER_2) {
-    this->meter = SKIP;
-  } else {
-    this->meter = SKIP;
-  }
+  /*
+   * IGNORE FOR NOW
+    if (this->meter == METER_0) {
+      this->meter = METER_1;
+    } else if (this->meter == METER_1) {
+      this->meter = METER_2;
+    } else if (this->meter == METER_2) {
+      this->meter = SKIP;
+    } else {
+      this->meter = SKIP;
+    }
+    */
+  qInfo() << "ChangeMeter in Future";
 }
 
 Thing *
@@ -1295,6 +1375,7 @@ IntegrationPluginFems::GetThingByParentAndClassId(Thing *parentThing,
   Things valueToAddThings = myThings()
                                 .filterByParentId(parentThing->id())
                                 .filterByThingClassId(identifier);
+
   qInfo() << "Things in my Things found: " << valueToAddThings.length();
   if (valueToAddThings.count() == 1) {
     qInfo() << "Returning Thing: " << valueToAddThings.first()->id();
@@ -1313,8 +1394,10 @@ void IntegrationPluginFems::checkBatteryState(Thing *parentThing) {
         thing->stateValue(batteryChargingEnergyStateTypeId);
     QVariant dischargingEnergy =
         thing->stateValue(batteryDischarginEnergyStateTypeId);
+    qInfo() << "Getting stateValues";
     int charging = chargingEnergy.toInt();
     int discharging = dischargingEnergy.toInt();
+    qInfo() << "charging: " << charging << " discharging: " << discharging;
 
     if (charging != 0 && charging > discharging) {
       this->batteryState = "charging";
@@ -1323,30 +1406,10 @@ void IntegrationPluginFems::checkBatteryState(Thing *parentThing) {
     } else if (discharging == charging) {
       this->batteryState = "idle";
     }
+
     QVariant var = this->batteryState;
+    qInfo() << "Setting Battery State: " << this->batteryState;
     this->addValueToThing(thing, batteryChargingStateStateTypeId, &var, QSTRING,
                           0);
-  }
-}
-
-void IntegrationPluginFems::calculateStateOfHealth(Thing *parentThing) {
-  // StateOfHealth -> when reaching 10% ESS -> Tell the System Critical ESS
-  // State
-
-  Thing *thing = GetThingByParentAndClassId(parentThing, batteryThingClassId);
-  if (thing != nullptr) {
-    QVariant socStateValue = thing->stateValue(batteryBatteryLevelStateTypeId);
-    int soc = socStateValue.toInt();
-    bool critical = false;
-    if (soc <= 10) {
-      critical = true;
-    }
-    QVariant var = critical ? "true" : "false";
-    ;
-    this->addValueToThing(thing, batteryBatteryCriticalStateTypeId, &var,
-                          MY_BOOLEAN, 0);
-
-  } else {
-    delete thing;
   }
 }

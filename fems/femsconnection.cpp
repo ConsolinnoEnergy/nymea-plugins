@@ -1,7 +1,7 @@
 #include "femsconnection.h"
 
-#include <QUrlQuery>
 #include <QDebug>
+#include <QUrlQuery>
 
 FemsConnection::FemsConnection(NetworkAccessManager *networkAccessManager,
                                const QHostAddress &address, QObject *parent,
@@ -65,21 +65,21 @@ FemsNetworkReply *FemsConnection::getFemsReply(QString path) {
 
   QUrl requestUrl;
   QString pathUrl = "/rest/channel/" + path;
-  qInfo() << pathUrl;
+  // qInfo() << pathUrl;
   requestUrl.setScheme("http");
   requestUrl.setHost(this->m_address.toString());
   requestUrl.setPort(this->m_port.toInt());
   requestUrl.setPath(pathUrl);
-  qInfo()<< requestUrl.toString();
+  // qInfo()<< requestUrl.toString();
   if (!this->m_use_edge) {
     // http://<BENUTZER>:<PASSWORT>@<IP>:80/rest/channel/Component/Channel
     requestUrl.setUserName(this->m_user);
     requestUrl.setPassword(this->m_password);
-    qInfo() << requestUrl.toString();
+    // qInfo() << requestUrl.toString();
   }
-  qInfo() << "FinalURL";
-    qInfo() << requestUrl.toString();
-     qInfo() << this->m_use_edge << this->m_user << this->m_password;
+  // qInfo() << "FinalURL";
+  // qInfo() << requestUrl.toString();
+  // qInfo() << this->m_use_edge << this->m_user << this->m_password;
 
   return new FemsNetworkReply(QNetworkRequest(requestUrl), this, this->m_user,
                               this->m_password, &this->m_use_edge);

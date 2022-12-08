@@ -25,10 +25,10 @@ FemsNetworkReply::FemsNetworkReply(const QNetworkRequest &request,
                                    QObject *parent, QString usr, QString pwd, bool useEdge)
     : QObject(parent) {
   m_request = request;
-  qInfo() << useEdge;
+  //qInfo() << useEdge;
   if (useEdge) {
 
-      qInfo() <<    "Basic " + QString("%1:%2").arg(usr).arg(pwd).toUtf8().toBase64();
+      //qInfo() <<    "Basic " + QString("%1:%2").arg(usr).arg(pwd).toUtf8().toBase64();
 
     this->m_request.setRawHeader("Authorization", "Basic " + QString("%1:%2").arg(usr).arg(pwd).toUtf8().toBase64());
   }
