@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Copyright (C) 2022 Consolinno Energy GmbH                              *
  * <felix.stoecker@consolinno.de>                                          *
@@ -40,17 +40,20 @@ static int id_increment = 0;
 
 IntegrationPluginFems::IntegrationPluginFems(QObject *parent)
     : IntegrationPlugin(parent) {
+    qInfo() << "IntegrationPluginsFems constructor called";
     this->ownId = id_increment++;
 }
 
 void IntegrationPluginFems::init() {
     // Initialisation can be done here.
+    qInfo() << "INIT called";
     meter = METER_0;
     batteryState = "idle";
     qCDebug(dcFems()) << "Plugin initialized.";
 }
 
 void IntegrationPluginFems::startPairing(ThingPairingInfo *info) {
+    qInfo() << "Start Pairing called";
     info->finish(Thing::ThingErrorNoError,
                  QString(QT_TR_NOOP("Please enter your login credentials for the FEMS connection")));
 }
@@ -75,6 +78,7 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
     qCDebug(dcFems()) << "Thing is " << thing;
 
     if (thing->thingClassId() == connectionThingClassId) {
+        qInfo() << "ConnectionThingClass found";
 
         QHostAddress address(
                     thing->paramValue(connectionThingAddressParamTypeId).toString());
@@ -87,10 +91,12 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
         }
 
         // Create the connection
-        pluginStorage()->beginGroup(thing->id().toString());
+        pluginStorage()->beginGroup(FEMS_PLUGIN_STORAGE_ID);
         QString user = pluginStorage()->value("username").toString();
         QString password = pluginStorage()->value("password").toString();
         pluginStorage()->endGroup();
+        qInfo() << "Username: " << user;
+        qInfo() << "Password: " << password;
         FemsConnection *connection = new FemsConnection(
                     hardwareManager()->networkManager(), address, thing,
                     user,
@@ -113,6 +119,7 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
                 // reply->networkReply()->error() <<
                 // reply->networkReply()->errorString();
                 qCDebug(dcFems()) << "Error: " << reply->networkReply()->error();
+                qInfo() << "WE ARE HERE";
                 if (reply->networkReply()->error() ==
                         QNetworkReply::ContentNotFoundError) {
                     info->finish(
@@ -120,6 +127,7 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
                                 QT_TR_NOOP("The device does not reply to our requests. Please "
                                            "verify that the FEMS API is enabled on the device."));
                 } else {
+                    qInfo() << "NETWORK REPLY FAILED";
                     info->finish(Thing::ThingErrorHardwareNotAvailable,
                                  QT_TR_NOOP("The device is not reachable."));
                 }
@@ -179,7 +187,7 @@ responseMap.value("value").toString();*/
         });
         qCDebug(dcFems()) << "Here is line after callback declaration";
     } else if ((thing->thingClassId() == meterThingClassId) ||
-               (thing->thingClassId() == batteryThingClassId)) {
+               (thing->thingClassId() == batteryThingClassId) || (thing -> thingClassId() == femsstatusThingClassId)) {
         qCDebug(dcFems()) << "This line appears because Parent was setup and now children "
                    "are created";
         Thing *parentThing = myThings().findById(thing->parentId());
@@ -214,7 +222,7 @@ void IntegrationPluginFems::postSetupThing(Thing *thing) {
         if (!m_connectionRefreshTimer) {
             qCDebug(dcFems()) << "Creating Timer";
             m_connectionRefreshTimer =
-                    hardwareManager()->pluginTimerManager()->registerTimer(60);
+                    hardwareManager()->pluginTimerManager()->registerTimer(5);
             qCDebug(dcFems()) << "connecting RefreshTimer and TimeOut";
             qCDebug(dcFems()) << "Size Of Connections: " << m_femsConnections.keys().length();
 
@@ -236,17 +244,27 @@ void IntegrationPluginFems::postSetupThing(Thing *thing) {
 }
 
 void IntegrationPluginFems::thingRemoved(Thing *thing) {
+    qInfo() << "Thing will be removed";
     if (thing->thingClassId() == connectionThingClassId) {
+        qInfo() << "ConnectionThing is being removed";
         FemsConnection *connection = m_femsConnections.key(thing);
         m_femsConnections.remove(connection);
         connection->deleteLater();
+    } else{
+        qInfo() << "Child is going to be removed";
+           thing -> deleteLater();
     }
 
     if (myThings().filterByThingClassId(connectionThingClassId).isEmpty()) {
+        qInfo() << "Unregistering Timer";
+        this->meterCreated = false;
+        this->batteryCreated = false;
+        this->statusCreated = false;
         hardwareManager()->pluginTimerManager()->unregisterTimer(
                     m_connectionRefreshTimer);
         m_connectionRefreshTimer = nullptr;
     }
+
 }
 
 void IntegrationPluginFems::executeAction(ThingActionInfo *info) {
@@ -317,6 +335,19 @@ void IntegrationPluginFems::refreshConnection(FemsConnection *connection) {
         qCDebug(dcFems()) << "#############################################################";
         qCDebug(dcFems()) << "#############################################################";
         qCDebug(dcFems()) << "Updating Sum";
+        if (myThings()
+                .filterByParentId(m_femsConnections.value(connection)->id())
+                .filterByThingClassId(femsstatusThingClassId)
+                .length() < 1 &&
+                !this->statusCreated) {
+            ThingDescriptor descriptor(femsstatusThingClassId, "FEMS Status", QString(),
+                                       connectionThing->id());
+            ParamList params;
+            params.append(Param(femsstatusThingIdParamTypeId, "Status"));
+            descriptor.setParams(params);
+            emit autoThingsAppeared(ThingDescriptors() << descriptor);
+            this->statusCreated = true;
+        }
         this->updateSumState(connection);
         break;
     }
@@ -683,8 +714,7 @@ void IntegrationPluginFems::updateSumState(FemsConnection *connection) {
     // EssActiveChargeEnergy(OpenEMS)
     FemsNetworkReply *sumState = connection->getFemsDataPoint(SUM_STATE);
 
-    connect(
-                sumState, &FemsNetworkReply::finished, this,
+    connect(sumState, &FemsNetworkReply::finished, this,
                 [this, sumState, parentThing]() {
         qCDebug(dcFems()) << "sumState";
         if (connectionError(sumState)) {
@@ -706,7 +736,7 @@ void IntegrationPluginFems::updateSumState(FemsConnection *connection) {
         QVariant *var = new QVariant((this->getValueOfRequestedData(&jsonDoc)));
         // GET "value" of data
         qCDebug(dcFems()) << "Adding SUM STATE";
-        addValueToThing(parentThing, connectionThingClassId,
+        addValueToThing(parentThing, femsstatusThingClassId,
                         femsstatusStatusStateTypeId, var, MY_INT, 0);
 
         if (var != nullptr) {
@@ -1304,18 +1334,18 @@ void IntegrationPluginFems::addValueToThing(Thing *childThing,
 }
 
 void IntegrationPluginFems::changeMeterString() {
-    /*
- * IGNORE FOR NOW
+
+ //ATM Try METER_0 -> Meter_1 and then Meter_2 again and again and again
   if (this->meter == METER_0) {
     this->meter = METER_1;
   } else if (this->meter == METER_1) {
     this->meter = METER_2;
   } else if (this->meter == METER_2) {
-    this->meter = SKIP;
+    this->meter = METER_0;
   } else {
     this->meter = SKIP;
   }
-  */
+
     qCDebug(dcFems()) << "ChangeMeter in Future";
 }
 
