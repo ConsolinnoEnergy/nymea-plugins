@@ -28,14 +28,14 @@ FemsNetworkReply *FemsConnection::isAvailable() {
   connect(reply, &FemsNetworkReply::finished, this, [=]() {
     if (reply->networkReply()->error() == QNetworkReply::NoError) {
       // Reply was successfully, we can communicate
-      if (!m_available) {
-        m_available = true;
-        emit availableChanged(m_available);
+        if (!m_available) {
+          m_available = true;
+          emit availableChanged(m_available);
 
-        // Destroy any pending requests
-        qDeleteAll(m_request_Queue);
-        m_request_Queue.clear();
-      }
+          // Destroy any pending requests
+          qDeleteAll(m_request_Queue);
+          m_request_Queue.clear();
+        }
     } else {
       // Ther have been errors, seems like we not available any more
       if (m_available) {

@@ -12,7 +12,7 @@
                     "name": "connection",
                     "displayName": "Fems System",
                     "id": "2649f540-8f17-462d-93f7-79aa9cfc3734",
-                    "setupMethod": "JustAdd",
+                    "setupMethod": "userandpassword",
                     "createMethods": ["user"],
                     "interfaces": [ "connectable"],
                     "paramTypes": [
@@ -30,20 +30,6 @@
                         "displayName": "Port",
                         "type": "QString",
                         "defaultValue": "80"
-                    },
-                    {
-                        "id": "baf7e75f-3887-47a4-8d77-6b750a66393b",
-                        "name": "username",
-                        "displayName": "Username",
-                        "type": "QString",
-                        "defaultValue": "Admin"
-                    },
-                    {
-                        "id": "0c23b0af-8341-4a14-9b6f-0d6ab602c5e2",
-                        "name": "password",
-                        "displayName": "Passwort",
-                        "type": "QString",
-                        "defaultValue": "admin"
                     },
                     {
 
