@@ -40,20 +40,20 @@ static int id_increment = 0;
 
 IntegrationPluginFems::IntegrationPluginFems(QObject *parent)
     : IntegrationPlugin(parent) {
-    qInfo() << "IntegrationPluginsFems constructor called";
+    qCDebug(dcFems()) << "IntegrationPluginsFems constructor called";
     this->ownId = id_increment++;
 }
 
 void IntegrationPluginFems::init() {
     // Initialisation can be done here.
-    qInfo() << "INIT called";
+    qCDebug(dcFems()) << "INIT called";
     meter = METER_0;
     batteryState = "idle";
     qCDebug(dcFems()) << "Plugin initialized.";
 }
 
 void IntegrationPluginFems::startPairing(ThingPairingInfo *info) {
-    qInfo() << "Start Pairing called";
+    qCDebug(dcFems()) << "Start Pairing called";
     info->finish(Thing::ThingErrorNoError,
                  QString(QT_TR_NOOP("Please enter your login credentials for the FEMS connection")));
 }
@@ -61,12 +61,12 @@ void IntegrationPluginFems::startPairing(ThingPairingInfo *info) {
 void IntegrationPluginFems::confirmPairing(ThingPairingInfo *info,
                                            const QString &username,
                                            const QString &password) {
-    qInfo() << "Starting beginGroup and adding username and pwd";
+    qCDebug(dcFems()) << "Starting beginGroup and adding username and pwd";
     pluginStorage()->beginGroup(FEMS_PLUGIN_STORAGE_ID);
     pluginStorage()->setValue("username", username);
     pluginStorage()->setValue("password", password);
     pluginStorage()->endGroup();
-    qInfo() << QString("Username: %1 and pwd %2 added").arg(username).arg(password);
+    qCDebug(dcFems()) << QString("Username: %1 and pwd %2 added").arg(username).arg(password);
     info->finish(Thing::ThingErrorNoError);
 }
 
@@ -78,7 +78,7 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
     qCDebug(dcFems()) << "Thing is " << thing;
 
     if (thing->thingClassId() == connectionThingClassId) {
-        qInfo() << "ConnectionThingClass found";
+        qCDebug(dcFems()) << "ConnectionThingClass found";
 
         QHostAddress address(
                     thing->paramValue(connectionThingAddressParamTypeId).toString());
@@ -95,8 +95,8 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
         QString user = pluginStorage()->value("username").toString();
         QString password = pluginStorage()->value("password").toString();
         pluginStorage()->endGroup();
-        qInfo() << "Username: " << user;
-        qInfo() << "Password: " << password;
+        qCDebug(dcFems()) << "Username: " << user;
+        qCDebug(dcFems()) << "Password: " << password;
         FemsConnection *connection = new FemsConnection(
                     hardwareManager()->networkManager(), address, thing,
                     user,
@@ -119,7 +119,7 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
                 // reply->networkReply()->error() <<
                 // reply->networkReply()->errorString();
                 qCDebug(dcFems()) << "Error: " << reply->networkReply()->error();
-                qInfo() << "WE ARE HERE";
+                qCDebug(dcFems()) << "WE ARE HERE";
                 if (reply->networkReply()->error() ==
                         QNetworkReply::ContentNotFoundError) {
                     info->finish(
@@ -127,7 +127,7 @@ void IntegrationPluginFems::setupThing(ThingSetupInfo *info) {
                                 QT_TR_NOOP("The device does not reply to our requests. Please "
                                            "verify that the FEMS API is enabled on the device."));
                 } else {
-                    qInfo() << "NETWORK REPLY FAILED";
+                    qCDebug(dcFems()) << "NETWORK REPLY FAILED";
                     info->finish(Thing::ThingErrorHardwareNotAvailable,
                                  QT_TR_NOOP("The device is not reachable."));
                 }
@@ -244,19 +244,19 @@ void IntegrationPluginFems::postSetupThing(Thing *thing) {
 }
 
 void IntegrationPluginFems::thingRemoved(Thing *thing) {
-    qInfo() << "Thing will be removed";
+    qCDebug(dcFems()) << "Thing will be removed";
     if (thing->thingClassId() == connectionThingClassId) {
-        qInfo() << "ConnectionThing is being removed";
+        qCDebug(dcFems()) << "ConnectionThing is being removed";
         FemsConnection *connection = m_femsConnections.key(thing);
         m_femsConnections.remove(connection);
         connection->deleteLater();
     } else{
-        qInfo() << "Child is going to be removed";
+        qCDebug(dcFems()) << "Child is going to be removed";
            thing -> deleteLater();
     }
 
     if (myThings().filterByThingClassId(connectionThingClassId).isEmpty()) {
-        qInfo() << "Unregistering Timer";
+        qCDebug(dcFems()) << "Unregistering Timer";
         this->meterCreated = false;
         this->batteryCreated = false;
         this->statusCreated = false;
