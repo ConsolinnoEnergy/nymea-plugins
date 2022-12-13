@@ -11,6 +11,7 @@ SOURCES += \
     integrationpluginfems.cpp
 
 HEADERS += \
+    constFemsPaths.h \
     femsconnection.h \
     femsnetworkreply.h \
     integrationpluginfems.h

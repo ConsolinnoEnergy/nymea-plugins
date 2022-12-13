@@ -22,6 +22,7 @@
 #define INTEGRATIONPLUGINFEMS_H
 
 #include "femsconnection.h"
+#include "constFemsPaths.h"
 #include "integrations/integrationplugin.h"
 #include <QHash>
 #include <QNetworkReply>
@@ -38,12 +39,14 @@ class IntegrationPluginFems : public IntegrationPlugin {
   Q_INTERFACES(IntegrationPlugin)
 
 public:
+
+
   explicit IntegrationPluginFems(QObject *parent = nullptr);
 
   void init() override;
-  //void startPairing(ThingPairingInfo *info) override;
-  //void confirmPairing(ThingPairingInfo *info, const QString &username,
-  //                    const QString &secret) override;
+  void startPairing(ThingPairingInfo *info) override;
+  void confirmPairing(ThingPairingInfo *info, const QString &username,
+                      const QString &secret) override;
   void setupThing(ThingSetupInfo *info) override;
   void postSetupThing(Thing *thing) override;
   void executeAction(ThingActionInfo *info) override;
@@ -88,6 +91,10 @@ private:
   QString batteryState;
 
   QString meter;
+
+  int connectionSwitch = 0;
+  bool batteryCreated = false;
+  bool meterCreated = false;
 };
 
 #endif // INTEGRATIONPLUGINFEMS_H
