@@ -95,6 +95,7 @@ private:
   int connectionSwitch = 0;
   bool batteryCreated = false;
   bool meterCreated = false;
+  bool statusCreated = false;
 };
 
 #endif // INTEGRATIONPLUGINFEMS_H

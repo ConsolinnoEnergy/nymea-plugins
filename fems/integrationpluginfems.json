@@ -14,7 +14,7 @@
                     "id": "2649f540-8f17-462d-93f7-79aa9cfc3734",
                     "setupMethod": "userandpassword",
                     "createMethods": ["user"],
-                    "interfaces": [ "connectable"],
+                    "interfaces": ["connectable"],
                     "paramTypes": [
                     {
                         "id": "297e85cc-e2aa-41fe-a27a-c3904b2e7f70",
