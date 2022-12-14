@@ -60,12 +60,19 @@ void IntegrationPluginEasee::confirmPairing(ThingPairingInfo *info, const QStrin
     QNetworkReply *reply = hardwareManager()->networkManager()->post(header,QJsonDocument(param).toJson(QJsonDocument::Compact));
     connect(reply, &QNetworkReply::finished, info, [=](){
         info->finish(Thing::ThingErrorNoError);
-            QByteArray response_data = reply->readAll();
-            QJsonDocument json = QJsonDocument::fromJson(response_data);
-             accessKey = json.object().value("accessToken").toString();
-                //     reply->deleteLater();
+        QByteArray response_data = reply->readAll();
+        QJsonDocument json = QJsonDocument::fromJson(response_data);
+        accessKey = json.object().value("accessToken").toString();
 
+        if (QString::compare (accessKey,"") != 0){
+            info->finish(Thing::ThingErrorNoError);
+        } else {
+            info->finish(Thing::ThingErrorAuthenticationFailure);
+        }
+        reply->deleteLater();
     });
+
+
 
 }
 
@@ -77,11 +84,11 @@ void IntegrationPluginEasee::setupThing(ThingSetupInfo *info)
 
     qCDebug(dcEasee()) << "Setup thing" << info->thing();
     if (QString::compare (accessKey,"") != 0){
-         info->thing()->setStateValue(wallboxConnectedStateTypeId, true);
+        info->thing()->setStateValue(wallboxConnectedStateTypeId, true);
 
     }
     else {
-        refresh(info->thing());
+        refreshAccessToken(info->thing());
     }
     info->finish(Thing::ThingErrorNoError);
 
@@ -90,117 +97,130 @@ void IntegrationPluginEasee::setupThing(ThingSetupInfo *info)
 void IntegrationPluginEasee::postSetupThing(Thing *thing)
 {
     Q_UNUSED(thing)
-    // Update the AccessKey every 20 hours or so
-       if (!m_timer) {
-           m_timer = hardwareManager()->pluginTimerManager()->registerTimer(5);
-           connect(m_timer, &PluginTimer::timeout, this, [this](){
-               foreach (Thing *thing, myThings()) {
 
-                   if (QString::compare (accessKey,"") != 0 && (siteId == 0 || circuitId == 0 ) ){
-                  getSiteAndCircuit(thing);
-               } else if (QString::compare (accessKey,"") == 0) {
-                       refresh(thing);
-                   }
-                   else {
-                      qCDebug(dcEasee()) << "Credentials Retrieved from the Cloud" <<siteId;
-                   getCurrentPower(thing);
-                   writeCurrentLimit(thing);
-                   }
-               }
-           });
-       }
+    if (!m_timer) {
+        m_timer = hardwareManager()->pluginTimerManager()->registerTimer(5);
+        connect(m_timer, &PluginTimer::timeout, this, [this](){
+            foreach (Thing *thing, myThings()) {
+
+                if (QString::compare (accessKey,"") != 0 && (siteId == 0 || circuitId == 0 ) ){
+                    getSiteAndCircuit(thing);
+                } else if (QString::compare (accessKey,"") == 0) {
+                    refreshAccessToken(thing);
+                }
+                else {
+                    qCDebug(dcEasee()) << "Credentials Retrieved from the Cloud" <<siteId;
+                    getCurrentPower(thing);
+                    writeCurrentLimit(thing);
+                }
+            }
+        });
+    }
 
     if (!access_timer){
         access_timer = hardwareManager()->pluginTimerManager()->registerTimer(8600);
         connect(access_timer, &PluginTimer::timeout, this, [this](){
             foreach (Thing *thing, myThings()) {
-                 refresh(thing);
-    }
-   });
+                refreshAccessToken(thing);
+            }
+        });
     }
 }
-void IntegrationPluginEasee::refresh(Thing *thing)
+
+void IntegrationPluginEasee::refreshAccessToken(Thing *thing)
 {
-     QString chargerId = thing->paramValue(wallboxThingChargerIdParamTypeId).toString();
-       pluginStorage()->beginGroup(chargerId);
-       QString username = pluginStorage()->value("username").toString();
-       QString password = pluginStorage()->value("password").toString();
-       pluginStorage()->endGroup();
-       QNetworkRequest header = composeApiKeyRequest();
-       QJsonObject param;
-       param.insert("username", QJsonValue::fromVariant(username));
-       param.insert("password", QJsonValue::fromVariant(password));
-       QNetworkReply *reply = hardwareManager()->networkManager()->post(header,QJsonDocument(param).toJson(QJsonDocument::Compact));
-       connect(reply, &QNetworkReply::finished, thing, [=](){
+    QString chargerId = thing->paramValue(wallboxThingChargerIdParamTypeId).toString();
+    pluginStorage()->beginGroup(chargerId);
+    QString username = pluginStorage()->value("username").toString();
+    QString password = pluginStorage()->value("password").toString();
+    pluginStorage()->endGroup();
+    QNetworkRequest header = composeApiKeyRequest();
+    QJsonObject param;
+    param.insert("username", QJsonValue::fromVariant(username));
+    param.insert("password", QJsonValue::fromVariant(password));
+    QNetworkReply *reply = hardwareManager()->networkManager()->post(header,QJsonDocument(param).toJson(QJsonDocument::Compact));
+    connect(reply, &QNetworkReply::finished, thing, [=](){
 
-       QByteArray response_data = reply->readAll();
-       QJsonDocument json = QJsonDocument::fromJson(response_data);
-       accessKey = json.object().value("accessToken").toString();
-           if (QString::compare (accessKey,"") != 0){
-                thing->setStateValue(wallboxConnectedStateTypeId, true);
+        QByteArray response_data = reply->readAll();
+        QJsonDocument json = QJsonDocument::fromJson(response_data);
+        accessKey = json.object().value("accessToken").toString();
+        if (QString::compare (accessKey,"") != 0){
+            thing->setStateValue(wallboxConnectedStateTypeId, true);
 
-           }
-       });
+        }
+        else {
+            thing->setStateValue(wallboxConnectedStateTypeId, false);
+        }
+        reply->deleteLater();
+    });
 
 
 }
 void IntegrationPluginEasee::getSiteAndCircuit(Thing *thing){
- QString chargerId = thing->paramValue(wallboxThingChargerIdParamTypeId).toString();
- QNetworkRequest header = composeSiteAndCircuitRequest(chargerId);
- QNetworkReply *reply = hardwareManager()->networkManager()->get(header);
- connect(reply, &QNetworkReply::finished, thing, [=](){
-     QByteArray response_data = reply->readAll();
-     QJsonDocument json = QJsonDocument::fromJson(response_data);
-     QJsonArray subJson = json.object().value("circuits").toArray();
-     QJsonDocument siteJson = QJsonDocument::fromVariant(subJson.at(0).toVariant());
-     double site = siteJson.object().value("siteId").toDouble();
-     double circuit =siteJson.object().value("id").toDouble();
+    QString chargerId = thing->paramValue(wallboxThingChargerIdParamTypeId).toString();
+    QNetworkRequest header = composeSiteAndCircuitRequest(chargerId);
+    QNetworkReply *reply = hardwareManager()->networkManager()->get(header);
+    connect(reply, &QNetworkReply::finished, thing, [=](){
+        QByteArray response_data = reply->readAll();
+        QJsonDocument json = QJsonDocument::fromJson(response_data);
+        QJsonArray subJson = json.object().value("circuits").toArray();
+        QJsonDocument siteJson = QJsonDocument::fromVariant(subJson.at(0).toVariant());
+        double site = siteJson.object().value("siteId").toDouble();
+        double circuit =siteJson.object().value("id").toDouble();
         siteId = site;
         circuitId = circuit;
 
-});
+    });
+    reply->deleteLater();
 
 }
 
 void IntegrationPluginEasee::getCurrentPower(Thing *thing){
- QString chargerId = thing->paramValue(wallboxThingChargerIdParamTypeId).toString();
- QNetworkRequest header = composeCurrentPowerRequest(chargerId);
- QNetworkReply *reply = hardwareManager()->networkManager()->get(header);
- connect(reply, &QNetworkReply::finished, thing, [=](){
-     QByteArray response_data = reply->readAll();
-     QJsonDocument json = QJsonDocument::fromJson(response_data);
-     double totalPower = json.object().value("totalPower").toDouble();
-     double phaseMode = json.object().value("outputPhase").toDouble();
-     if (phaseMode > 10) {thing->setStateValue(wallboxPhaseCountStateTypeId,3);}
-     else {thing->setStateValue(wallboxPhaseCountStateTypeId,1);}
-      thing->setStateValue(wallboxCurrentPowerStateTypeId,totalPower);
-      qCDebug(dcEasee()) << json.object().value("dynamicChargerCurrent").toDouble();
-      qCDebug(dcEasee()) << phaseMode;
-      if (totalPower > 10){
-          thing->setStateValue(wallboxPluggedInStateTypeId,true);
-          thing->setStateValue(wallboxChargingStateTypeId,true);
+    QString chargerId = thing->paramValue(wallboxThingChargerIdParamTypeId).toString();
+    QNetworkRequest header = composeCurrentPowerRequest(chargerId);
+    QNetworkReply *reply = hardwareManager()->networkManager()->get(header);
+    connect(reply, &QNetworkReply::finished, thing, [=](){
+        QByteArray response_data = reply->readAll();
+        QJsonDocument json = QJsonDocument::fromJson(response_data);
+        double totalPower = json.object().value("totalPower").toDouble();
+        double phaseMode = json.object().value("outputPhase").toDouble();
+        if (phaseMode > 10) {thing->setStateValue(wallboxPhaseCountStateTypeId,3);}
+        else {thing->setStateValue(wallboxPhaseCountStateTypeId,1);}
+        thing->setStateValue(wallboxCurrentPowerStateTypeId,totalPower);
+        qCDebug(dcEasee()) << json.object().value("dynamicChargerCurrent").toDouble();
+        qCDebug(dcEasee()) << phaseMode;
+        if (totalPower > 10){
+            thing->setStateValue(wallboxPluggedInStateTypeId,true);
+            thing->setStateValue(wallboxChargingStateTypeId,true);
 
-      } else {
-          thing->setStateValue(wallboxPluggedInStateTypeId,false);
-          thing->setStateValue(wallboxChargingStateTypeId,false);
-      }
-
-});
+        } else {
+            thing->setStateValue(wallboxPluggedInStateTypeId,false);
+            thing->setStateValue(wallboxChargingStateTypeId,false);
+        }
+        if (reply->error() != QNetworkReply::NetworkError::NoError){
+            thing->setStateValue(wallboxConnectedStateTypeId, false);
+        }
+        reply->deleteLater();
+    });
 
 }
 
 void IntegrationPluginEasee::writeCurrentLimit(Thing *thing)
 {
-       QNetworkRequest header = composeCurrentLimitRequest();
-       int limit = thing->state("maxChargingCurrent").value().toInt();
-       QJsonObject param;
-       param.insert("phase1", QJsonValue::fromVariant(limit));
-       param.insert("phase2", QJsonValue::fromVariant(limit));
-       param.insert("phase3", QJsonValue::fromVariant(limit));
-       param.insert("timeToLive", QJsonValue::fromVariant(1));
-       QNetworkReply *reply = hardwareManager()->networkManager()->post(header,QJsonDocument(param).toJson(QJsonDocument::Compact));
-       connect(reply, &QNetworkReply::finished, thing, [=](){
-       });
+    QNetworkRequest header = composeCurrentLimitRequest();
+    int limit = thing->state("maxChargingCurrent").value().toInt();
+    QJsonObject param;
+    param.insert("phase1", QJsonValue::fromVariant(limit));
+    param.insert("phase2", QJsonValue::fromVariant(limit));
+    param.insert("phase3", QJsonValue::fromVariant(limit));
+    param.insert("timeToLive", QJsonValue::fromVariant(1));
+    QNetworkReply *reply = hardwareManager()->networkManager()->post(header,QJsonDocument(param).toJson(QJsonDocument::Compact));
+    connect(reply, &QNetworkReply::finished, thing, [=](){
+        if (reply->error() != QNetworkReply::NetworkError::NoError){
+            thing->setStateValue(wallboxConnectedStateTypeId, false);
+        }
+        reply->deleteLater();
+    });
 
 
 }
@@ -219,7 +239,8 @@ void IntegrationPluginEasee::thingRemoved(Thing *thing)
 {
     // A thing is being removed from the system. Do the required cleanup
     // (e.g. disconnect from the device) here.
-
+    delete m_timer;
+    delete access_timer;
     qCDebug(dcEasee()) << "Remove thing" << thing;
 }
 QNetworkRequest IntegrationPluginEasee::composeApiKeyRequest()

@@ -18,13 +18,13 @@
                     "paramTypes": [
                     {
 
-                                                "id": "2ca038e4-8b09-42c4-a0c6-555fa65d0d45",
-                                                "name": "chargerId",
-                                                "displayName": "Charger ID",
-                                                "type": "QString",
-                                                "inputType": "TextLine",
-                                                "defaultValue":""
-                                            }
+                    "id": "2ca038e4-8b09-42c4-a0c6-555fa65d0d45",
+                    "name": "chargerId",
+                    "displayName": "Charger ID",
+                    "type": "QString",
+                    "inputType": "TextLine",
+                    "defaultValue":""
+                    }
 
                     ],
                     "stateTypes": [

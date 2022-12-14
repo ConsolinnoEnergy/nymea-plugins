@@ -53,7 +53,7 @@ public:
 
 
 private slots:
-    void refresh(Thing *thing);
+    void refreshAccessToken(Thing *thing);
     void getSiteAndCircuit(Thing *thing);
     void getCurrentPower(Thing *thing);
     void writeCurrentLimit(Thing *thing);
@@ -66,7 +66,7 @@ private:
     QNetworkRequest composeCurrentLimitRequest();
     QString accessKey;
     PluginTimer *m_timer = nullptr;
-        PluginTimer *access_timer = nullptr;
+    PluginTimer *access_timer = nullptr;
     double siteId = 0;
     double circuitId = 0;
 };
