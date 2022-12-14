@@ -207,6 +207,15 @@ Description: nymea integration plugin for fast.com based internet speed test
  This package contains the nymea integration plugin for performing ineternet speed
  tests using fast.com
 
+Package: nymea-plugin-fems
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Conflicts: nymea-plugins-translations (< 1.0.1)
+Description: nymea integration plugin for FEMS System
+ This package contains the nymea integration plugin for FEMS state, Battery and Meter
+
 
 Package: nymea-plugin-flowercare
 Architecture: any
@@ -522,7 +531,7 @@ Depends: ${shlibs:Depends},
 Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin for Telegram
  This plugin allows nymea to send messages to telegram via the bot API.
- 
+
 
 Package: nymea-plugin-tempo
 Architecture: any
@@ -557,7 +566,7 @@ Depends: ${shlibs:Depends},
          ${misc:Depends},
 Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin for UDP commander
- This package contains the nymea integration plugin for sending arbitrary 
+ This package contains the nymea integration plugin for sending arbitrary
  UDP commands from and to nymea.
 
 

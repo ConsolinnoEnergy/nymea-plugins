@@ -22,6 +22,7 @@ PLUGIN_DIRS = \
     elgato              \
     eq-3                \
     fastcom             \
+    fems                \
     flowercare          \
     fronius             \
     garadget            \
@@ -123,3 +124,6 @@ for(plugin, PLUGINS) {
         error("Invalid plugin \"$${plugin}\".")
     }
 }
+
+SUBDIRS += \
+    fems
