@@ -539,7 +539,7 @@ void IntegrationPluginFronius::updateMeters(FroniusSolarConnection *connection)
 {
     Thing *parentThing = m_froniusConnections.value(connection);
     foreach (Thing *meterThing, myThings().filterByParentId(parentThing->id()).filterByThingClassId(meterThingClassId)) {
-        int meterId = meterThing->paramValue(inverterThingIdParamTypeId).toInt();
+        int meterId = meterThing->paramValue(meterThingIdParamTypeId).toInt();
 
         // Get the inverter realtime data
         FroniusNetworkReply *realtimeDataReply = connection->getMeterRealtimeData(meterId);
