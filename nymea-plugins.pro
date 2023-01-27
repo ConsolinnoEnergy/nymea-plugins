@@ -126,3 +126,6 @@ for(plugin, PLUGINS) {
     }
 }
 
+SUBDIRS += \
+    kostalpico
+
