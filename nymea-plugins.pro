@@ -19,9 +19,11 @@ PLUGIN_DIRS = \
     dht                 \
     dweetio             \
     dynatrace           \
+    easee               \
     elgato              \
     eq-3                \
     fastcom             \
+    fems                \
     flowercare          \
     fronius             \
     garadget            \
@@ -61,6 +63,7 @@ PLUGIN_DIRS = \
     serialportcommander \
     sgready             \
     simpleheatpump      \
+    simplesmartconsumer \
     sma                 \
     somfytahoma         \
     sonos               \
@@ -122,3 +125,4 @@ for(plugin, PLUGINS) {
         error("Invalid plugin \"$${plugin}\".")
     }
 }
+
