@@ -28,42 +28,43 @@ FroniusNetworkReply(QNetworkRequest(requestUrl), this);
     return reply;
 }*/
 
-KostalNetworkReply *KostalPicoConnection::getActiveDevices(){
-    QUrl requestUrl;
-    requestUrl.setScheme("http");
-    requestUrl.setHost(m_address.toString());
-    requestUrl.setPath("yields.xml");
+KostalNetworkReply *KostalPicoConnection::getActiveDevices() {
+  QUrl requestUrl;
+  requestUrl.setScheme("http");
+  requestUrl.setHost(m_address.toString());
+  requestUrl.setPath("yields.xml");
 
-    KostalNetworkReply *reply = new KostalNetworkReply(QNetworkRequest(requestUrl), this);
-    m_requestQueue.enqueue(reply);
+  KostalNetworkReply *reply =
+      new KostalNetworkReply(QNetworkRequest(requestUrl), this);
+  m_requestQueue.enqueue(reply);
 
-    // Note: we use this request for detecting if the logger is available or not.
-    connect(reply, &KostalNetworkReply::finished, this, [=](){
-        if (reply->networkReply()->error() == QNetworkReply::NoError) {
-            // Reply was successfully, we can communicate
-            if (!m_available) {
-                //qCDebug(dcKostal()) << "Connection: the connection is now available";
-                m_available = true;
-                emit availableChanged(m_available);
+  // Note: we use this request for detecting if the logger is available or not.
+  connect(reply, &KostalNetworkReply::finished, this, [=]() {
+    if (reply->networkReply()->error() == QNetworkReply::NoError) {
+      // Reply was successfully, we can communicate
+      if (!m_available) {
+        // qCDebug(dcKostal()) << "Connection: the connection is now available";
+        m_available = true;
+        emit availableChanged(m_available);
 
-                // Destroy any pending requests
-                qDeleteAll(m_requestQueue);
-                m_requestQueue.clear();
-            }
-        } else {
-            // Ther have been errors, seems like we not available any more
-            if (m_available) {
-                //qCDebug(dcKostal()) << "Connection: the connection is not available any more:" << reply->networkReply()->errorString();
-                m_available = false;
-                emit availableChanged(m_available);
-            }
-        }
-    });
+        // Destroy any pending requests
+        qDeleteAll(m_requestQueue);
+        m_requestQueue.clear();
+      }
+    } else {
+      // Ther have been errors, seems like we not available any more
+      if (m_available) {
+        // qCDebug(dcKostal()) << "Connection: the connection is not available
+        // any more:" << reply->networkReply()->errorString();
+        m_available = false;
+        emit availableChanged(m_available);
+      }
+    }
+  });
 
-    sendNextRequest();
-    return reply;
+  sendNextRequest();
+  return reply;
 }
-
 
 // Watt in Type -> GridPower
 KostalNetworkReply *KostalPicoConnection::getMeasurement() {
@@ -78,6 +79,8 @@ KostalNetworkReply *KostalPicoConnection::getMeasurement() {
   KostalNetworkReply *reply =
       new KostalNetworkReply(QNetworkRequest(requestUrl), this);
   m_requestQueue.enqueue(reply);
+  sendNextRequest();
+  return reply;
 }
 // Has Production
 // Yields->Yield-> Type Produced -> In Watthours
@@ -93,6 +96,8 @@ KostalNetworkReply *KostalPicoConnection::getYields() {
   KostalNetworkReply *reply =
       new KostalNetworkReply(QNetworkRequest(requestUrl), this);
   m_requestQueue.enqueue(reply);
+  sendNextRequest();
+  return reply;
 }
 
 void KostalPicoConnection::sendNextRequest() {
@@ -114,3 +119,4 @@ void KostalPicoConnection::sendNextRequest() {
     m_currentReply = nullptr;
     sendNextRequest();
   });
+}

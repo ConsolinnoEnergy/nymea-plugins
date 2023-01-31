@@ -21,13 +21,17 @@
 #ifndef INTEGRATIONPLUGINKOSTALPICO_H
 #define INTEGRATIONPLUGINKOSTALPICO_H
 
-#include "integrations/integrationplugin.h"
+#include <integrations/integrationplugin.h>
+
 #include "kostalpicoconnection.h"
 
+#include <QObject>
 #include <QHash>
 #include <QNetworkReply>
 #include <QTimer>
 #include <QUuid>
+
+class PluginTimer;
 
 class IntegrationPluginKostalpico: public IntegrationPlugin
 {
@@ -42,9 +46,11 @@ public:
 
     //void init() override;
 
-    void discoverThings(ThingDiscoverInfo *info) override;
+    void discoverThings(ThingDiscoveryInfo *info) override;
 
     void setupThing(ThingSetupInfo *info) override;
+
+    void postSetupThing(Thing *info) override;
 
     void executeAction(ThingActionInfo *info) override;
 
@@ -57,9 +63,10 @@ private:
     QHash<KostalPicoConnection *, Thing *> m_kostalConnections;
 
     void refreshConnection(KostalPicoConnection *connection);
-
+    //Consumption
     void updateCurrentPower(KostalPicoConnection *connection);
-    void updateTotalEnergyConsumed(KostalPicoConnection *connection);
+    //Production
+    void updateTotalEnergyProduced(KostalPicoConnection *connection);
 };
 
 #endif // INTEGRATIONPLUGINKOSTALPICO_H

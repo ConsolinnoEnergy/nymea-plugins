@@ -7,7 +7,7 @@ KostalNetworkReply::~KostalNetworkReply() {
   if (m_networkReply) {
     // We don't need the finished signal any more, object gets deleted
     disconnect(m_networkReply, &QNetworkReply::finished, this,
-               &FroniusNetworkReply::finished);
+               &KostalNetworkReply::finished);
 
     if (m_networkReply->isRunning()) {
       // Abort the reply, we are not interested in it any more

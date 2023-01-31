@@ -10,7 +10,8 @@ class KostalNetworkReply : public QObject {
   friend class KostalPicoConnection;
 
 public:
-  ~FroniusNetworkReply();
+
+  ~KostalNetworkReply();
   QUrl requestUrl() const;
 
   QNetworkRequest request() const;

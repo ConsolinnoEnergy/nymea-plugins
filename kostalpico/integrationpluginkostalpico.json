@@ -8,6 +8,42 @@
             "displayName": "Kostal Pico MP Plus",
             "id": "43da1800-ebf8-45bd-9b58-66e3475d41d7",
             "thingClasses": [
+            {
+                "name": "connection",
+                "displayName": "Kostal System",
+                "id": "74c35c37-56fb-4fa1-8404-5ffa7f10612c",
+                "setupMethod": "JustAdd",
+                "createMethods": ["Discovery"],
+                "interfaces": ["connectable"],
+                "paramTypes": [
+                {
+                    "id": "990e01f6-c887-451a-8a36-88fb8e91819e",
+                    "name":"macAddress",
+                    "displayName": "MAC address",
+                    "type": "QString",
+                    "inputType": "MacAddress",
+                    "defaultValue": ""
+                                        }
+                ],
+                "stateTypes": [
+                {
+                    "id": "0b828d1d-ca58-4fef-a437-e5ee7fd1ddea",
+                    "name": "connected",
+                    "displayName": "Reachable",
+                    "displayNameEvent": "Reachable changed",
+                    "type": "bool",
+                    "defaultValue": false
+                }
+                ],
+                "actionTypes": [
+
+                ],
+                "eventTypes": [
+
+                ]
+            },
+
+
                 {
                     "name": "kostalpico",
                     "displayName": "Kostal Pico MP Plus",
@@ -15,14 +51,13 @@
                     "setupMethod": "JustAdd",
                     "createMethods": ["Discovery"],
                     "interfaces": ["smartmeterproducer", "solarinverter", "connectable"],
-                    "paramTypes": [                 
+                    "paramTypes": [
                         {
-                            "id": "2a360168-e138-4f0f-bf47-5c1e586b0170",
-                            "name":"macAddress",
-                            "displayName": "MAC address",
+                            "id": "977ce7ea-9207-4d90-acb4-a0dfcb467c5f",
+                            "name": "id",
+                            "displayName": "Device ID",
                             "type": "QString",
-                            "inputType": "MacAddress",
-                            "defaultValue": ""
+                            "readOnly": true
                         }
                     ],
                     "stateTypes": [

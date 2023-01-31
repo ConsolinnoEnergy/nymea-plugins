@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Copyright (C) 2020 Consolinno Energy GmbH <f.stoecker@consolinno.de> *
  *                                                                         *
@@ -20,79 +20,80 @@
 
 #include "integrationpluginkostalpico.h"
 #include "plugininfo.h"
+#include "plugintimer.h"
+#include <QNetworkInterface>
 #include <QXmlStreamReader>
+#include <network/networkdevicediscovery.h>
 
 IntegrationPluginKostalpico::IntegrationPluginKostalpico() {}
 
-void IntegrationPluginKostalpico::discoverThings(ThingDiscoverInfo *info) {
-
-  if (!hardwareManager()->networkDeviceDiscovery()->available()) {
-    qCWarning(dcKostalpico()) << "Failed to discover network devices. The "
-                                 "network device discovery is not available.";
-    info->finish(Thing::ThingErrorHardwareNotAvailable,
-                 QT_TR_NOOP("Unable to discover devices in your network."));
-    return;
-  }
-
-  qCDebug(dcKostalpico()) << "Starting network discovery...";
-  NetworkDeviceDiscoveryReply *discoveryReply =
-      hardwareManager()->networkDeviceDiscovery()->discover();
-  connect(discoveryReply, &NetworkDeviceDiscoveryReply::finished,
-          discoveryReply, &NetworkDeviceDiscoveryReply::deleteLater);
-  connect(discoveryReply, &NetworkDeviceDiscoveryReply::finished, info, [=]() {
-    ThingDescriptors descriptors;
-    qCDebug(dcKostalpico())
-        << "Discovery finished. Found"
-        << discoveryReply->networkDeviceInfos().count() << "devices";
-    foreach (const NetworkDeviceInfo &networkDeviceInfo,
-             discoveryReply->networkDeviceInfos()) {
-      qCDebug(dcKostalpico()) << networkDeviceInfo;
-      if (networkDeviceInfo.macAddress().isNull())
-        continue;
-
-      // Hostname or MAC manufacturer must include Fronius
-      if (!(networkDeviceInfo.macAddressManufacturer().toLower().contains(
-                "Atmel") ||
-            networkDeviceInfo.hostName().toLower().contains("PikoPlus")))
-        continue;
-
-      QString title;
-      if (networkDeviceInfo.hostName().isEmpty()) {
-        title += "Piko Plus";
-      } else {
-        title += "Piko Plus (" + networkDeviceInfo.hostName() + ")";
-      }
-
-      QString description;
-      if (networkDeviceInfo.macAddressManufacturer().isEmpty()) {
-        description = networkDeviceInfo.macAddress();
-      } else {
-        description = networkDeviceInfo.macAddress() + " (" +
-                      networkDeviceInfo.macAddressManufacturer() + ")";
-      }
-
-      ThingDescriptor descriptor(connectionThingClassId, title, description);
-
-      // Check if we already have set up this device
-      Things existingThings = myThings().filterByParam(
-          connectionThingMacParamTypeId, networkDeviceInfo.macAddress());
-      if (existingThings.count() == 1) {
-        qCDebug(dcKostalpico()) << "This thing already exists in the system."
-                                << existingThings.first() << networkDeviceInfo;
-        descriptor.setThingId(existingThings.first()->id());
-      }
-
-      ParamList params;
-      params << Param(connectionThingAddressParamTypeId,
-                      networkDeviceInfo.address().toString());
-      params << Param(connectionThingMacParamTypeId,
-                      networkDeviceInfo.macAddress());
-      descriptor.setParams(params);
-      info->addThingDescriptor(descriptor);
+void IntegrationPluginKostalpico::discoverThings(ThingDiscoveryInfo *info) {
+  if (info->thingClassId() == connectionThingClassId) {
+    if (!hardwareManager()->networkDeviceDiscovery()->available()) {
+      qCWarning(dcKostalpico())
+          << "Failed to discover network devices. The network device discovery "
+             "is not available.";
+      info->finish(Thing::ThingErrorHardwareNotAvailable,
+                   QT_TR_NOOP("The discovery is not available. Please enter "
+                              "the IP address manually."));
+      return;
     }
-    info->finish(Thing::ThingErrorNoError);
-  });
+
+    qCDebug(dcKostalpico()) << "Starting network discovery...";
+    NetworkDeviceDiscoveryReply *discoveryReply =
+        hardwareManager()->networkDeviceDiscovery()->discover();
+    connect(discoveryReply, &NetworkDeviceDiscoveryReply::finished,
+            discoveryReply, &NetworkDeviceDiscoveryReply::deleteLater);
+    connect(
+        discoveryReply, &NetworkDeviceDiscoveryReply::finished, info, [=]() {
+          qCDebug(dcKostalpico())
+              << "Discovery finished. Found"
+              << discoveryReply->networkDeviceInfos().count() << "devices";
+          foreach (const NetworkDeviceInfo &networkDeviceInfo,
+                   discoveryReply->networkDeviceInfos()) {
+            qCDebug(dcKostalpico()) << networkDeviceInfo;
+
+            QString title;
+            if (networkDeviceInfo.hostName().isEmpty()) {
+              title = networkDeviceInfo.address().toString();
+            } else {
+              title = networkDeviceInfo.hostName() + " (" +
+                      networkDeviceInfo.address().toString() + ")";
+            }
+
+            QString description;
+            if (networkDeviceInfo.macAddressManufacturer().isEmpty()) {
+              description = networkDeviceInfo.macAddress();
+            } else {
+              description = networkDeviceInfo.macAddress() + " (" +
+                            networkDeviceInfo.macAddressManufacturer() + ")";
+            }
+
+            ThingDescriptor descriptor(info->thingClassId(), title,
+                                       description);
+            ParamList params;
+            params << Param(connectionThingMacAddressParamTypeId,
+                            networkDeviceInfo.macAddress());
+            descriptor.setParams(params);
+
+            // Check if we already have set up this device
+            Things existingThings =
+                myThings().filterByParam(connectionThingMacAddressParamTypeId,
+                                         networkDeviceInfo.macAddress());
+            if (existingThings.count() == 1) {
+              qCDebug(dcKostalpico())
+                  << "This connection already exists in the system:"
+                  << networkDeviceInfo;
+              descriptor.setThingId(existingThings.first()->id());
+            }
+
+            info->addThingDescriptor(descriptor);
+          }
+          info->finish(Thing::ThingErrorNoError);
+        });
+  }
 }
+
 void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
   // A thing is being set up. Use info->thing() to get details of the thing, do
   // the required setup (e.g. connect to the device) and call info->finish()
@@ -102,8 +103,18 @@ void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
 
   if (thing->thingClassId() == connectionThingClassId) {
 
-    QHostAddress address(
-        thing->paramValue(connectionThingAddressParamTypeId).toString());
+    MacAddress mac = MacAddress(
+        thing->paramValue(connectionThingMacAddressParamTypeId).toString());
+    if (!mac.isValid()) {
+      info->finish(Thing::ThingErrorInvalidParameter,
+                   QT_TR_NOOP("The given MAC address is not valid."));
+      return;
+    }
+    NetworkDeviceMonitor *monitor =
+        hardwareManager()->networkDeviceDiscovery()->registerMonitor(mac);
+    connect(info, &ThingSetupInfo::aborted, monitor, [monitor, this]() {
+      hardwareManager()->networkDeviceDiscovery()->unregisterMonitor(monitor);
+    });
 
     // Handle reconfigure
     if (m_kostalConnections.values().contains(thing)) {
@@ -113,10 +124,12 @@ void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
     }
 
     // Create the connection
-    KostalPicoConnection *connection = new KostalPicoConnection(
-        hardwareManager()->networkManager(), address, thing);
+    KostalPicoConnection *connection =
+        new KostalPicoConnection(hardwareManager()->networkManager(),
+                                 monitor->networkDeviceInfo().address(), thing);
 
-    // Verify the version
+    // (possible TODO, depends if API changes with versions -> Verify the
+    // version ?)
     KostalNetworkReply *reply = connection->getActiveDevices();
     connect(reply, &KostalNetworkReply::finished, info, [=] {
       QByteArray data = reply->networkReply()->readAll();
@@ -139,17 +152,16 @@ void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
         return;
       }
 
-      // Convert the rawdata to a JSON document
+      // Convert the rawdata to an xml document -> see if no Error
 
-      QXmlStreamReader xmlDoc = new QXmlStreamReader(&data);
-      if (xmlDoc.hasError()) {
+      QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
+      if (xmlDoc->hasError()) {
         qCWarning(dcKostalpico()) << "Failed to parse XML data" << data;
         info->finish(Thing::ThingErrorHardwareFailure,
                      QT_TR_NOOP("The data received from the device could not "
                                 "be processed because the format is unknown."));
         return;
       }
-      // TODO / Possible check for Version ?
 
       m_kostalConnections.insert(connection, thing);
       info->finish(Thing::ThingErrorNoError);
@@ -247,8 +259,9 @@ void IntegrationPluginKostalpico::thingRemoved(Thing *thing) {
 void IntegrationPluginKostalpico::refreshConnection(
     KostalPicoConnection *connection) {
   if (connection->busy()) {
-    qCWarning(dcKostalpico()) << "Connection busy. Skipping refresh cycle for host"
-                           << connection->address().toString();
+    qCWarning(dcKostalpico())
+        << "Connection busy. Skipping refresh cycle for host"
+        << connection->address().toString();
     return;
   }
 
@@ -267,251 +280,168 @@ void IntegrationPluginKostalpico::refreshConnection(
 
     QByteArray data = reply->networkReply()->readAll();
 
-    QXmlStreamReader xmlDoc = new QXmlStreamReader(&data);
-    if (xmlDoc.hasError()) {
+    QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
+    if (xmlDoc->hasError()) {
       qCWarning(dcKostalpico())
-          << "Failed to parse XML data" << data << ":" << error.errorString();
+          << "Failed to parse XML data" << data << ":" << xmlDoc->error();
       return;
     }
 
-    // Parse the data for thing information
-    QList<ThingDescriptor> thingDescriptors;
-
-    QVariantMap bodyMap = jsonDoc.toVariant().toMap().value("Body").toMap();
-    // qCDebug(dcKostalpico()) << "System:" <<
-    // qUtf8Printable(QJsonDocument::fromVariant(bodyMap).toJson());
-
-    // Check if there are new inverters
-    QVariantMap inverterMap =
-        bodyMap.value("Data").toMap().value("Inverter").toMap();
-    foreach (const QString &inverterId, inverterMap.keys()) {
-      QVariantMap inverterInfo = inverterMap.value(inverterId).toMap();
-      const QString serialNumber = inverterInfo.value("Serial").toString();
-
-      // Note: we use the id to identify for backwards compatibility
-      if (myThings()
-              .filterByParentId(connectionThing->id())
-              .filterByParam(inverterThingIdParamTypeId, inverterId)
-              .isEmpty()) {
-        QString thingDescription = connectionThing->name();
-        ThingDescriptor descriptor(inverterThingClassId,
-                                   "Fronius Solar Inverter", thingDescription,
-                                   connectionThing->id());
-        ParamList params;
-        params.append(Param(inverterThingIdParamTypeId, inverterId));
-        params.append(
-            Param(inverterThingSerialNumberParamTypeId, serialNumber));
-        descriptor.setParams(params);
-        thingDescriptors.append(descriptor);
-      }
-    }
-
-    // Check if there are new meters
-    QVariantMap meterMap = bodyMap.value("Data").toMap().value("Meter").toMap();
-    foreach (const QString &meterId, meterMap.keys()) {
-      // Note: we use the id to identify for backwards compatibility
-      if (myThings()
-              .filterByParentId(connectionThing->id())
-              .filterByParam(meterThingIdParamTypeId, meterId)
-              .isEmpty()) {
-        // Get the meter realtime data for details
-        FroniusNetworkReply *realtimeDataReply =
-            connection->getMeterRealtimeData(meterId.toInt());
-        connect(realtimeDataReply, &FroniusNetworkReply::finished, this, [=]() {
-          if (realtimeDataReply->networkReply()->error() !=
-              QNetworkReply::NoError) {
-            return;
-          }
-
-          QByteArray data = realtimeDataReply->networkReply()->readAll();
-
-          QJsonParseError error;
-          QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
-          if (error.error != QJsonParseError::NoError) {
-            qCWarning(dcKostalpico()) << "Meter: Failed to parse JSON data" << data
-                                   << ":" << error.errorString();
-            return;
-          }
-
-          // Parse the data and update the states of our device
-          QVariantMap dataMap = jsonDoc.toVariant()
-                                    .toMap()
-                                    .value("Body")
-                                    .toMap()
-                                    .value("Data")
-                                    .toMap();
-          QString thingName;
-          QString serialNumber;
-
-          if (dataMap.contains("Details")) {
-            QVariantMap details = dataMap.value("Details").toMap();
-            thingName = details.value("Manufacturer", "Fronius").toString() +
-                        " " + details.value("Model", "Smart Meter").toString();
-            serialNumber = details.value("Serial").toString();
-          } else {
-            thingName = connectionThing->name() + " Meter " + meterId;
-          }
-
-          ThingDescriptor descriptor(meterThingClassId, thingName, QString(),
-                                     connectionThing->id());
-          ParamList params;
-          params.append(Param(meterThingIdParamTypeId, meterId));
-          params.append(Param(meterThingSerialNumberParamTypeId, serialNumber));
-          descriptor.setParams(params);
-          emit autoThingsAppeared(ThingDescriptors() << descriptor);
-        });
-      }
-    }
-
-    // Check if there are new energy storages
-    QVariantMap storageMap =
-        bodyMap.value("Data").toMap().value("Storage").toMap();
-    foreach (const QString &storageId, storageMap.keys()) {
-      // Note: we use the id to identify for backwards compatibility
-      if (myThings()
-              .filterByParentId(connectionThing->id())
-              .filterByParam(storageThingIdParamTypeId, storageId)
-              .isEmpty()) {
-
-        // Get the meter realtime data for details
-        FroniusNetworkReply *realtimeDataReply =
-            connection->getStorageRealtimeData(storageId.toInt());
-        connect(realtimeDataReply, &FroniusNetworkReply::finished, this, [=]() {
-          if (realtimeDataReply->networkReply()->error() !=
-              QNetworkReply::NoError) {
-            return;
-          }
-
-          QByteArray data = realtimeDataReply->networkReply()->readAll();
-
-          QJsonParseError error;
-          QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
-          if (error.error != QJsonParseError::NoError) {
-            qCWarning(dcKostalpico()) << "Storage: Failed to parse JSON data"
-                                   << data << ":" << error.errorString();
-            return;
-          }
-
-          // Parse the data and update the states of our device
-          QVariantMap dataMap = jsonDoc.toVariant()
-                                    .toMap()
-                                    .value("Body")
-                                    .toMap()
-                                    .value("Data")
-                                    .toMap()
-                                    .value("Controller")
-                                    .toMap();
-
-          QString thingName;
-          QString serialNumber;
-          if (dataMap.contains("Details")) {
-            QVariantMap details = dataMap.value("Details").toMap();
-            thingName = details.value("Manufacturer", "Fronius").toString() +
-                        " " +
-                        details.value("Model", "Energy Storage").toString();
-            serialNumber = details.value("Serial").toString();
-          } else {
-            thingName = connectionThing->name() + " Storage " + storageId;
-          }
-
-          ThingDescriptor descriptor(storageThingClassId, thingName, QString(),
-                                     connectionThing->id());
-          ParamList params;
-          params.append(Param(storageThingIdParamTypeId, storageId));
-          params.append(
-              Param(storageThingSerialNumberParamTypeId, serialNumber));
-          descriptor.setParams(params);
-          emit autoThingsAppeared(ThingDescriptors() << descriptor);
-        });
-      }
-    }
-
-    // Inform about unhandled devices
-    QVariantMap ohmpilotMap =
-        bodyMap.value("Data").toMap().value("Ohmpilot").toMap();
-    foreach (QString ohmpilotId, ohmpilotMap.keys()) {
-      qCDebug(dcKostalpico()) << "Unhandled device Ohmpilot" << ohmpilotId;
-    }
-
-    QVariantMap sensorCardMap =
-        bodyMap.value("Data").toMap().value("SensorCard").toMap();
-    foreach (QString sensorCardId, sensorCardMap.keys()) {
-      qCDebug(dcKostalpico()) << "Unhandled device SensorCard" << sensorCardId;
-    }
-
-    QVariantMap stringControlMap =
-        bodyMap.value("Data").toMap().value("StringControl").toMap();
-    foreach (QString stringControlId, stringControlMap.keys()) {
-      qCDebug(dcKostalpico()) << "Unhandled device StringControl"
-                           << stringControlId;
-    }
-
-    if (!thingDescriptors.empty()) {
-      emit autoThingsAppeared(thingDescriptors);
-      thingDescriptors.clear();
+    if (myThings()
+            .filterByParentId(connectionThing->id())
+            .filterByThingClassId(kostalpicoThingClassId)
+            .isEmpty()) {
+      qCDebug(dcKostalpico()) << "Creating Inverter";
+      QString thingDescription = connectionThing->name();
+      ThingDescriptor descriptor(kostalpicoThingClassId, "Kostal Pico MP Plus",
+                                 thingDescription, connectionThing->id());
+      ParamList params;
+      params.append(Param(kostalpicoThingIdParamTypeId, "Smartmeter"));
+      descriptor.setParams(params);
+      emit autoThingsAppeared(ThingDescriptors() << descriptor);
     }
 
     // All devices
-    updatePowerFlow(connection);
-    updateInverters(connection);
-    updateMeters(connection);
-    updateStorages(connection);
+    updateCurrentPower(connection);
+    updateTotalEnergyProduced(connection);
   });
 }
 
-//TODO
-//void updateTotalEnergyConsumed(KostalPicoConnection *connection);
-//TODO
-void IntegrationPluginKostalpico::updateCurrentPower(KostalPicoConnection *connection)
-{
-    Thing *parentThing = m_froniusConnections.value(connection);
+// Consumption
+// Look for Value in <Measurement Value='XYZ' Unit='W'
+// Type='GridConsumedPower'/>
+void IntegrationPluginKostalpico::updateCurrentPower(
+    KostalPicoConnection *connection) {
+  Thing *parentThing = m_kostalConnections.value(connection);
 
-    // Get power flow realtime data and update storage and pv power values according to the total values
-    // The inverter details inform about the PV production after feeding the storage, but we should use the total
-    // to make sure the sum is correct. Battery seems to be feeded DC to DC before the AC power convertion
-    FroniusNetworkReply *powerFlowReply = connection->getPowerFlowRealtimeData();
-    connect(powerFlowReply, &FroniusNetworkReply::finished, this, [=]() {
-        if (powerFlowReply->networkReply()->error() != QNetworkReply::NoError) {
-            return;
+  KostalNetworkReply *currentPower = connection->getMeasurement();
+  connect(
+      currentPower, &KostalNetworkReply::finished, this,
+      [this, currentPower, parentThing]() {
+        if (currentPower->networkReply()->error() != QNetworkReply::NoError) {
+          return;
         }
+        QByteArray data = currentPower->networkReply()->readAll();
 
-        QByteArray data = powerFlowReply->networkReply()->readAll();
-
-        QJsonParseError error;
-        QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
-        if (error.error != QJsonParseError::NoError) {
-            qCWarning(dcFronius()) << "Meter: Failed to parse JSON data" << data << ":" << error.errorString();
-            return;
+        QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
+        if (xmlDoc->hasError()) {
+          qCWarning(dcKostalpico())
+              << "Failed to parse XML data" << data << ":" << xmlDoc->error();
+          return;
         }
-
-        // Parse the data and update the states of our device
-        QVariantMap dataMap = jsonDoc.toVariant().toMap().value("Body").toMap().value("Data").toMap();
-        //qCDebug(dcFronius()) << "Power flow data" << qUtf8Printable(QJsonDocument::fromVariant(dataMap).toJson(QJsonDocument::Indented));
-
-        // Find the inverter for this connection and set the total power
-        Things availableInverters = myThings().filterByParentId(parentThing->id()).filterByThingClassId(inverterThingClassId);
-        if (availableInverters.count() == 1) {
-            Thing *inverterThing = availableInverters.first();
-            double pvPower = dataMap.value("Site").toMap().value("P_PV").toDouble();
-            inverterThing->setStateValue(inverterCurrentPowerStateTypeId, - pvPower);
-        }
-
-        // Find the storage for this connection and update the current power
-        Things availableStorages = myThings().filterByParentId(parentThing->id()).filterByThingClassId(storageThingClassId);
-        if (availableStorages.count() == 1) {
-            Thing *storageThing = availableStorages.first();
-            // Note: negative (charge), positiv (discharge)
-            double akkuPower = - dataMap.value("Site").toMap().value("P_Akku").toDouble();
-            storageThing->setStateValue(storageCurrentPowerStateTypeId, akkuPower);
-            if (akkuPower < 0) {
-                storageThing->setStateValue(storageChargingStateStateTypeId, "discharging");
-            } else if (akkuPower > 0) {
-                storageThing->setStateValue(storageChargingStateStateTypeId, "charging");
+        // TODO XML LOGIC
+        QString currentPower = "";
+        bool entryFound = false;
+        while (!xmlDoc->atEnd() || entryFound) {
+          // has nextStartElement
+          if (xmlDoc->readNextStartElement()) {
+            if (xmlDoc->name() == "Measurement" &&
+                xmlDoc->attributes().hasAttribute("Type")) {
+              if (xmlDoc->attributes().value("Type") == "GridConsumedPower") {
+                // if no Value -> no measurement update
+                if (xmlDoc->attributes().hasAttribute("Value")) {
+                  currentPower = xmlDoc->attributes().value("Value").toString();
+                } else {
+                  break;
+                }
+              } else {
+                xmlDoc->skipCurrentElement();
+              }
             } else {
-                storageThing->setStateValue(storageChargingStateStateTypeId, "idle");
+              xmlDoc->skipCurrentElement();
             }
+          }
         }
 
-    });
+        if (entryFound) {
+          Thing *kostalPicoInverter =
+              myThings()
+                  .filterByParentId(parentThing->id())
+                  .filterByThingClassId(kostalpicoThingClassId)
+                  .first();
+          if (kostalPicoInverter != nullptr) {
+            kostalPicoInverter->setStateValue(kostalpicoCurrentPowerStateTypeId,
+                                              currentPower);
+          }
+        }
+      });
 }
+// Production
+// Look for
+//<Yields>
+//<Yield Type='Produced' Slot='Total' Unit='Wh'>
+//  <YieldValue Value='2547230' TimeStamp='2022-06-22T17:30:00'/>
+//</Yield>
+void IntegrationPluginKostalpico::updateTotalEnergyProduced(
+    KostalPicoConnection *connection) {
+  Thing *parentThing = m_kostalConnections.value(connection);
 
+  KostalNetworkReply *totalEnergyConsumed = connection->getYields();
+  connect(totalEnergyConsumed, &KostalNetworkReply::finished, this,
+          [this, totalEnergyConsumed, parentThing]() {
+            if (totalEnergyConsumed->networkReply()->error() !=
+                QNetworkReply::NoError) {
+              return;
+            }
+            QByteArray data = totalEnergyConsumed->networkReply()->readAll();
+
+            QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
+            if (xmlDoc->hasError()) {
+              qCWarning(dcKostalpico()) << "Failed to parse XML data" << data
+                                        << ":" << xmlDoc->error();
+              return;
+            }
+            // TODO XML LOGIC
+            bool entryFound = false;
+            QString totalProducedEnergy = "";
+            while (!xmlDoc->atEnd() || entryFound) {
+              // Look for Yields
+              if (xmlDoc->readNextStartElement()) {
+                if (xmlDoc->name() == "Yields") {
+                  // Look for Yield -> Type Produced and Slot Total
+                  if (xmlDoc->name() == "Yield" &&
+                      xmlDoc->attributes().hasAttribute("Type") &&
+                      xmlDoc->attributes().hasAttribute("Slot")) {
+                    if (xmlDoc->attributes().value("Type") == "Produced" &&
+                        xmlDoc->attributes().value("Slot") == "Total") {
+
+                      // If YieldValue has no Value -> skip this time no need to
+                      // look in the rest of the xml
+                      if (xmlDoc->name() == "YieldValue") {
+                        if (xmlDoc->attributes().hasAttribute("Value")) {
+                          totalProducedEnergy =
+                              xmlDoc->attributes().value("Value").toString();
+                          entryFound = true;
+                          break;
+                        } else {
+                          break;
+                        }
+                      } else {
+                        xmlDoc->skipCurrentElement();
+                      }
+
+                    } else {
+                      xmlDoc->skipCurrentElement();
+                    }
+
+                  } else {
+                    xmlDoc->skipCurrentElement();
+                  }
+                }
+              } else {
+                xmlDoc->skipCurrentElement();
+              }
+            }
+            if (entryFound) {
+              Thing *kostalPicoInverter =
+                  myThings()
+                      .filterByParentId(parentThing->id())
+                      .filterByThingClassId(kostalpicoThingClassId)
+                      .first();
+              if (kostalPicoInverter != nullptr)
+                kostalPicoInverter->setStateValue(
+                    kostalpicoTotalEnergyProducedStateTypeId,
+                    totalProducedEnergy);
+            }
+          });
+}
