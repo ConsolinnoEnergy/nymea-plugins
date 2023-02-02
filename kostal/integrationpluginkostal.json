@@ -1,5 +1,5 @@
 {
-    "name": "kostalpico",
+    "name": "kostal",
     "displayName": "Kostal Pico MP Plus",
     "id": "9f3b66c7-3ca1-4f2a-9659-348627ee1ae3",
     "vendors": [
@@ -98,6 +98,3 @@
         }
     ]
 }
-
-
-

@@ -30,7 +30,7 @@ IntegrationPluginKostalpico::IntegrationPluginKostalpico() {}
 void IntegrationPluginKostalpico::discoverThings(ThingDiscoveryInfo *info) {
   if (info->thingClassId() == connectionThingClassId) {
     if (!hardwareManager()->networkDeviceDiscovery()->available()) {
-      qCWarning(dcKostalpico())
+      qCWarning(dcKostal())
           << "Failed to discover network devices. The network device discovery "
              "is not available.";
       info->finish(Thing::ThingErrorHardwareNotAvailable,
@@ -39,19 +39,19 @@ void IntegrationPluginKostalpico::discoverThings(ThingDiscoveryInfo *info) {
       return;
     }
 
-    qCDebug(dcKostalpico()) << "Starting network discovery...";
+    qCDebug(dcKostal()) << "Starting network discovery...";
     NetworkDeviceDiscoveryReply *discoveryReply =
         hardwareManager()->networkDeviceDiscovery()->discover();
     connect(discoveryReply, &NetworkDeviceDiscoveryReply::finished,
             discoveryReply, &NetworkDeviceDiscoveryReply::deleteLater);
     connect(
         discoveryReply, &NetworkDeviceDiscoveryReply::finished, info, [=]() {
-          qCDebug(dcKostalpico())
+          qCDebug(dcKostal())
               << "Discovery finished. Found"
               << discoveryReply->networkDeviceInfos().count() << "devices";
           foreach (const NetworkDeviceInfo &networkDeviceInfo,
                    discoveryReply->networkDeviceInfos()) {
-            qCDebug(dcKostalpico()) << networkDeviceInfo;
+            qCDebug(dcKostal()) << networkDeviceInfo;
 
             QString title;
             if (networkDeviceInfo.hostName().isEmpty()) {
@@ -81,7 +81,7 @@ void IntegrationPluginKostalpico::discoverThings(ThingDiscoveryInfo *info) {
                 myThings().filterByParam(connectionThingMacAddressParamTypeId,
                                          networkDeviceInfo.macAddress());
             if (existingThings.count() == 1) {
-              qCDebug(dcKostalpico())
+              qCDebug(dcKostal())
                   << "This connection already exists in the system:"
                   << networkDeviceInfo;
               descriptor.setThingId(existingThings.first()->id());
@@ -99,7 +99,7 @@ void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
   // the required setup (e.g. connect to the device) and call info->finish()
   // when done.
   Thing *thing = info->thing();
-  qCDebug(dcKostalpico()) << "Setup thing" << info->thing();
+  qCDebug(dcKostal()) << "Setup thing" << info->thing();
 
   if (thing->thingClassId() == connectionThingClassId) {
 
@@ -134,7 +134,7 @@ void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
     connect(reply, &KostalNetworkReply::finished, info, [=] {
       QByteArray data = reply->networkReply()->readAll();
       if (reply->networkReply()->error() != QNetworkReply::NoError) {
-        qCWarning(dcKostalpico())
+        qCWarning(dcKostal())
             << "Network request error:" << reply->networkReply()->error()
             << reply->networkReply()->errorString()
             << reply->networkReply()->url();
@@ -156,7 +156,7 @@ void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
 
       QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
       if (xmlDoc->hasError()) {
-        qCWarning(dcKostalpico()) << "Failed to parse XML data" << data;
+        qCWarning(dcKostal()) << "Failed to parse XML data" << data;
         info->finish(Thing::ThingErrorHardwareFailure,
                      QT_TR_NOOP("The data received from the device could not "
                                 "be processed because the format is unknown."));
@@ -172,7 +172,7 @@ void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
 
     connect(connection, &KostalPicoConnection::availableChanged, this,
             [=](bool available) {
-              qCDebug(dcKostalpico())
+              qCDebug(dcKostal())
                   << thing << "Available changed" << available;
               thing->setStateValue("connected", available);
 
@@ -191,14 +191,14 @@ void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
     // Verify the parent connection
     Thing *parentThing = myThings().findById(thing->parentId());
     if (!parentThing) {
-      qCWarning(dcKostalpico()) << "Could not find the parent for" << thing;
+      qCWarning(dcKostal()) << "Could not find the parent for" << thing;
       info->finish(Thing::ThingErrorHardwareNotAvailable);
       return;
     }
 
     KostalPicoConnection *connection = m_kostalConnections.key(parentThing);
     if (!connection) {
-      qCWarning(dcKostalpico())
+      qCWarning(dcKostal())
           << "Could not find the parent connection for" << thing;
       info->finish(Thing::ThingErrorHardwareNotAvailable);
       return;
@@ -215,7 +215,7 @@ void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
 }
 
 void IntegrationPluginKostalpico::postSetupThing(Thing *thing) {
-  qCDebug(dcKostalpico()) << "Post setup" << thing->name();
+  qCDebug(dcKostal()) << "Post setup" << thing->name();
 
   if (thing->thingClassId() == connectionThingClassId) {
 
@@ -259,7 +259,7 @@ void IntegrationPluginKostalpico::thingRemoved(Thing *thing) {
 void IntegrationPluginKostalpico::refreshConnection(
     KostalPicoConnection *connection) {
   if (connection->busy()) {
-    qCWarning(dcKostalpico())
+    qCWarning(dcKostal())
         << "Connection busy. Skipping refresh cycle for host"
         << connection->address().toString();
     return;
@@ -282,7 +282,7 @@ void IntegrationPluginKostalpico::refreshConnection(
 
     QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
     if (xmlDoc->hasError()) {
-      qCWarning(dcKostalpico())
+      qCWarning(dcKostal())
           << "Failed to parse XML data" << data << ":" << xmlDoc->error();
       return;
     }
@@ -291,7 +291,7 @@ void IntegrationPluginKostalpico::refreshConnection(
             .filterByParentId(connectionThing->id())
             .filterByThingClassId(kostalpicoThingClassId)
             .isEmpty()) {
-      qCDebug(dcKostalpico()) << "Creating Inverter";
+      qCDebug(dcKostal()) << "Creating Inverter";
       QString thingDescription = connectionThing->name();
       ThingDescriptor descriptor(kostalpicoThingClassId, "Kostal Pico MP Plus",
                                  thingDescription, connectionThing->id());
@@ -325,7 +325,7 @@ void IntegrationPluginKostalpico::updateCurrentPower(
 
         QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
         if (xmlDoc->hasError()) {
-          qCWarning(dcKostalpico())
+          qCWarning(dcKostal())
               << "Failed to parse XML data" << data << ":" << xmlDoc->error();
           return;
         }
@@ -387,7 +387,7 @@ void IntegrationPluginKostalpico::updateTotalEnergyProduced(
 
             QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
             if (xmlDoc->hasError()) {
-              qCWarning(dcKostalpico()) << "Failed to parse XML data" << data
+              qCWarning(dcKostal()) << "Failed to parse XML data" << data
                                         << ":" << xmlDoc->error();
               return;
             }

@@ -34,6 +34,7 @@ PLUGIN_DIRS = \
     homeconnect         \
     keba                \
     kodi                \
+    kostal              \
     lgsmarttv           \
     lifx                \
     mecelectronics      \
@@ -127,5 +128,3 @@ for(plugin, PLUGINS) {
 }
 
 SUBDIRS += \
-    kostalpico
-
