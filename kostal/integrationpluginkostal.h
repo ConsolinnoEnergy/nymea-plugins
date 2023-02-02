@@ -33,16 +33,16 @@
 
 class PluginTimer;
 
-class IntegrationPluginKostalpico: public IntegrationPlugin
+class IntegrationPluginKostal: public IntegrationPlugin
 {
     Q_OBJECT
 
-    Q_PLUGIN_METADATA(IID "io.nymea.IntegrationPlugin" FILE "integrationpluginkostalpico.json")
+    Q_PLUGIN_METADATA(IID "io.nymea.IntegrationPlugin" FILE "integrationpluginkostal.json")
     Q_INTERFACES(IntegrationPlugin)
 
 
 public:
-    explicit IntegrationPluginKostalpico();
+    explicit IntegrationPluginKostal();
 
     //void init() override;
 

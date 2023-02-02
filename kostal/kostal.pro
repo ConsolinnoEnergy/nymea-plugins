@@ -6,12 +6,12 @@ QT += core
 QMAKE_CXXFLAGS_WARN_ON += -Wno-reorder
 
 SOURCES += \
-    integrationpluginkostalpico.cpp \
+    integrationpluginkostal.cpp \
     kostalnetworkreply.cpp \
     kostalpicoconnection.cpp
 
 HEADERS += \
-    integrationpluginkostalpico.h \
+    integrationpluginkostal.h \
     kostalnetworkreply.h \
     kostalpicoconnection.h
 

@@ -18,16 +18,16 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "integrationpluginkostalpico.h"
+#include "integrationpluginkostal.h"
 #include "plugininfo.h"
 #include "plugintimer.h"
 #include <QNetworkInterface>
 #include <QXmlStreamReader>
 #include <network/networkdevicediscovery.h>
 
-IntegrationPluginKostalpico::IntegrationPluginKostalpico() {}
+IntegrationPluginKostal::IntegrationPluginKostal() {}
 
-void IntegrationPluginKostalpico::discoverThings(ThingDiscoveryInfo *info) {
+void IntegrationPluginKostal::discoverThings(ThingDiscoveryInfo *info) {
   if (info->thingClassId() == connectionThingClassId) {
     if (!hardwareManager()->networkDeviceDiscovery()->available()) {
       qCWarning(dcKostal())
@@ -94,7 +94,7 @@ void IntegrationPluginKostalpico::discoverThings(ThingDiscoveryInfo *info) {
   }
 }
 
-void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
+void IntegrationPluginKostal::setupThing(ThingSetupInfo *info) {
   // A thing is being set up. Use info->thing() to get details of the thing, do
   // the required setup (e.g. connect to the device) and call info->finish()
   // when done.
@@ -214,7 +214,7 @@ void IntegrationPluginKostalpico::setupThing(ThingSetupInfo *info) {
   }
 }
 
-void IntegrationPluginKostalpico::postSetupThing(Thing *thing) {
+void IntegrationPluginKostal::postSetupThing(Thing *thing) {
   qCDebug(dcKostal()) << "Post setup" << thing->name();
 
   if (thing->thingClassId() == connectionThingClassId) {
@@ -239,11 +239,11 @@ void IntegrationPluginKostalpico::postSetupThing(Thing *thing) {
   }
 }
 
-void IntegrationPluginKostalpico::executeAction(ThingActionInfo *info) {
+void IntegrationPluginKostal::executeAction(ThingActionInfo *info) {
   Q_UNUSED(info)
 }
 
-void IntegrationPluginKostalpico::thingRemoved(Thing *thing) {
+void IntegrationPluginKostal::thingRemoved(Thing *thing) {
   if (thing->thingClassId() == connectionThingClassId) {
     KostalPicoConnection *connection = m_kostalConnections.key(thing);
     m_kostalConnections.remove(connection);
@@ -256,7 +256,7 @@ void IntegrationPluginKostalpico::thingRemoved(Thing *thing) {
     m_connectionRefreshTimer = nullptr;
   }
 }
-void IntegrationPluginKostalpico::refreshConnection(
+void IntegrationPluginKostal::refreshConnection(
     KostalPicoConnection *connection) {
   if (connection->busy()) {
     qCWarning(dcKostal())
@@ -310,7 +310,7 @@ void IntegrationPluginKostalpico::refreshConnection(
 // Consumption
 // Look for Value in <Measurement Value='XYZ' Unit='W'
 // Type='GridConsumedPower'/>
-void IntegrationPluginKostalpico::updateCurrentPower(
+void IntegrationPluginKostal::updateCurrentPower(
     KostalPicoConnection *connection) {
   Thing *parentThing = m_kostalConnections.value(connection);
 
@@ -372,7 +372,7 @@ void IntegrationPluginKostalpico::updateCurrentPower(
 //<Yield Type='Produced' Slot='Total' Unit='Wh'>
 //  <YieldValue Value='2547230' TimeStamp='2022-06-22T17:30:00'/>
 //</Yield>
-void IntegrationPluginKostalpico::updateTotalEnergyProduced(
+void IntegrationPluginKostal::updateTotalEnergyProduced(
     KostalPicoConnection *connection) {
   Thing *parentThing = m_kostalConnections.value(connection);
 
