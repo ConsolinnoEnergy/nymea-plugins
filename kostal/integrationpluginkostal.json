@@ -32,7 +32,8 @@
                     "displayName": "Reachable",
                     "displayNameEvent": "Reachable changed",
                     "type": "bool",
-                    "defaultValue": false
+                    "defaultValue": false,
+                    "cached": false
                 }
                 ],
                 "actionTypes": [

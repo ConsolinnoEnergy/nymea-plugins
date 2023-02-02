@@ -117,12 +117,9 @@ void IntegrationPluginKostal::setupThing(ThingSetupInfo *info) {
     });
 
     // Handle reconfigure
-    if (m_kostalConnections.values().contains(thing)) {
-      KostalPicoConnection *connection = m_kostalConnections.key(thing);
-      m_kostalConnections.remove(connection);
-      connection->deleteLater();
-    }
-
+    m_connectionThing->deleteLater();
+    qCDebug(dcKostal()) << "Added DeviceAddress: "
+                        << monitor->networkDeviceInfo().address().toString();
     // Create the connection
     KostalPicoConnection *connection =
         new KostalPicoConnection(hardwareManager()->networkManager(),
@@ -131,79 +128,71 @@ void IntegrationPluginKostal::setupThing(ThingSetupInfo *info) {
     // (possible TODO, depends if API changes with versions -> Verify the
     // version ?)
     KostalNetworkReply *reply = connection->getActiveDevices();
-    connect(reply, &KostalNetworkReply::finished, info, [=] {
-      QByteArray data = reply->networkReply()->readAll();
-      if (reply->networkReply()->error() != QNetworkReply::NoError) {
-        qCWarning(dcKostal())
-            << "Network request error:" << reply->networkReply()->error()
-            << reply->networkReply()->errorString()
-            << reply->networkReply()->url();
-        if (reply->networkReply()->error() ==
-            QNetworkReply::ContentNotFoundError) {
-          info->finish(
-              Thing::ThingErrorHardwareNotAvailable,
-              QT_TR_NOOP(
-                  "The device does not reply to our requests. Please verify "
-                  "that the Fronius Solar API is enabled on the device."));
-        } else {
-          info->finish(Thing::ThingErrorHardwareNotAvailable,
-                       QT_TR_NOOP("The device is not reachable."));
-        }
-        return;
-      }
+    connect(
+        reply, &KostalNetworkReply::finished, info,
+        [this, reply, info, connection, thing] {
+          QByteArray data = reply->networkReply()->readAll();
+          if (reply->networkReply()->error() != QNetworkReply::NoError) {
+            qCWarning(dcKostal())
+                << "Network request error:" << reply->networkReply()->error()
+                << reply->networkReply()->errorString()
+                << reply->networkReply()->url();
+            if (reply->networkReply()->error() ==
+                QNetworkReply::ContentNotFoundError) {
+              info->finish(
+                  Thing::ThingErrorHardwareNotAvailable,
+                  QT_TR_NOOP(
+                      "The device does not reply to our requests. Please "
+                      "verify "
+                      "that the Fronius Solar API is enabled on the device."));
+            } else {
+              info->finish(Thing::ThingErrorHardwareNotAvailable,
+                           QT_TR_NOOP("The device is not reachable."));
+            }
+            return;
+          }
 
-      // Convert the rawdata to an xml document -> see if no Error
+          // Convert the rawdata to an xml document -> see if no Error
 
-      QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
-      if (xmlDoc->hasError()) {
-        qCWarning(dcKostal()) << "Failed to parse XML data" << data;
-        info->finish(Thing::ThingErrorHardwareFailure,
-                     QT_TR_NOOP("The data received from the device could not "
-                                "be processed because the format is unknown."));
-        return;
-      }
+          QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
+          if (xmlDoc->hasError()) {
+            qCWarning(dcKostal()) << "Failed to parse XML data" << data;
+            info->finish(
+                Thing::ThingErrorHardwareFailure,
+                QT_TR_NOOP("The data received from the device could not "
+                           "be processed because the format is unknown."));
+            return;
+          }
+          info->finish(Thing::ThingErrorNoError);
+          this->m_kostalConnection = connection;
+          this->m_connectionThing = thing;
 
-      m_kostalConnections.insert(connection, thing);
-      info->finish(Thing::ThingErrorNoError);
-
-      // Update the already known states
-      thing->setStateValue("connected", true);
-    });
+          // Update the already known states
+          thing->setStateValue("connected", true);
+        });
 
     connect(connection, &KostalPicoConnection::availableChanged, this,
-            [=](bool available) {
-              qCDebug(dcKostal())
-                  << thing << "Available changed" << available;
+            [this, thing](bool available) {
+              qCDebug(dcKostal()) << thing << "Available changed" << available;
               thing->setStateValue("connected", available);
-
-              if (!available) {
-                // Update all child things, they will be set to available once
-                // the connection starts working again
-                foreach (Thing *childThing,
-                         myThings().filterByParentId(thing->id())) {
-                  childThing->setStateValue("connected", false);
-                }
+              // Update all child things, they will be set to available once
+              // the connection starts working again
+              foreach (Thing *thing, myThings().filterByThingClassId(
+                                         kostalpicoThingClassId)) {
+                thing->setStateValue("connected", available);
               }
             });
 
   } else if ((thing->thingClassId() == kostalpicoThingClassId)) {
-
+    qCDebug(dcKostal()) << "Children Thing detected";
     // Verify the parent connection
-    Thing *parentThing = myThings().findById(thing->parentId());
-    if (!parentThing) {
-      qCWarning(dcKostal()) << "Could not find the parent for" << thing;
-      info->finish(Thing::ThingErrorHardwareNotAvailable);
-      return;
-    }
 
-    KostalPicoConnection *connection = m_kostalConnections.key(parentThing);
+    KostalPicoConnection *connection = this->m_kostalConnection;
     if (!connection) {
-      qCWarning(dcKostal())
-          << "Could not find the parent connection for" << thing;
+      qCWarning(dcKostal()) << "Could not find the connection for" << thing;
       info->finish(Thing::ThingErrorHardwareNotAvailable);
       return;
     }
-
     info->finish(Thing::ThingErrorNoError);
 
   } else {
@@ -222,20 +211,21 @@ void IntegrationPluginKostal::postSetupThing(Thing *thing) {
     // Create a refresh timer for monitoring the active devices
     if (!m_connectionRefreshTimer) {
       m_connectionRefreshTimer =
-          hardwareManager()->pluginTimerManager()->registerTimer(2);
-      connect(m_connectionRefreshTimer, &PluginTimer::timeout, this, [this]() {
-        foreach (KostalPicoConnection *connection, m_kostalConnections.keys()) {
-          refreshConnection(connection);
-        }
-      });
+          hardwareManager()->pluginTimerManager()->registerTimer(10);
+      connect(m_connectionRefreshTimer, &PluginTimer::timeout, this,
+              [this]() { this->refreshConnection(); });
       m_connectionRefreshTimer->start();
     }
 
     // Refresh now
-    KostalPicoConnection *connection = m_kostalConnections.key(thing);
+    KostalPicoConnection *connection = m_kostalConnection;
+
     if (connection) {
-      refreshConnection(connection);
+      qCDebug(dcKostal()) << "Refreshing Connection";
+      this->refreshConnection();
     }
+  } else if (thing->thingClassId() == kostalpicoThingClassId) {
+    thing->setStateValue("connected", true);
   }
 }
 
@@ -244,10 +234,11 @@ void IntegrationPluginKostal::executeAction(ThingActionInfo *info) {
 }
 
 void IntegrationPluginKostal::thingRemoved(Thing *thing) {
+  qCDebug(dcKostal()) << "Removing Thing";
   if (thing->thingClassId() == connectionThingClassId) {
-    KostalPicoConnection *connection = m_kostalConnections.key(thing);
-    m_kostalConnections.remove(connection);
+    KostalPicoConnection *connection = m_kostalConnection;
     connection->deleteLater();
+    this->m_connectionThing->deleteLater();
   }
 
   if (myThings().filterByThingClassId(connectionThingClassId).isEmpty()) {
@@ -256,25 +247,23 @@ void IntegrationPluginKostal::thingRemoved(Thing *thing) {
     m_connectionRefreshTimer = nullptr;
   }
 }
-void IntegrationPluginKostal::refreshConnection(
-    KostalPicoConnection *connection) {
-  if (connection->busy()) {
-    qCWarning(dcKostal())
-        << "Connection busy. Skipping refresh cycle for host"
-        << connection->address().toString();
+void IntegrationPluginKostal::refreshConnection() {
+  if (this->m_kostalConnection->busy()) {
+    qCWarning(dcKostal()) << "Connection busy. Skipping refresh cycle for host"
+                          << this->m_kostalConnection->address().toString();
     return;
   }
-
+  qCDebug(dcKostal()) << "Creating reply and getting all Active Devices";
   // Note: this call will be used to monitor the available state of the
   // connection internally
-  KostalNetworkReply *reply = connection->getActiveDevices();
+  KostalNetworkReply *reply = this->m_kostalConnection->getActiveDevices();
   connect(reply, &KostalNetworkReply::finished, this, [=]() {
     if (reply->networkReply()->error() != QNetworkReply::NoError) {
       // Note: the connection warns about any errors if available changed
       return;
     }
 
-    Thing *connectionThing = m_kostalConnections.value(connection);
+    Thing *connectionThing = this->m_connectionThing;
     if (!connectionThing)
       return;
 
@@ -286,11 +275,11 @@ void IntegrationPluginKostal::refreshConnection(
           << "Failed to parse XML data" << data << ":" << xmlDoc->error();
       return;
     }
-
-    if (myThings()
-            .filterByParentId(connectionThing->id())
-            .filterByThingClassId(kostalpicoThingClassId)
-            .isEmpty()) {
+    bool childEmpty =
+        myThings().filterByThingClassId(kostalpicoThingClassId).isEmpty();
+    qCDebug(dcKostal()) << "Looking if ChildrenThing is empty";
+    qCDebug(dcKostal()) << childEmpty;
+    if (childEmpty) {
       qCDebug(dcKostal()) << "Creating Inverter";
       QString thingDescription = connectionThing->name();
       ThingDescriptor descriptor(kostalpicoThingClassId, "Kostal Pico MP Plus",
@@ -300,10 +289,18 @@ void IntegrationPluginKostal::refreshConnection(
       descriptor.setParams(params);
       emit autoThingsAppeared(ThingDescriptors() << descriptor);
     }
-
-    // All devices
-    updateCurrentPower(connection);
-    updateTotalEnergyProduced(connection);
+    // only update if child appeared
+    else {
+      // qCDebug(dcKostal()) << "Updating Datapoints";
+      // All devices
+      if (this->m_toggle) {
+        updateCurrentPower(this->m_kostalConnection);
+        this->m_toggle = false;
+      } else {
+        updateTotalEnergyProduced(this->m_kostalConnection);
+        this->m_toggle = true;
+      }
+    }
   });
 }
 
@@ -312,12 +309,10 @@ void IntegrationPluginKostal::refreshConnection(
 // Type='GridConsumedPower'/>
 void IntegrationPluginKostal::updateCurrentPower(
     KostalPicoConnection *connection) {
-  Thing *parentThing = m_kostalConnections.value(connection);
-
   KostalNetworkReply *currentPower = connection->getMeasurement();
   connect(
       currentPower, &KostalNetworkReply::finished, this,
-      [this, currentPower, parentThing]() {
+      [this, currentPower]() {
         if (currentPower->networkReply()->error() != QNetworkReply::NoError) {
           return;
         }
@@ -329,39 +324,61 @@ void IntegrationPluginKostal::updateCurrentPower(
               << "Failed to parse XML data" << data << ":" << xmlDoc->error();
           return;
         }
+        qCDebug(dcKostal()) << "Reading Measurements XML";
         // TODO XML LOGIC
         QString currentPower = "";
         bool entryFound = false;
-        while (!xmlDoc->atEnd() || entryFound) {
-          // has nextStartElement
-          if (xmlDoc->readNextStartElement()) {
-            if (xmlDoc->name() == "Measurement" &&
-                xmlDoc->attributes().hasAttribute("Type")) {
-              if (xmlDoc->attributes().value("Type") == "GridConsumedPower") {
-                // if no Value -> no measurement update
-                if (xmlDoc->attributes().hasAttribute("Value")) {
-                  currentPower = xmlDoc->attributes().value("Value").toString();
+        while (xmlDoc->readNextStartElement() && !entryFound) {
+          qCDebug(dcKostal())
+              << "Reading Next Start Element: " << xmlDoc->name();
+          if (xmlDoc->name() == "Measurements") {
+            while (!xmlDoc->atEnd() && xmlDoc->readNext() && !entryFound) {
+              if (xmlDoc->name() == "Measurement" &&
+                  xmlDoc->attributes().hasAttribute("Type")) {
+                qCDebug(dcKostal()) << "Found potential Measurement";
+                if (xmlDoc->attributes().value("Type") == "GridConsumedPower") {
+                  qCDebug(dcKostal())
+                      << "Found correct XML Entry for Consumed Power";
+
+                  if (xmlDoc->attributes().hasAttribute("Value")) {
+                    currentPower =
+                        xmlDoc->attributes().value("Value").toString();
+                    qCDebug(dcKostal())
+                        << "Found Value for Consumption" << currentPower;
+                    entryFound = true;
+                    break;
+                  } else {
+                    qCDebug(dcKostal())
+                        << "Not Value Entry for XML Entry Consumed Power";
+                  }
                 } else {
-                  break;
+                  qCDebug(dcKostal())
+                      << "Was not the correct Measurement" << xmlDoc->name();
+                  qCDebug(dcKostal()) << "Attributes were: ";
+                  int count = xmlDoc->attributes().count();
+                  for (int i = 0; i < count; i++) {
+                    qCDebug(dcKostal())
+                        << "Attribute at " << i << " is: "
+                        << xmlDoc->attributes().at(i).name().toString()
+                        << " with a value of: "
+                        << xmlDoc->attributes().at(i).value().toString();
+                    ;
+                  }
                 }
-              } else {
-                xmlDoc->skipCurrentElement();
               }
-            } else {
-              xmlDoc->skipCurrentElement();
             }
           }
         }
 
         if (entryFound) {
+          qCDebug(dcKostal()) << "Value for Consumption found " << currentPower;
           Thing *kostalPicoInverter =
-              myThings()
-                  .filterByParentId(parentThing->id())
-                  .filterByThingClassId(kostalpicoThingClassId)
-                  .first();
+              myThings().filterByThingClassId(kostalpicoThingClassId).first();
           if (kostalPicoInverter != nullptr) {
+            qCDebug(dcKostal())
+                << "Found KostalPicoInverter and add Consumption";
             kostalPicoInverter->setStateValue(kostalpicoCurrentPowerStateTypeId,
-                                              currentPower);
+                                              currentPower.toDouble());
           }
         }
       });
@@ -374,74 +391,62 @@ void IntegrationPluginKostal::updateCurrentPower(
 //</Yield>
 void IntegrationPluginKostal::updateTotalEnergyProduced(
     KostalPicoConnection *connection) {
-  Thing *parentThing = m_kostalConnections.value(connection);
-
   KostalNetworkReply *totalEnergyConsumed = connection->getYields();
-  connect(totalEnergyConsumed, &KostalNetworkReply::finished, this,
-          [this, totalEnergyConsumed, parentThing]() {
-            if (totalEnergyConsumed->networkReply()->error() !=
-                QNetworkReply::NoError) {
-              return;
-            }
-            QByteArray data = totalEnergyConsumed->networkReply()->readAll();
+  connect(
+      totalEnergyConsumed, &KostalNetworkReply::finished, this,
+      [this, totalEnergyConsumed]() {
+        if (totalEnergyConsumed->networkReply()->error() !=
+            QNetworkReply::NoError) {
+          return;
+        }
+        QByteArray data = totalEnergyConsumed->networkReply()->readAll();
 
-            QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
-            if (xmlDoc->hasError()) {
-              qCWarning(dcKostal()) << "Failed to parse XML data" << data
-                                        << ":" << xmlDoc->error();
-              return;
-            }
-            // TODO XML LOGIC
-            bool entryFound = false;
-            QString totalProducedEnergy = "";
-            while (!xmlDoc->atEnd() || entryFound) {
-              // Look for Yields
+        QXmlStreamReader *xmlDoc = new QXmlStreamReader(data);
+        if (xmlDoc->hasError()) {
+          qCWarning(dcKostal())
+              << "Failed to parse XML data" << data << ":" << xmlDoc->error();
+          return;
+        }
+
+        bool entryFound = false;
+        QString totalProducedEnergy = "";
+        qCDebug(dcKostal()) << "Starting with Yields";
+        while (xmlDoc->readNextStartElement() && !entryFound) {
+          qCDebug(dcKostal())
+              << "Reading Next Start Element: " << xmlDoc->name();
+          if (xmlDoc->name() == "Yield" &&
+              xmlDoc->attributes().hasAttribute("Type") &&
+              xmlDoc->attributes().hasAttribute("Slot")) {
+            qCDebug(dcKostal()) << "Found potential Yield";
+            if (xmlDoc->attributes().value("Type") == "Produced" &&
+                xmlDoc->attributes().value("Slot") == "Total") {
+              qCDebug(dcKostal()) << "Found correct XML Entry for Produced";
               if (xmlDoc->readNextStartElement()) {
-                if (xmlDoc->name() == "Yields") {
-                  // Look for Yield -> Type Produced and Slot Total
-                  if (xmlDoc->name() == "Yield" &&
-                      xmlDoc->attributes().hasAttribute("Type") &&
-                      xmlDoc->attributes().hasAttribute("Slot")) {
-                    if (xmlDoc->attributes().value("Type") == "Produced" &&
-                        xmlDoc->attributes().value("Slot") == "Total") {
-
-                      // If YieldValue has no Value -> skip this time no need to
-                      // look in the rest of the xml
-                      if (xmlDoc->name() == "YieldValue") {
-                        if (xmlDoc->attributes().hasAttribute("Value")) {
-                          totalProducedEnergy =
-                              xmlDoc->attributes().value("Value").toString();
-                          entryFound = true;
-                          break;
-                        } else {
-                          break;
-                        }
-                      } else {
-                        xmlDoc->skipCurrentElement();
-                      }
-
-                    } else {
-                      xmlDoc->skipCurrentElement();
-                    }
-
-                  } else {
-                    xmlDoc->skipCurrentElement();
-                  }
+                if (xmlDoc->name() == "YieldValue" &&
+                    xmlDoc->attributes().hasAttribute("Value")) {
+                  totalProducedEnergy =
+                      xmlDoc->attributes().value("Value").toString();
+                  qCDebug(dcKostal())
+                      << "Found Value for Production" << totalProducedEnergy;
+                  entryFound = true;
+                  break;
                 }
-              } else {
-                xmlDoc->skipCurrentElement();
               }
             }
-            if (entryFound) {
-              Thing *kostalPicoInverter =
-                  myThings()
-                      .filterByParentId(parentThing->id())
-                      .filterByThingClassId(kostalpicoThingClassId)
-                      .first();
-              if (kostalPicoInverter != nullptr)
-                kostalPicoInverter->setStateValue(
-                    kostalpicoTotalEnergyProducedStateTypeId,
-                    totalProducedEnergy);
-            }
-          });
+          }
+        }
+        if (entryFound) {
+          qCDebug(dcKostal())
+              << "Entry found writing Value : " << totalProducedEnergy;
+          Thing *kostalPicoInverter =
+              myThings().filterByThingClassId(kostalpicoThingClassId).first();
+          if (kostalPicoInverter != nullptr)
+            qCDebug(dcKostal()) << "Thing KostalPicoInvertert found.";
+          double totalWh = totalProducedEnergy.toDouble();
+          double totalkWh = totalWh / 1000;
+          qCDebug(dcKostal()) << totalkWh;
+          kostalPicoInverter->setStateValue(
+              kostalpicoTotalEnergyProducedStateTypeId, totalkWh);
+        }
+      });
 }

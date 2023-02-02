@@ -60,13 +60,15 @@ private:
 
     PluginTimer *m_connectionRefreshTimer = nullptr;
 
-    QHash<KostalPicoConnection *, Thing *> m_kostalConnections;
+    KostalPicoConnection *m_kostalConnection;
+    Thing *m_connectionThing = nullptr;
 
-    void refreshConnection(KostalPicoConnection *connection);
+    void refreshConnection();
     //Consumption
     void updateCurrentPower(KostalPicoConnection *connection);
     //Production
     void updateTotalEnergyProduced(KostalPicoConnection *connection);
+    bool m_toggle;
 };
 
 #endif // INTEGRATIONPLUGINKOSTALPICO_H

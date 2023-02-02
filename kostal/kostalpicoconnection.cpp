@@ -1,5 +1,4 @@
 #include "kostalpicoconnection.h"
-
 #include <QDebug>
 #include <QUrlQuery>
 
@@ -29,35 +28,36 @@ FroniusNetworkReply(QNetworkRequest(requestUrl), this);
 }*/
 
 KostalNetworkReply *KostalPicoConnection::getActiveDevices() {
-  QUrl requestUrl;
-  requestUrl.setScheme("http");
-  requestUrl.setHost(m_address.toString());
-  requestUrl.setPath("yields.xml");
+  QString requestString = "http://" + m_address.toString() + "/yields.xml";
+  QUrl requestUrl(requestString);
+
+  // qCDebug(dcKostal()) << "Start Request with url: " << requestUrl.toString();
 
   KostalNetworkReply *reply =
       new KostalNetworkReply(QNetworkRequest(requestUrl), this);
   m_requestQueue.enqueue(reply);
 
   // Note: we use this request for detecting if the logger is available or not.
-  connect(reply, &KostalNetworkReply::finished, this, [=]() {
+  connect(reply, &KostalNetworkReply::finished, this, [this, reply]() {
     if (reply->networkReply()->error() == QNetworkReply::NoError) {
       // Reply was successfully, we can communicate
-      if (!m_available) {
+      if (!this->m_available) {
         // qCDebug(dcKostal()) << "Connection: the connection is now available";
-        m_available = true;
-        emit availableChanged(m_available);
+        this->m_available = true;
+        emit availableChanged(this->m_available);
 
         // Destroy any pending requests
         qDeleteAll(m_requestQueue);
         m_requestQueue.clear();
       }
     } else {
-      // Ther have been errors, seems like we not available any more
-      if (m_available) {
-        // qCDebug(dcKostal()) << "Connection: the connection is not available
-        // any more:" << reply->networkReply()->errorString();
-        m_available = false;
-        emit availableChanged(m_available);
+      // There have been errors, seems like we not available any more
+      if (this->m_available) {
+        /*qCDebug(dcKostal())
+            << "Connection: the connection is not available any more:"
+            << reply->networkReply()->errorString();*/
+        this->m_available = false;
+        emit availableChanged(this->m_available);
       }
     }
   });
@@ -68,10 +68,8 @@ KostalNetworkReply *KostalPicoConnection::getActiveDevices() {
 
 // Watt in Type -> GridPower
 KostalNetworkReply *KostalPicoConnection::getMeasurement() {
-  QUrl requestUrl;
-  requestUrl.setScheme("http");
-  requestUrl.setHost(m_address.toString());
-  requestUrl.setPath("measurements.xml");
+  QString requestString = "http://" + m_address.toString() + "/measurements.xml";
+  QUrl requestUrl(requestString);
   QUrlQuery query;
   // only allow Inverter atm
   query.addQueryItem("Type", "Inverter");
@@ -85,14 +83,16 @@ KostalNetworkReply *KostalPicoConnection::getMeasurement() {
 // Has Production
 // Yields->Yield-> Type Produced -> In Watthours
 KostalNetworkReply *KostalPicoConnection::getYields() {
-  QUrl requestUrl;
-  requestUrl.setScheme("http");
-  requestUrl.setHost(m_address.toString());
-  requestUrl.setPath("yields.xml");
-  QUrlQuery query;
+  QString requestString = "http://" + m_address.toString() + "/yields.xml";
+  QUrl requestUrl(requestString);
+  // requestUrl.setScheme("http");
+  // requestUrl.setHost(m_address.toString());
+  // requestUrl.setPath("yields.xml");
+  qInfo() << m_address.toString();
+  // QUrlQuery query;
   // only allow Inverter atm
-  query.addQueryItem("Type", "Inverter");
-  requestUrl.setQuery(query);
+  // query.addQueryItem("Type", "Inverter");
+  // requestUrl.setQuery(query);
   KostalNetworkReply *reply =
       new KostalNetworkReply(QNetworkRequest(requestUrl), this);
   m_requestQueue.enqueue(reply);
