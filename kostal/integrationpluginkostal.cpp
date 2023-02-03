@@ -336,9 +336,8 @@ void IntegrationPluginKostal::updateCurrentPower(
               if (xmlDoc->name() == "Measurement" &&
                   xmlDoc->attributes().hasAttribute("Type")) {
                 qCDebug(dcKostal()) << "Found potential Measurement";
-                if (xmlDoc->attributes().value("Type") == "GridConsumedPower") {
-                  qCDebug(dcKostal())
-                      << "Found correct XML Entry for Consumed Power";
+                if (xmlDoc->attributes().value("Type") == "AC_Power") {
+                  qCDebug(dcKostal()) << "Found correct XML Entry for AC Power";
 
                   if (xmlDoc->attributes().hasAttribute("Value")) {
                     currentPower =
@@ -377,8 +376,10 @@ void IntegrationPluginKostal::updateCurrentPower(
           if (kostalPicoInverter != nullptr) {
             qCDebug(dcKostal())
                 << "Found KostalPicoInverter and add Consumption";
+            double currentPowerDouble = currentPower.toDouble();
+            currentPowerDouble = currentPowerDouble * -1.0;
             kostalPicoInverter->setStateValue(kostalpicoCurrentPowerStateTypeId,
-                                              currentPower.toDouble());
+                                              currentPowerDouble);
           }
         }
       });
