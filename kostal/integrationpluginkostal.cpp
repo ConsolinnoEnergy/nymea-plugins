@@ -211,7 +211,7 @@ void IntegrationPluginKostal::postSetupThing(Thing *thing) {
     // Create a refresh timer for monitoring the active devices
     if (!m_connectionRefreshTimer) {
       m_connectionRefreshTimer =
-          hardwareManager()->pluginTimerManager()->registerTimer(10);
+          hardwareManager()->pluginTimerManager()->registerTimer(2);
       connect(m_connectionRefreshTimer, &PluginTimer::timeout, this,
               [this]() { this->refreshConnection(); });
       m_connectionRefreshTimer->start();

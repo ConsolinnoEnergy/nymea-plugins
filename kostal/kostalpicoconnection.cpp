@@ -88,7 +88,7 @@ KostalNetworkReply *KostalPicoConnection::getYields() {
   // requestUrl.setScheme("http");
   // requestUrl.setHost(m_address.toString());
   // requestUrl.setPath("yields.xml");
-  qInfo() << m_address.toString();
+  //qInfo() << m_address.toString();
   // QUrlQuery query;
   // only allow Inverter atm
   // query.addQueryItem("Type", "Inverter");
