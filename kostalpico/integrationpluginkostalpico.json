@@ -1,10 +1,10 @@
 {
-    "name": "kostal",
+    "name": "kostalpico",
     "displayName": "Kostal Pico MP Plus",
     "id": "9f3b66c7-3ca1-4f2a-9659-348627ee1ae3",
     "vendors": [
         {
-            "name": "kostal",
+            "name": "kostalpico",
             "displayName": "Kostal Pico MP Plus",
             "id": "43da1800-ebf8-45bd-9b58-66e3475d41d7",
             "thingClasses": [
