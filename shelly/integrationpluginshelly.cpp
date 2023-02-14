@@ -37,6 +37,7 @@
 #include <QHostAddress>
 #include <QJsonDocument>
 #include <QColor>
+#include <QNetworkInterface>
 
 #include "hardwaremanager.h"
 #include "network/networkaccessmanager.h"
@@ -76,6 +77,9 @@ static QHash<ThingClassId, ParamTypeId> idParamTypeMap = {
     {shellyI3ThingClassId, shellyI3ThingIdParamTypeId},
     {shellyMotionThingClassId, shellyMotionThingIdParamTypeId},
     {shellyTrvThingClassId, shellyTrvThingIdParamTypeId},
+    {shellyFloodThingClassId, shellyFloodThingIdParamTypeId},
+    {shellySmokeThingClassId, shellySmokeThingIdParamTypeId},
+    {shellyGasThingClassId, shellyGasThingIdParamTypeId}
 };
 
 static QHash<ThingClassId, ParamTypeId> usernameParamTypeMap = {
@@ -94,6 +98,9 @@ static QHash<ThingClassId, ParamTypeId> usernameParamTypeMap = {
     {shellyI3ThingClassId, shellyI3ThingUsernameParamTypeId},
     {shellyMotionThingClassId, shellyMotionThingUsernameParamTypeId},
     {shellyTrvThingClassId, shellyTrvThingUsernameParamTypeId},
+    {shellyFloodThingClassId, shellyFloodThingUsernameParamTypeId},
+    {shellySmokeThingClassId, shellySmokeThingUsernameParamTypeId},
+    {shellyGasThingClassId, shellyGasThingUsernameParamTypeId}
 };
 
 static QHash<ThingClassId, ParamTypeId> passwordParamTypeMap = {
@@ -111,7 +118,10 @@ static QHash<ThingClassId, ParamTypeId> passwordParamTypeMap = {
     {shellyHTThingClassId, shellyHTThingPasswordParamTypeId},
     {shellyI3ThingClassId, shellyI3ThingPasswordParamTypeId},
     {shellyMotionThingClassId, shellyMotionThingPasswordParamTypeId},
-    {shellyTrvThingClassId, shellyTrvThingPasswordParamTypeId}
+    {shellyTrvThingClassId, shellyTrvThingPasswordParamTypeId},
+    {shellyFloodThingClassId, shellyFloodThingPasswordParamTypeId},
+    {shellySmokeThingClassId, shellySmokeThingPasswordParamTypeId},
+    {shellyGasThingClassId, shellyGasThingPasswordParamTypeId}
 };
 
 static QHash<ThingClassId, ParamTypeId> rollerModeParamTypeMap = {
@@ -233,7 +243,10 @@ static QHash<ActionTypeId, ThingClassId> updateActionTypesMap = {
     {shellyHTPerformUpdateActionTypeId, shellyHTThingClassId},
     {shellyI3PerformUpdateActionTypeId, shellyI3ThingClassId},
     {shellyMotionPerformUpdateActionTypeId, shellyMotionThingClassId},
-    {shellyTrvPerformUpdateActionTypeId, shellyTrvThingClassId}
+    {shellyTrvPerformUpdateActionTypeId, shellyTrvThingClassId},
+    {shellyFloodPerformUpdateActionTypeId, shellyFloodThingClassId},
+    {shellySmokePerformUpdateActionTypeId, shellySmokeThingClassId},
+    {shellyGasPerformUpdateActionTypeId, shellyGasThingClassId}
 };
 
 // Settings
@@ -301,6 +314,12 @@ void IntegrationPluginShelly::discoverThings(ThingDiscoveryInfo *info)
             namePattern = QRegExp("shellymotionsensor-[0-9A-Z]+$");
         } else if (info->thingClassId() == shellyTrvThingClassId) {
             namePattern = QRegExp("shellytrv-[0-9A-Z]+$");
+        } else if (info->thingClassId() == shellyFloodThingClassId) {
+            namePattern = QRegExp("^shellyflood-[0-9A-Z]+$");
+        } else if (info->thingClassId() == shellyFloodThingClassId) {
+            namePattern = QRegExp("^shellysmoke-[0-9A-Z]+$");
+        } else if (info->thingClassId() == shellyGasThingClassId) {
+            namePattern = QRegExp("^shellygas-[0-9A-Z]+$");
         }
         if (!entry.name().contains(namePattern)) {
             continue;
@@ -405,7 +424,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         } else {
             url.setPath("/reboot");
             QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-            connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+            connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
             connect(reply, &QNetworkReply::finished, info, [info, reply](){
                 if (reply->error() != QNetworkReply::NoError) {
                     qCWarning(dcShelly()) << "Failed to execute reboot action:" << reply->error() << reply->errorString();
@@ -422,7 +441,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("update", "true");
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply](){
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
         });
@@ -458,7 +477,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
             query.addQueryItem("turn", on ? "on" : "off");
             url.setQuery(query);
             QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-            connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+            connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
             connect(reply, &QNetworkReply::finished, info, [info, reply, on](){
                 info->thing()->setStateValue("power", on);
                 info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
@@ -475,7 +494,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("turn", on ? "on" : "off");
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply, on](){
             info->thing()->setStateValue("power", on);
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
@@ -493,7 +512,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("blue", QString::number(color.blue()));
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply, color](){
             info->thing()->setStateValue("color", color);
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
@@ -508,7 +527,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("white", QString::number(whiteValue));
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply, whiteValue](){
             info->thing()->setStateValue(shellyRgbw2WhiteChannelStateTypeId, whiteValue);
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
@@ -527,7 +546,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("white", "255");
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply, ct](){
             info->thing()->setStateValue("colorTemperature", ct);
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
@@ -543,7 +562,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("gain", QString::number(brightness));
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply, brightness](){
             info->thing()->setStateValue("brightness", brightness);
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
@@ -559,7 +578,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("turn", on ? "on" : "off");
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply, on](){
             info->thing()->setStateValue("power", on);
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
@@ -575,7 +594,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("brightness", QString::number(brightness));
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply, brightness](){
             info->thing()->setStateValue("brightness", brightness);
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
@@ -592,7 +611,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         url.setQuery(query);
         qCDebug(dcShelly()) << "Requesting:" << url;
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply, targetValue](){
             // The Shelly TRV seems to reply with OK, but then takes ages to actually set the value
             // If we send another value within that time frame, it will again reply with OK but just ognore it...
@@ -612,7 +631,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("pos", QString::number(targetValue));
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply, targetValue](){
             // The Shelly TRV seems to reply with OK, but then takes ages to actually set the value
             // If we send another value within that time frame, it will again reply with OK but just ognore it...
@@ -631,7 +650,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("boost_minutes", thing->setting(shellyTrvSettingsBoostDurationParamTypeId).toString());
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply](){
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
         });
@@ -644,7 +663,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("go", "open");
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply](){
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
         });
@@ -657,7 +676,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("go", "close");
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply](){
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
         });
@@ -670,7 +689,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         query.addQueryItem("go", "stop");
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply](){
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
         });
@@ -680,7 +699,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
     if (action.actionTypeId() == shellyRollerCalibrateActionTypeId) {
         url.setPath(QString("/roller/%1/calibrate").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply](){
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
         });
@@ -691,10 +710,10 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
         url.setPath(QString("/roller/%1").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
         QUrlQuery query;
         query.addQueryItem("go", "to_pos");
-        query.addQueryItem("roller_pos", info->action().paramValue(shellyRollerPercentageActionPercentageParamTypeId).toString());
+        query.addQueryItem("roller_pos", QString::number(100 - info->action().paramValue(shellyRollerPercentageActionPercentageParamTypeId).toUInt()));
         url.setQuery(query);
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply](){
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
         });
@@ -704,7 +723,63 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
     if (action.actionTypeId() == shellyEmResetActionTypeId || action.actionTypeId() == shellyEm3ResetActionTypeId) {
         url.setPath("/reset_data");
         QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, info, [info, reply](){
+            info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+        });
+        return;
+    }
+
+    if (action.actionTypeId() == shellyGasSelfTestActionTypeId) {
+        url.setPath("/self_test");
+        QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, info, [info, reply](){
+            info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+        });
+        return;
+    }
+
+    if (action.actionTypeId() == shellyGasMuteActionTypeId) {
+        url.setPath("/mute");
+        QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, info, [info, reply](){
+            info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+        });
+        return;
+    }
+
+    if (action.actionTypeId() == shellyGasUnmuteActionTypeId) {
+        url.setPath("/unmute");
+        QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, info, [info, reply](){
+            info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+        });
+        return;
+    }
+
+    if (action.actionTypeId() == shellyGasOpenValveActionTypeId) {
+        url.setPath("/settings/valve/0");
+        QUrlQuery query;
+        query.addQueryItem("go", "open");
+        url.setQuery(query);
+        QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
+        connect(reply, &QNetworkReply::finished, info, [info, reply](){
+            info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+        });
+        return;
+    }
+
+    if (action.actionTypeId() == shellyGasCloseValveActionTypeId) {
+        url.setPath("/settings/valve/0");
+        QUrlQuery query;
+        query.addQueryItem("go", "close");
+        url.setQuery(query);
+        QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
+        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
         connect(reply, &QNetworkReply::finished, info, [info, reply](){
             info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
         });
@@ -769,8 +844,8 @@ void IntegrationPluginShelly::onMulticastMessageReceived(const QHostAddress &sou
     }
 
     thing->setStateValue("connected", true);
-    foreach (Thing *thing, myThings().filterByParentId(thing->id())) {
-        thing->setStateValue("connected", true);
+    foreach (Thing *child, myThings().filterByParentId(thing->id())) {
+        child->setStateValue("connected", true);
     }
 
     qCDebug(dcShelly) << "CoIoT multicast message for" << thing->name() << ":" << qUtf8Printable(jsonDoc.toJson());
@@ -794,8 +869,11 @@ void IntegrationPluginShelly::onMulticastMessageReceived(const QHostAddress &sou
             break;
         case 1103: // Roller position
             foreach (Thing *roller, myThings().filterByParentId(thing->id()).filterByInterface("extendedshutter")) {
-                roller->setStateValue(shellyRollerPercentageStateTypeId, value.toUInt());
+                roller->setStateValue(shellyRollerPercentageStateTypeId, 100 - value.toUInt());
             }
+            break;
+        case 1105:
+            thing->setStateValue("valveState", value);
             break;
         case 1201: // power (on/off) for channel 2
             thing->setStateValue("channel2", value.toInt() == 1);
@@ -864,6 +942,9 @@ void IntegrationPluginShelly::onMulticastMessageReceived(const QHostAddress &sou
         case 3106:
             thing->setStateValue("lightIntensity", value.toInt());
             break;
+        case 3107:
+            thing->setStateValue("gasLevel", value.toInt());
+            break;
         case 3111:
             if (value.toInt() == -1) { // When connected to power surce
                 thing->setStateValue("batteryLevel", 100);
@@ -871,6 +952,12 @@ void IntegrationPluginShelly::onMulticastMessageReceived(const QHostAddress &sou
                 thing->setStateValue("batteryLevel", value.toInt());
             }
             thing->setStateValue("batteryCritical", thing->stateValue("batteryLevel").toUInt() < 10);
+            break;
+        case 3113:
+            thing->setStateValue("sensorOperation", value);
+            break;
+        case 3114:
+            thing->setStateValue("selfTest", value);
             break;
         case 3121:
             thing->setStateValue("valvePosition", value.toUInt());
@@ -1043,8 +1130,17 @@ void IntegrationPluginShelly::onMulticastMessageReceived(const QHostAddress &sou
         case 5108:
             white = value.toInt();
             break;
+        case 6105:
+            thing->setStateValue("fireDetected", value.toInt() == 1);
+            break;
+        case 6106:
+            thing->setStateValue("waterDetected", value.toInt() == 1);
+            break;
         case 6107:
             thing->setStateValue("isPresent", value.toInt() == 1);
+            break;
+        case 6108:
+            thing->setStateValue("gas", value);
             break;
         case 6110:
             thing->setStateValue("vibration", value.toInt() == 1);
@@ -1078,7 +1174,7 @@ void IntegrationPluginShelly::onMulticastMessageReceived(const QHostAddress &sou
         }
     }
     if (thing->thingClassId() == shellyRgbw2ThingClassId) {
-        thing->setStateValue(shellyRgbw2ThingClassId, QColor(red, green, blue));
+        thing->setStateValue(shellyRgbw2ColorStateTypeId, QColor(red, green, blue));
         thing->setStateValue(shellyRgbw2WhiteChannelStateTypeId, white);
     }
 
@@ -1092,6 +1188,12 @@ void IntegrationPluginShelly::onMulticastMessageReceived(const QHostAddress &sou
             roller->setStateValue(shellyRollerMovingStateTypeId, moving);
         }
     }
+
+    // Fetching info about signal strength, battery level for sleepy devices as they may be still awake when sending us something.
+    if (thing->thingClassId() == shellyFloodThingClassId ||
+            thing->thingClassId() == shellyTrvThingClassId) {
+        fetchStatusGen1(thing);
+    }
 }
 
 void IntegrationPluginShelly::updateStatus()
@@ -1100,6 +1202,12 @@ void IntegrationPluginShelly::updateStatus()
         if (thing->paramValue("id").toString().contains("Plus")) {
             fetchStatusGen2(thing);
         } else {
+            //Skipping sleepy devices, as they won't reply to cyclic requests.
+            if (thing->thingClassId() == shellyFloodThingClassId
+                    || thing->thingClassId() == shellyTrvThingClassId) {
+                continue;
+            }
+
             fetchStatusGen1(thing);
         }
     }
@@ -1214,6 +1322,25 @@ void IntegrationPluginShelly::setupGen1(ThingSetupInfo *info)
 
     QUrlQuery query;
     query.addQueryItem("coiot_enable", "true");
+    if (thing->paramValue("coapMode").toString() == "unicast") {
+        QHostAddress ourAddress;
+        foreach (const QNetworkInterface &interface, QNetworkInterface::allInterfaces()) {
+            foreach (const QNetworkAddressEntry &addressEntry, interface.addressEntries()) {
+                if (address.isInSubnet(addressEntry.ip(), addressEntry.prefixLength())) {
+                    ourAddress = addressEntry.ip();
+                    break;
+                }
+            }
+        }
+        if (!ourAddress.isNull()) {
+            query.addQueryItem("coiot_peer", ourAddress.toString() + ":5683");
+        } else {
+            qCWarning(dcShelly) << "Unable to determine a matching interface for CoIoT unicast. Falling back to multicast.";
+            query.addQueryItem("coiot_peer", "mcast");
+        }
+    } else {
+        query.addQueryItem("coiot_peer", "mcast");
+    }
 
     // Make sure the shelly 2.5 is in the mode we expect it to be (roller or relay)
     if (info->thing()->thingClassId() == shelly25ThingClassId || info->thing()->thingClassId() == shelly2ThingClassId) {
@@ -1262,6 +1389,10 @@ void IntegrationPluginShelly::setupGen1(ThingSetupInfo *info)
             info->thing()->setSettingValue(shellyTrvSettingsChildLockParamTypeId, settingsMap.value("child_lock").toBool());
             info->thing()->setSettingValue(shellyTrvSettingsDisplayFlippedParamTypeId, settingsMap.value("display").toMap().value("flipped").toBool());
             info->thing()->setSettingValue(shellyTrvSettingsDisplayBrightnessParamTypeId, settingsMap.value("display").toMap().value("brightness").toUInt());
+        } else if (info->thing()->thingClassId() == shellyGasThingClassId) {
+            info->thing()->setSettingValue(shellyGasSettingsBuzzerVolumeParamTypeId, settingsMap.value("set_volume").toUInt());
+        } else if (info->thing()->thingClassId() == shellyFloodThingClassId) {
+            info->thing()->setSettingValue(shellyFloodSettingsRainSensorParamTypeId, settingsMap.value("rain_sensor").toBool());
         }
 
         ThingDescriptors autoChilds;
@@ -1364,7 +1495,8 @@ void IntegrationPluginShelly::setupGen1(ThingSetupInfo *info)
     if (info->thing()->thingClassId() == shellyPlugThingClassId ||
             info->thing()->thingClassId() == shellyButton1ThingClassId ||
             info->thing()->thingClassId() == shellyI3ThingClassId ||
-            info->thing()->thingClassId() == shellyTrvThingClassId) {
+            info->thing()->thingClassId() == shellyTrvThingClassId ||
+            info->thing()->thingClassId() == shellyGasThingClassId) {
         connect(info->thing(), &Thing::settingChanged, this, [this, thing, shellyId](const ParamTypeId &settingTypeId, const QVariant &value) {
 
             pluginStorage()->beginGroup(thing->id().toString());
@@ -1408,6 +1540,12 @@ void IntegrationPluginShelly::setupGen1(ThingSetupInfo *info)
             } else if (settingTypeId == shellyTrvSettingsDisplayFlippedParamTypeId) {
                 url.setPath("/settings");
                 query.addQueryItem("display_flipped", value.toString());
+            } else if (settingTypeId == shellyGasSettingsBuzzerVolumeParamTypeId) {
+                url.setPath("/settings");
+                query.addQueryItem("set_volume", value.toString());
+            } else if (settingTypeId == shellyFloodSettingsRainSensorParamTypeId) {
+                url.setPath("/settings");
+                query.addQueryItem("rain_sensor", value.toString());
             }
 
             url.setQuery(query);
@@ -1483,7 +1621,7 @@ void IntegrationPluginShelly::setupGen2(ThingSetupInfo *info)
                 thing->setStateValue("currentPower", switch0.value("apower").toDouble());
             }
             if (switch0.contains("aenergy") && thing->hasState("totalEnergyConsumed")) {
-                thing->setStateValue("totalEnergyConsumed", notification.value("switch:0").toMap().value("aenergy").toMap().value("total").toDouble());
+                thing->setStateValue("totalEnergyConsumed", notification.value("switch:0").toMap().value("aenergy").toMap().value("total").toDouble() / 1000);
             }
             if (switch0.contains("output") && thing->hasState("power")) {
                 thing->setStateValue("power", switch0.value("output").toBool());
