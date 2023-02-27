@@ -1,3 +1,9 @@
+nymea-plugins (1.5.102) jammy; urgency=medium
+
+  * fix wrong MeterId for updating the Smart Meter
+
+ -- Leonhard Heizinger <l.heizinger@consolinno.de>  Wed, 27 Feb 2022 10:28:48 +0100
+
 nymea-plugins (1.5.101-1) jammy; urgency=medium
 
   * Bumps version number to reflect fork: 1.5.1>01-1<-- Fork version based on upstream 1.5.1
