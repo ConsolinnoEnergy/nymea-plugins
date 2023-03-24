@@ -161,8 +161,10 @@ void IntegrationPluginKostal::setupThing(ThingSetupInfo *info) {
                 Thing::ThingErrorHardwareFailure,
                 QT_TR_NOOP("The data received from the device could not "
                            "be processed because the format is unknown."));
+            free(xmlDoc);
             return;
           }
+          free(xmlDoc);
           info->finish(Thing::ThingErrorNoError);
           this->m_kostalConnection = connection;
           this->m_connectionThing = thing;
@@ -273,6 +275,7 @@ void IntegrationPluginKostal::refreshConnection() {
     if (xmlDoc->hasError()) {
       qCWarning(dcKostalpico())
           << "Failed to parse XML data" << data << ":" << xmlDoc->error();
+      free(xmlDoc);
       return;
     }
     bool childEmpty =
@@ -322,6 +325,7 @@ void IntegrationPluginKostal::updateCurrentPower(
         if (xmlDoc->hasError()) {
           qCWarning(dcKostalpico())
               << "Failed to parse XML data" << data << ":" << xmlDoc->error();
+          free(xmlDoc);
           return;
         }
         qCDebug(dcKostalpico()) << "Reading Measurements XML";
@@ -368,7 +372,7 @@ void IntegrationPluginKostal::updateCurrentPower(
             }
           }
         }
-
+        free(xmlDoc);
         if (entryFound) {
           qCDebug(dcKostalpico()) << "Value for Consumption found " << currentPower;
           Thing *kostalPicoInverter =
@@ -406,6 +410,7 @@ void IntegrationPluginKostal::updateTotalEnergyProduced(
         if (xmlDoc->hasError()) {
           qCWarning(dcKostalpico())
               << "Failed to parse XML data" << data << ":" << xmlDoc->error();
+          free(xmlDoc);
           return;
         }
 
@@ -436,6 +441,7 @@ void IntegrationPluginKostal::updateTotalEnergyProduced(
             }
           }
         }
+        free(xmlDoc);
         if (entryFound) {
           qCDebug(dcKostalpico())
               << "Entry found writing Value : " << totalProducedEnergy;
