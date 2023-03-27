@@ -161,10 +161,10 @@ void IntegrationPluginKostal::setupThing(ThingSetupInfo *info) {
                 Thing::ThingErrorHardwareFailure,
                 QT_TR_NOOP("The data received from the device could not "
                            "be processed because the format is unknown."));
-            free(xmlDoc);
+            delete(xmlDoc);
             return;
           }
-          free(xmlDoc);
+          delete(xmlDoc);
           info->finish(Thing::ThingErrorNoError);
           this->m_kostalConnection = connection;
           this->m_connectionThing = thing;
@@ -275,9 +275,10 @@ void IntegrationPluginKostal::refreshConnection() {
     if (xmlDoc->hasError()) {
       qCWarning(dcKostalpico())
           << "Failed to parse XML data" << data << ":" << xmlDoc->error();
-      free(xmlDoc);
+      delete(xmlDoc);
       return;
     }
+    delete(xmlDoc);
     bool childEmpty =
         myThings().filterByThingClassId(kostalpicoThingClassId).isEmpty();
     qCDebug(dcKostalpico()) << "Looking if ChildrenThing is empty";
@@ -325,7 +326,7 @@ void IntegrationPluginKostal::updateCurrentPower(
         if (xmlDoc->hasError()) {
           qCWarning(dcKostalpico())
               << "Failed to parse XML data" << data << ":" << xmlDoc->error();
-          free(xmlDoc);
+          delete(xmlDoc);
           return;
         }
         qCDebug(dcKostalpico()) << "Reading Measurements XML";
@@ -372,7 +373,7 @@ void IntegrationPluginKostal::updateCurrentPower(
             }
           }
         }
-        free(xmlDoc);
+        delete(xmlDoc);
         if (entryFound) {
           qCDebug(dcKostalpico()) << "Value for Consumption found " << currentPower;
           Thing *kostalPicoInverter =
@@ -410,7 +411,7 @@ void IntegrationPluginKostal::updateTotalEnergyProduced(
         if (xmlDoc->hasError()) {
           qCWarning(dcKostalpico())
               << "Failed to parse XML data" << data << ":" << xmlDoc->error();
-          free(xmlDoc);
+          delete(xmlDoc);
           return;
         }
 
@@ -441,7 +442,7 @@ void IntegrationPluginKostal::updateTotalEnergyProduced(
             }
           }
         }
-        free(xmlDoc);
+        delete(xmlDoc);
         if (entryFound) {
           qCDebug(dcKostalpico())
               << "Entry found writing Value : " << totalProducedEnergy;
