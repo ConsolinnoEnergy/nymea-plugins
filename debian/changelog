@@ -1,4 +1,4 @@
-nymea-plugins (1.5.102) jammy; urgency=medium
+nymea-plugins (1.5.102-1) jammy; urgency=medium
 
   * fix wrong MeterId for updating the Smart Meter
 
