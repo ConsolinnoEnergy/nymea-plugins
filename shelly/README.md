@@ -9,12 +9,15 @@ The currently supported devices are:
 * Shelly 1L
 * Shelly 2
 * Shelly 2.5
+* Shelly Plus 2PM
 * Shelly Plug / PlugS
+* Shelly Plus Plug S
 * Shelly RGBW2
 * Shelly Dimmer / Dimmer 2
 * Shelly Button 1
 * Shelly EM
 * Shelly 3EM
+* Shelly Pro 3EM
 * Shelly H+T
 * Shelly i3
 * Shelly Motion
@@ -39,6 +42,9 @@ from now on and this login will be required also for the web interface of the Sh
 It is recommended to keep the Shelly Button 1 plugged into a power source during setup and configuration. Without a power source
 it will shut down right after a button press which might interrupt the setup. However, once set up, the Shelly Button 1 will work
 perfectly fine in the low power mode.
+
+### Note for Shelly power meters
+Shelly devices require an internet connection to sync the time for the total energy counters to work. The timeserver can be configured in the devices webinterface.
 
 ### Note regarding firmware updates
 Some shelly devices get sold with an old firmware version installed. Some functionality will be missing. Since some point in 2021, shelly devices need to connect to the shelly cloud once to pull firmware updates. So please enable cloud access in the settings under "Internet & Security" -> "Cloud" and wait a few minutes.

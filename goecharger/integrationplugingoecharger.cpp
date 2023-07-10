@@ -223,11 +223,17 @@ void IntegrationPluginGoECharger::postSetupThing(Thing *thing)
             case ApiVersion1:
                 if (m_mqttChannelsV1.contains(thing)) {
                     thing->setStateValue("connected", m_mqttChannelsV1.value(thing)->isConnected());
+                    if (!m_mqttChannelsV1.value(thing)->isConnected()) {
+                        markAsDisconnected(thing);
+                    }
                 }
                 break;
             case ApiVersion2:
                 if (m_mqttChannelsV2.contains(thing)) {
                     thing->setStateValue("connected", m_mqttChannelsV2.value(thing)->isConnected());
+                    if (!m_mqttChannelsV2.value(thing)->isConnected()) {
+                        markAsDisconnected(thing);
+                    }
                 }
                 break;
             }
@@ -317,7 +323,7 @@ void IntegrationPluginGoECharger::executeAction(ThingActionInfo *info)
             connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
             connect(reply, &QNetworkReply::finished, info, [=](){
                 if (reply->error() != QNetworkReply::NoError) {
-                    qCWarning(dcGoECharger()) << "Execute action failed. TP reply returned error:" << thing->name() << reply->errorString() << reply->readAll();
+                    qCWarning(dcGoECharger()) << "Execute action failed for" << thing->name() << "HTTP error:" << reply->errorString() << reply->readAll() << "Request was:" << request.url().toString();
                     info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP("The wallbox does not seem to be reachable."));
                     return;
                 }
@@ -326,7 +332,7 @@ void IntegrationPluginGoECharger::executeAction(ThingActionInfo *info)
                 QJsonParseError error;
                 QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
                 if (error.error != QJsonParseError::NoError) {
-                    qCWarning(dcGoECharger()) << "Execute action failed. Failed to parse data for thing " << thing->name() << qUtf8Printable(data) << error.errorString();
+                    qCWarning(dcGoECharger()) << "Execute action failed for" << thing->name() << "Parsing data failed:" << qUtf8Printable(data) << error.errorString() << "Request was:" << request.url().toString();
                     info->finish(Thing::ThingErrorHardwareFailure, QT_TR_NOOP("The wallbox returned invalid data."));
                     return;
                 }
@@ -356,7 +362,7 @@ void IntegrationPluginGoECharger::executeAction(ThingActionInfo *info)
             connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
             connect(reply, &QNetworkReply::finished, info, [=](){
                 if (reply->error() != QNetworkReply::NoError) {
-                    qCWarning(dcGoECharger()) << "Execute action failed. HTTP status reply returned error:" << thing->name() << reply->errorString() << reply->readAll();
+                    qCWarning(dcGoECharger()) << "Execute action failed for" << thing->name() << "HTTP error:" << reply->errorString() << reply->readAll() << "Request was:" << request.url().toString();
                     info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP("The wallbox does not seem to be reachable."));
                     return;
                 }
@@ -365,7 +371,7 @@ void IntegrationPluginGoECharger::executeAction(ThingActionInfo *info)
                 QJsonParseError error;
                 QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
                 if (error.error != QJsonParseError::NoError) {
-                    qCWarning(dcGoECharger()) << "Execute action failed. Failed to parse data for thing " << thing->name() << qUtf8Printable(data) << error.errorString();
+                    qCWarning(dcGoECharger()) << "Execute action failed for" << thing->name() << "Failed to parse data" << qUtf8Printable(data) << error.errorString() << "Request was:" << request.url().toString();
                     info->finish(Thing::ThingErrorHardwareFailure, QT_TR_NOOP("The wallbox returned invalid data."));
                     return;
                 }
@@ -377,6 +383,45 @@ void IntegrationPluginGoECharger::executeAction(ThingActionInfo *info)
                     info->finish(Thing::ThingErrorNoError);
                 } else {
                     qCWarning(dcGoECharger()) << "Action finished with error:" << responseCode.value("amp").toString();
+                    info->finish(Thing::ThingErrorHardwareFailure);
+                }
+            });
+            return;
+        } else if (action.actionTypeId() == goeHomeDesiredPhaseCountActionTypeId) {
+            uint desiredPhases = action.paramValue(goeHomeDesiredPhaseCountActionDesiredPhaseCountParamTypeId).toUInt();
+            QString value = desiredPhases == 1 ? "1" : "2"; // 1: 1-Phase, 2: 3-Phases (0: Auto)
+            qCDebug(dcGoECharger()) << "Setting phaseSwitchMode to" << value;
+            // Warning: using QUrlQuery not always works here due to standard mixing from go-e:
+            // The url query has to be JSON encoded, i.e. <url>/set?fna="mein charger"
+            QUrlQuery configuration;
+            configuration.addQueryItem("psm", value);
+            QNetworkRequest request = buildConfigurationRequestV2(address, configuration);
+            QNetworkReply *reply = hardwareManager()->networkManager()->get(request);
+            connect(info, &ThingActionInfo::aborted, reply, &QNetworkReply::abort);
+            connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
+            connect(reply, &QNetworkReply::finished, info, [=](){
+                if (reply->error() != QNetworkReply::NoError) {
+                    qCWarning(dcGoECharger()) << "Execute action failed for" << thing->name() << "HTTP error:" << reply->errorString() << reply->readAll() << "Request was:" << request.url().toString();
+                    info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP("The wallbox does not seem to be reachable."));
+                    return;
+                }
+
+                QByteArray data = reply->readAll();
+                QJsonParseError error;
+                QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+                if (error.error != QJsonParseError::NoError) {
+                    qCWarning(dcGoECharger()) << "Execute action failed for" << thing->name() << "Failed to parse data" << qUtf8Printable(data) << error.errorString() << "Request was:" << request.url().toString();
+                    info->finish(Thing::ThingErrorHardwareFailure, QT_TR_NOOP("The wallbox returned invalid data."));
+                    return;
+                }
+
+                QVariantMap responseCode = jsonDoc.toVariant().toMap();
+                if (responseCode.value("psm", false).toBool()) {
+                    qCDebug(dcGoECharger()) << "Execute action finished successfully. phaseSwitchMode" << value << "desired phases:" << desiredPhases;
+                    thing->setStateValue(goeHomeDesiredPhaseCountStateTypeId, desiredPhases);
+                    info->finish(Thing::ThingErrorNoError);
+                } else {
+                    qCWarning(dcGoECharger()) << "Action finished with error:" << responseCode.value("psm").toString();
                     info->finish(Thing::ThingErrorHardwareFailure);
                 }
             });
@@ -566,6 +611,7 @@ void IntegrationPluginGoECharger::updateV1(Thing *thing, const QVariantMap &stat
     // FIXME: check if we can use amx since it is better for pv charging, not all version seen implement this
     thing->setStateValue(goeHomeMaxChargingCurrentStateTypeId, statusMap.value("amp").toUInt());
     thing->setStateValue(goeHomeAdapterConnectedStateTypeId, (statusMap.value("adi").toUInt() == 0 ? false : true));
+    thing->setStateValue(goeHomeDesiredPhaseCountStateTypeId, statusMap.value("psm").toUInt()  == 1 ? 1 : 3);
 
     uint amaLimit = statusMap.value("ama").toUInt();
     uint cableLimit = statusMap.value("cbl").toUInt();
@@ -1173,33 +1219,33 @@ void IntegrationPluginGoECharger::updateV2(Thing *thing, const QVariantMap &stat
         QVariantList measurementList = statusMap.value("nrg").toList();
 
         if (measurementList.count() >= 1)
-            voltagePhaseA = measurementList.at(0).toUInt();
+            voltagePhaseA = measurementList.at(0).toDouble();
 
         if (measurementList.count() >= 2)
-            voltagePhaseB = measurementList.at(1).toUInt();
+            voltagePhaseB = measurementList.at(1).toDouble();
 
         if (measurementList.count() >= 3)
-            voltagePhaseC = measurementList.at(2).toUInt();
+            voltagePhaseC = measurementList.at(2).toDouble();
 
         if (measurementList.count() >= 5)
-            amperePhaseA = measurementList.at(4).toUInt();
+            amperePhaseA = measurementList.at(4).toDouble();
 
         if (measurementList.count() >= 6)
-            amperePhaseB = measurementList.at(5).toUInt();
+            amperePhaseB = measurementList.at(5).toDouble();
 
         if (measurementList.count() >= 7)
-            amperePhaseC = measurementList.at(6).toUInt();
+            amperePhaseC = measurementList.at(6).toDouble();
 
         if (measurementList.count() >= 8)
-            powerPhaseA = measurementList.at(7).toUInt();
+            powerPhaseA = measurementList.at(7).toDouble();
         if (measurementList.count() >= 9)
-            powerPhaseB = measurementList.at(8).toUInt() ;
+            powerPhaseB = measurementList.at(8).toDouble() ;
 
         if (measurementList.count() >= 10)
-            powerPhaseC = measurementList.at(9).toUInt();
+            powerPhaseC = measurementList.at(9).toDouble();
 
         if (measurementList.count() >= 12)
-            currentPower = measurementList.at(11).toUInt();
+            currentPower = measurementList.at(11).toDouble();
 
         // Update all states
         thing->setStateValue(goeHomeVoltagePhaseAStateTypeId, voltagePhaseA);
@@ -1289,7 +1335,7 @@ void IntegrationPluginGoECharger::setupMqttChannelV2(ThingSetupInfo *info, const
     connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
     connect(reply, &QNetworkReply::finished, info, [=](){
         if (reply->error() != QNetworkReply::NoError) {
-            qCWarning(dcGoECharger()) << "HTTP status reply returned error:" << reply->errorString() << reply->readAll();
+            qCWarning(dcGoECharger()) << "Failed to set MQTT config for" << thing->name() << reply->errorString() << reply->readAll() << "Request was:" << request.url().toString();
             info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP("The wallbox does not seem to be reachable."));
             return;
         }
@@ -1298,7 +1344,7 @@ void IntegrationPluginGoECharger::setupMqttChannelV2(ThingSetupInfo *info, const
         QJsonParseError error;
         QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
         if (error.error != QJsonParseError::NoError) {
-            qCWarning(dcGoECharger()) << "Failed to set mqtt configuration for thing " << thing->name() << qUtf8Printable(data) << error.errorString();
+            qCWarning(dcGoECharger()) << "Failed to parse MQTT config reply from" << thing->name() << qUtf8Printable(data) << error.errorString() << "Request was:" << request.url().toString();
             info->finish(Thing::ThingErrorHardwareFailure, QT_TR_NOOP("The wallbox returned invalid data."));
             return;
         }
@@ -1378,7 +1424,7 @@ void IntegrationPluginGoECharger::reconfigureMqttChannelV2(Thing *thing)
     connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
     connect(reply, &QNetworkReply::finished, thing, [=](){
         if (reply->error() != QNetworkReply::NoError) {
-            qCWarning(dcGoECharger()) << "HTTP status reply returned error:" << reply->errorString() << reply->readAll();
+            qCWarning(dcGoECharger()) << "Configuring MQTT for" << thing->name() << "failed:" << reply->errorString() << reply->readAll() << "Request was:" << request.url().toString();
             hardwareManager()->mqttProvider()->releaseChannel(m_mqttChannelsV2.take(thing));
             return;
         }
@@ -1387,7 +1433,7 @@ void IntegrationPluginGoECharger::reconfigureMqttChannelV2(Thing *thing)
         QJsonParseError error;
         QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
         if (error.error != QJsonParseError::NoError) {
-            qCWarning(dcGoECharger()) << "Failed to set mqtt configuration for thing " << thing->name() << qUtf8Printable(data) << error.errorString();
+            qCWarning(dcGoECharger()) << "Failed to parse MQTT config reply for" << thing->name() << qUtf8Printable(data) << error.errorString() << "Request was:" << request.url().toString();
             hardwareManager()->mqttProvider()->releaseChannel(m_mqttChannelsV2.take(thing));
             return;
         }
@@ -1448,8 +1494,8 @@ void IntegrationPluginGoECharger::refreshHttp()
             m_pendingReplies.remove(thing);
 
             if (reply->error() != QNetworkReply::NoError) {
-                qCWarning(dcGoECharger()) << "HTTP status reply returned error:" << reply->errorString();
-                thing->setStateValue("connected", false);
+                qCWarning(dcGoECharger()) << "HTTP status reply error for thing" << thing->name() << reply->errorString() << "Request was:" << request.url().toString();
+                markAsDisconnected(thing);
                 return;
             }
 
@@ -1457,8 +1503,8 @@ void IntegrationPluginGoECharger::refreshHttp()
             QJsonParseError error;
             QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
             if (error.error != QJsonParseError::NoError) {
-                qCWarning(dcGoECharger()) << "Failed to parse status data for thing " << thing->name() << qUtf8Printable(data) << error.errorString();
-                thing->setStateValue("connected", false);
+                qCWarning(dcGoECharger()) << "Failed to parse status data for thing" << thing->name() << qUtf8Printable(data) << error.errorString() << "Request was:" << request.url().toString();
+                markAsDisconnected(thing);
                 return;
             }
 
@@ -1502,7 +1548,7 @@ void IntegrationPluginGoECharger::onMqttClientV1Disconnected(MqttChannel *channe
     }
 
     qCDebug(dcGoECharger()) << thing << "connected";
-    thing->setStateValue("connected", false);
+    markAsDisconnected(thing);
 }
 
 void IntegrationPluginGoECharger::onMqttPublishV1Received(MqttChannel *channel, const QString &topic, const QByteArray &payload)
@@ -1517,7 +1563,7 @@ void IntegrationPluginGoECharger::onMqttPublishV1Received(MqttChannel *channel, 
     QJsonParseError error;
     QJsonDocument jsonDoc = QJsonDocument::fromJson(payload, &error);
     if (error.error != QJsonParseError::NoError) {
-        qCWarning(dcGoECharger()) << "Failed to parse status data for thing " << thing->name() << qUtf8Printable(payload) << error.errorString();
+        qCWarning(dcGoECharger()) << "Failed to parse MQTT status data for thing" << thing->name() << "on topic" << topic << error.errorString() << qUtf8Printable(payload);
         return;
     }
 
@@ -1525,7 +1571,7 @@ void IntegrationPluginGoECharger::onMqttPublishV1Received(MqttChannel *channel, 
     if (topic == QString("go-eCharger/%1/status").arg(serialNumber)) {
         updateV1(thing, jsonDoc.toVariant().toMap());
     } else {
-        qCDebug(dcGoECharger()) << "Unhandled topic publish received:" << topic << qUtf8Printable(jsonDoc.toJson(QJsonDocument::Compact));
+        qCDebug(dcGoECharger()) << "Unhandled MQTT topic publish received for thing" << thing->name() << "on topic" << topic << qUtf8Printable(jsonDoc.toJson(QJsonDocument::Compact));
     }
 }
 
@@ -1550,5 +1596,22 @@ void IntegrationPluginGoECharger::onMqttClientV2Disconnected(MqttChannel *channe
     }
 
     qCDebug(dcGoECharger()) << thing << "connected";
+    markAsDisconnected(thing);
+}
+
+void IntegrationPluginGoECharger::markAsDisconnected(Thing *thing)
+{
+    qCDebug(dcGoECharger()) << "Mark device as disconnected" << thing;
     thing->setStateValue("connected", false);
+    thing->setStateValue("currentPower", 0);
+    thing->setStateValue("voltagePhaseA", 0);
+    thing->setStateValue("voltagePhaseB", 0);
+    thing->setStateValue("voltagePhaseC", 0);
+    thing->setStateValue("currentPhaseA", 0);
+    thing->setStateValue("currentPhaseB", 0);
+    thing->setStateValue("currentPhaseC", 0);
+    thing->setStateValue("currentPowerPhaseA", 0);
+    thing->setStateValue("currentPowerPhaseB", 0);
+    thing->setStateValue("currentPowerPhaseC", 0);
+    thing->setStateValue("frequency", 0);
 }
