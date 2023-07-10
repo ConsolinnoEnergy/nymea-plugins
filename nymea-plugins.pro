@@ -65,7 +65,6 @@ PLUGIN_DIRS = \
     shelly              \
     simpleheatpump      \
     simplesmartconsumer \
-    sma                 \
     solarlog            \
     somfytahoma         \
     sonos               \
