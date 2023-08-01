@@ -198,6 +198,13 @@ Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin for easee
  This package contains the nymea integration plugin for devices from Easee
 
+Package: nymea-plugin-eebus
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Conflicts: nymea-plugins-translations (< 1.0.1)
+Description: nymea integration plugin for eebus
+ This package contains the nymea integration plugin for devices from EEBUS
 
 Package: nymea-plugin-elgato
 Architecture: any

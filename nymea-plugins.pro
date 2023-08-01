@@ -20,6 +20,7 @@ PLUGIN_DIRS = \
     dweetio             \
     dynatrace           \
     easee               \
+    eebus               \
     elgato              \
     eq-3                \
     espuino             \
