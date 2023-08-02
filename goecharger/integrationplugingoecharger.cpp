@@ -387,45 +387,6 @@ void IntegrationPluginGoECharger::executeAction(ThingActionInfo *info)
                 }
             });
             return;
-        } else if (action.actionTypeId() == goeHomeDesiredPhaseCountActionTypeId) {
-            uint desiredPhases = action.paramValue(goeHomeDesiredPhaseCountActionDesiredPhaseCountParamTypeId).toUInt();
-            QString value = desiredPhases == 1 ? "1" : "2"; // 1: 1-Phase, 2: 3-Phases (0: Auto)
-            qCDebug(dcGoECharger()) << "Setting phaseSwitchMode to" << value;
-            // Warning: using QUrlQuery not always works here due to standard mixing from go-e:
-            // The url query has to be JSON encoded, i.e. <url>/set?fna="mein charger"
-            QUrlQuery configuration;
-            configuration.addQueryItem("psm", value);
-            QNetworkRequest request = buildConfigurationRequestV2(address, configuration);
-            QNetworkReply *reply = hardwareManager()->networkManager()->get(request);
-            connect(info, &ThingActionInfo::aborted, reply, &QNetworkReply::abort);
-            connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
-            connect(reply, &QNetworkReply::finished, info, [=](){
-                if (reply->error() != QNetworkReply::NoError) {
-                    qCWarning(dcGoECharger()) << "Execute action failed for" << thing->name() << "HTTP error:" << reply->errorString() << reply->readAll() << "Request was:" << request.url().toString();
-                    info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP("The wallbox does not seem to be reachable."));
-                    return;
-                }
-
-                QByteArray data = reply->readAll();
-                QJsonParseError error;
-                QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
-                if (error.error != QJsonParseError::NoError) {
-                    qCWarning(dcGoECharger()) << "Execute action failed for" << thing->name() << "Failed to parse data" << qUtf8Printable(data) << error.errorString() << "Request was:" << request.url().toString();
-                    info->finish(Thing::ThingErrorHardwareFailure, QT_TR_NOOP("The wallbox returned invalid data."));
-                    return;
-                }
-
-                QVariantMap responseCode = jsonDoc.toVariant().toMap();
-                if (responseCode.value("psm", false).toBool()) {
-                    qCDebug(dcGoECharger()) << "Execute action finished successfully. phaseSwitchMode" << value << "desired phases:" << desiredPhases;
-                    thing->setStateValue(goeHomeDesiredPhaseCountStateTypeId, desiredPhases);
-                    info->finish(Thing::ThingErrorNoError);
-                } else {
-                    qCWarning(dcGoECharger()) << "Action finished with error:" << responseCode.value("psm").toString();
-                    info->finish(Thing::ThingErrorHardwareFailure);
-                }
-            });
-            return;
         } else {
             info->finish(Thing::ThingErrorActionTypeNotFound);
         }
@@ -611,7 +572,6 @@ void IntegrationPluginGoECharger::updateV1(Thing *thing, const QVariantMap &stat
     // FIXME: check if we can use amx since it is better for pv charging, not all version seen implement this
     thing->setStateValue(goeHomeMaxChargingCurrentStateTypeId, statusMap.value("amp").toUInt());
     thing->setStateValue(goeHomeAdapterConnectedStateTypeId, (statusMap.value("adi").toUInt() == 0 ? false : true));
-    thing->setStateValue(goeHomeDesiredPhaseCountStateTypeId, statusMap.value("psm").toUInt()  == 1 ? 1 : 3);
 
     uint amaLimit = statusMap.value("ama").toUInt();
     uint cableLimit = statusMap.value("cbl").toUInt();
@@ -1219,33 +1179,33 @@ void IntegrationPluginGoECharger::updateV2(Thing *thing, const QVariantMap &stat
         QVariantList measurementList = statusMap.value("nrg").toList();
 
         if (measurementList.count() >= 1)
-            voltagePhaseA = measurementList.at(0).toDouble();
+            voltagePhaseA = measurementList.at(0).toUInt();
 
         if (measurementList.count() >= 2)
-            voltagePhaseB = measurementList.at(1).toDouble();
+            voltagePhaseB = measurementList.at(1).toUInt();
 
         if (measurementList.count() >= 3)
-            voltagePhaseC = measurementList.at(2).toDouble();
+            voltagePhaseC = measurementList.at(2).toUInt();
 
         if (measurementList.count() >= 5)
-            amperePhaseA = measurementList.at(4).toDouble();
+            amperePhaseA = measurementList.at(4).toUInt();
 
         if (measurementList.count() >= 6)
-            amperePhaseB = measurementList.at(5).toDouble();
+            amperePhaseB = measurementList.at(5).toUInt();
 
         if (measurementList.count() >= 7)
-            amperePhaseC = measurementList.at(6).toDouble();
+            amperePhaseC = measurementList.at(6).toUInt();
 
         if (measurementList.count() >= 8)
-            powerPhaseA = measurementList.at(7).toDouble();
+            powerPhaseA = measurementList.at(7).toUInt();
         if (measurementList.count() >= 9)
-            powerPhaseB = measurementList.at(8).toDouble() ;
+            powerPhaseB = measurementList.at(8).toUInt() ;
 
         if (measurementList.count() >= 10)
-            powerPhaseC = measurementList.at(9).toDouble();
+            powerPhaseC = measurementList.at(9).toUInt();
 
         if (measurementList.count() >= 12)
-            currentPower = measurementList.at(11).toDouble();
+            currentPower = measurementList.at(11).toUInt();
 
         // Update all states
         thing->setStateValue(goeHomeVoltagePhaseAStateTypeId, voltagePhaseA);

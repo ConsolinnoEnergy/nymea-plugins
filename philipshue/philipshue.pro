@@ -12,8 +12,7 @@ SOURCES += \
     huelight.cpp \
     huemotionsensor.cpp \
     hueremote.cpp \
-    huedevice.cpp \
-    huetapdial.cpp
+    huedevice.cpp
 
 HEADERS += \
     integrationpluginphilipshue.h \
@@ -24,8 +23,7 @@ HEADERS += \
     huelight.h \
     huemotionsensor.h \
     hueremote.h \
-    huedevice.h \
-    huetapdial.h
+    huedevice.h
 
 
 

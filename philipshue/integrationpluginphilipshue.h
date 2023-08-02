@@ -36,7 +36,6 @@
 #include "huelight.h"
 #include "hueremote.h"
 #include "huemotionsensor.h"
-#include "huetapdial.h"
 
 #include "plugintimer.h"
 #include "network/networkaccessmanager.h"
@@ -74,13 +73,6 @@ private slots:
     void lightStateChanged();
     void remoteStateChanged();
     void onRemoteButtonEvent(int buttonCode);
-
-    // Tap Dial
-    void onTapDialReachableChanged(bool reachable);
-    void onTapDialBatteryLevelChanged(int batteryLevel);
-    void onTapDialRotaryEvent(int rotationCode);
-    void onTapDialButtonEvent(int buttonCode);
-
 
     // Motion sensor
     void onMotionSensorReachableChanged(bool reachable);
@@ -129,7 +121,6 @@ private:
     QHash<HueBridge *, Thing *> m_bridges;
     QHash<HueLight *, Thing *> m_lights;
     QHash<HueRemote *, Thing *> m_remotes;
-    QHash<HueTapDial *, Thing *> m_tapDials;
     QHash<HueMotionSensor *, Thing *> m_motionSensors;
 
     void refreshLight(Thing *thing);

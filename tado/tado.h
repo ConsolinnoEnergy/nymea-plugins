@@ -75,7 +75,7 @@ public:
         bool settingPower = false;
         double temperature = false;
         double humidity = false;
-        bool windowOpenDetected = false;
+        bool windowOpen = false;
         double heatingPowerPercentage = false;
         QString heatingPowerType;
         bool overlayIsSet = false;
