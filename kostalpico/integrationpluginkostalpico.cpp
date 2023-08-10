@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Copyright (C) 2020 Consolinno Energy GmbH <f.stoecker@consolinno.de> *
  *                                                                         *
@@ -105,7 +105,7 @@ void IntegrationPluginKostal::setupThing(ThingSetupInfo *info) {
 
     MacAddress mac = MacAddress(
         thing->paramValue(connectionThingMacAddressParamTypeId).toString());
-    if (!mac.isValid()) {
+    if (!mac.isNull()) {
       info->finish(Thing::ThingErrorInvalidParameter,
                    QT_TR_NOOP("The given MAC address is not valid."));
       return;
