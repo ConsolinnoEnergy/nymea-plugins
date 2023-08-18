@@ -106,7 +106,7 @@ void IntegrationPluginGoECharger::setupThing(ThingSetupInfo *info)
     qCDebug(dcGoECharger()) << "Setting up" << thing << thing->params();
 
     MacAddress macAddress = MacAddress(thing->paramValue(goeHomeThingMacAddressParamTypeId).toString());
-    if (!macAddress.isNull()) {
+    if (macAddress.isNull()) {
         qCWarning(dcGoECharger()) << "The configured mac address is not valid" << thing->params();
         info->finish(Thing::ThingErrorInvalidParameter, QT_TR_NOOP("The MAC address is not known. Please reconfigure the thing."));
         return;
