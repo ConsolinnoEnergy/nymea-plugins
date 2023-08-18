@@ -105,7 +105,7 @@ void IntegrationPluginKostal::setupThing(ThingSetupInfo *info) {
 
     MacAddress mac = MacAddress(
         thing->paramValue(connectionThingMacAddressParamTypeId).toString());
-    if (!mac.isNull()) {
+    if (mac.isNull()) {
       info->finish(Thing::ThingErrorInvalidParameter,
                    QT_TR_NOOP("The given MAC address is not valid."));
       return;
