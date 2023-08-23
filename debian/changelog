@@ -1,3 +1,9 @@
+nymea-plugins (1.7.100-1) jammy; urgency=medium
+
+  * Add plugin for kostal pico inverter
+
+ -- Michael Menner <m.menner@consolinno.de>  Wed, 23 Aug 2023 10:00:41 +0100
+
 nymea-plugins (1.7.0) jammy; urgency=medium
 
   [ Michael Zanetti ]
