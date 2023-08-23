@@ -1,7 +1,9 @@
-include($$[QT_INSTALL_PREFIX]/include/nymea/plugin.pri)
+include(../plugins.pri)
 
 QT += network
 QT += core
+
+TARGET = $$qtLibraryTarget(nymea_integrationpluginanel)
 
 QMAKE_CXXFLAGS_WARN_ON += -Wno-reorder
 
