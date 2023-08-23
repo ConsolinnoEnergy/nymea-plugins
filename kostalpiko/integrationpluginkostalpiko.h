@@ -18,12 +18,12 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef INTEGRATIONPLUGINKOSTALPICO_H
-#define INTEGRATIONPLUGINKOSTALPICO_H
+#ifndef INTEGRATIONPLUGINKOSTALPIKO_H
+#define INTEGRATIONPLUGINKOSTALPIKO_H
 
 #include <integrations/integrationplugin.h>
 
-#include "kostalpicoconnection.h"
+#include "kostalpikoconnection.h"
 
 #include <QObject>
 #include <QHash>
@@ -33,42 +33,34 @@
 
 class PluginTimer;
 
-class IntegrationPluginKostal: public IntegrationPlugin
+class IntegrationPluginKostalPiko: public IntegrationPlugin
 {
     Q_OBJECT
 
-    Q_PLUGIN_METADATA(IID "io.nymea.IntegrationPlugin" FILE "integrationpluginkostalpico.json")
+    Q_PLUGIN_METADATA(IID "io.nymea.IntegrationPlugin" FILE "integrationpluginkostalpiko.json")
     Q_INTERFACES(IntegrationPlugin)
 
 
 public:
-    explicit IntegrationPluginKostal();
-
-    //void init() override;
-
+    explicit IntegrationPluginKostalPiko();
     void discoverThings(ThingDiscoveryInfo *info) override;
-
     void setupThing(ThingSetupInfo *info) override;
-
     void postSetupThing(Thing *info) override;
-
-    void executeAction(ThingActionInfo *info) override;
-
     void thingRemoved(Thing *thing) override;
 
 private:
 
     PluginTimer *m_connectionRefreshTimer = nullptr;
 
-    KostalPicoConnection *m_kostalConnection;
+    KostalPikoConnection *m_kostalConnection;
     Thing *m_connectionThing = nullptr;
 
     void refreshConnection();
     //Consumption
-    void updateCurrentPower(KostalPicoConnection *connection);
+    void updateCurrentPower(KostalPikoConnection *connection);
     //Production
-    void updateTotalEnergyProduced(KostalPicoConnection *connection);
+    void updateTotalEnergyProduced(KostalPikoConnection *connection);
     bool m_toggle;
 };
 
-#endif // INTEGRATIONPLUGINKOSTALPICO_H
+#endif // INTEGRATIONPLUGINKOSTALPIKO_H

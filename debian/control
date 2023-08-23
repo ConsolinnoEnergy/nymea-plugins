@@ -339,14 +339,14 @@ Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin for kodi
  This package contains the nymea integration plugin for kodi
 
-Package: nymea-plugin-kostalpico
+Package: nymea-plugin-kostalpiko
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends},
 Conflicts: nymea-plugins-translations (< 1.0.1)
-Description: nymea.io plugin for kostalpico
+Description: nymea.io plugin for Kostal Piko MP Plus
  The nymea daemon is a plugin based IoT (Internet of Things) server.
- This package will install the nymea.io plugin for kostal pico mp plus smartmeter.
+ This package will install the nymea.io plugin for Kostal Piko MP Plus smartmeter.
 
 
 Package: nymea-plugin-lgsmarttv

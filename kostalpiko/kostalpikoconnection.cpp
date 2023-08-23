@@ -1,19 +1,19 @@
-#include "kostalpicoconnection.h"
+#include "kostalpikoconnection.h"
 #include <QDebug>
 #include <QUrlQuery>
 
-KostalPicoConnection::KostalPicoConnection(NetworkAccessManager *networkManager,
+KostalPikoConnection::KostalPikoConnection(NetworkAccessManager *networkManager,
                                            const QHostAddress &address,
                                            QObject *parent)
     : QObject(parent), m_networkManager(networkManager), m_address(address) {}
-QHostAddress KostalPicoConnection::address() const { return m_address; }
+QHostAddress KostalPikoConnection::address() const { return m_address; }
 
-bool KostalPicoConnection::available() const { return m_available; }
+bool KostalPikoConnection::available() const { return m_available; }
 
-bool KostalPicoConnection::busy() const { return m_requestQueue.count() > 1; }
+bool KostalPikoConnection::busy() const { return m_requestQueue.count() > 1; }
 // TODO
 /*
-KostalNetworkReply *KostalPicoConnection::getVersion()
+KostalNetworkReply *KostalPikoConnection::getVersion()
 {
     QUrl requestUrl;
     requestUrl.setScheme("http");
@@ -27,7 +27,7 @@ FroniusNetworkReply(QNetworkRequest(requestUrl), this);
     return reply;
 }*/
 
-KostalNetworkReply *KostalPicoConnection::getActiveDevices() {
+KostalNetworkReply *KostalPikoConnection::getActiveDevices() {
   QString requestString = "http://" + m_address.toString() + "/yields.xml";
   QUrl requestUrl(requestString);
 
@@ -67,7 +67,7 @@ KostalNetworkReply *KostalPicoConnection::getActiveDevices() {
 }
 
 // Watt in Type -> GridPower
-KostalNetworkReply *KostalPicoConnection::getMeasurement() {
+KostalNetworkReply *KostalPikoConnection::getMeasurement() {
   QString requestString = "http://" + m_address.toString() + "/measurements.xml";
   QUrl requestUrl(requestString);
   QUrlQuery query;
@@ -82,7 +82,7 @@ KostalNetworkReply *KostalPicoConnection::getMeasurement() {
 }
 // Has Production
 // Yields->Yield-> Type Produced -> In Watthours
-KostalNetworkReply *KostalPicoConnection::getYields() {
+KostalNetworkReply *KostalPikoConnection::getYields() {
   QString requestString = "http://" + m_address.toString() + "/yields.xml";
   QUrl requestUrl(requestString);
   // requestUrl.setScheme("http");
@@ -100,7 +100,7 @@ KostalNetworkReply *KostalPicoConnection::getYields() {
   return reply;
 }
 
-void KostalPicoConnection::sendNextRequest() {
+void KostalPikoConnection::sendNextRequest() {
   if (m_currentReply)
     return;
 

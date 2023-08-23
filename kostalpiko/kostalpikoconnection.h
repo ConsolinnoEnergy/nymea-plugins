@@ -1,5 +1,5 @@
-#ifndef KOSTALPICOCONNECTION_H
-#define KOSTALPICOCONNECTION_H
+#ifndef KOSTALPIKOCONNECTION_H
+#define KOSTALPIKOCONNECTION_H
 
 #include <QObject>
 
@@ -10,11 +10,11 @@
 
 #include "kostalnetworkreply.h"
 
-class KostalPicoConnection : public QObject
+class KostalPikoConnection : public QObject
 {
     Q_OBJECT
 public:
-    explicit KostalPicoConnection(NetworkAccessManager *networkManager, const QHostAddress &address, QObject *parent = nullptr);
+    explicit KostalPikoConnection(NetworkAccessManager *networkManager, const QHostAddress &address, QObject *parent = nullptr);
 
     QHostAddress address() const;
 
@@ -54,4 +54,4 @@ private:
 
 };
 
-#endif // KOSTALPICOCONNECTION_H
+#endif // KOSTALPIKOCONNECTION_H
