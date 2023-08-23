@@ -2,7 +2,7 @@ TEMPLATE = subdirs
 
 PLUGIN_DIRS = \
     anel                \
-    aqi                 \ 
+    aqi                 \
     avahimonitor        \
     awattar             \
     bimmerconnected     \
@@ -37,6 +37,7 @@ PLUGIN_DIRS = \
     homeconnect         \
     keba                \
     kodi                \
+    kostalpico          \
     lgsmarttv           \
     lifx                \
     mecelectronics      \
@@ -52,7 +53,7 @@ PLUGIN_DIRS = \
     nuki                \
     mcp3008             \
     onewire             \
-    openuv              \ 
+    openuv              \
     openweathermap      \
     osdomotics          \
     philipshue          \
@@ -76,7 +77,7 @@ PLUGIN_DIRS = \
     tasmota             \
     tcpcommander        \
     telegram            \
-    tempo               \ 
+    tempo               \
     texasinstruments    \
     tplink              \
     tuya                \
@@ -129,4 +130,3 @@ for(plugin, PLUGINS) {
         error("Invalid plugin \"$${plugin}\".")
     }
 }
-
