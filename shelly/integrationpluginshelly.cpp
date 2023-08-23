@@ -66,6 +66,7 @@ static QHash<ThingClassId, ParamTypeId> idParamTypeMap = {
     {shelly1pmThingClassId, shelly1pmThingIdParamTypeId},
     {shelly1lThingClassId, shelly1lThingIdParamTypeId},
     {shellyPlugThingClassId, shellyPlugThingIdParamTypeId},
+    {shellyPlusPlugThingClassId, shellyPlusPlugThingIdParamTypeId},
     {shellyRgbw2ThingClassId, shellyRgbw2ThingIdParamTypeId},
     {shellyDimmerThingClassId, shellyDimmerThingIdParamTypeId},
     {shelly2ThingClassId, shelly2ThingIdParamTypeId},
@@ -87,6 +88,7 @@ static QHash<ThingClassId, ParamTypeId> usernameParamTypeMap = {
     {shelly1pmThingClassId, shelly1pmThingUsernameParamTypeId},
     {shelly1lThingClassId, shelly1lThingUsernameParamTypeId},
     {shellyPlugThingClassId, shellyPlugThingUsernameParamTypeId},
+    {shellyPlusPlugThingClassId, shellyPlusPlugThingUsernameParamTypeId},
     {shellyRgbw2ThingClassId, shellyRgbw2ThingUsernameParamTypeId},
     {shellyDimmerThingClassId, shellyDimmerThingUsernameParamTypeId},
     {shelly2ThingClassId, shelly2ThingUsernameParamTypeId},
@@ -108,6 +110,7 @@ static QHash<ThingClassId, ParamTypeId> passwordParamTypeMap = {
     {shelly1pmThingClassId, shelly1pmThingPasswordParamTypeId},
     {shelly1lThingClassId, shelly1lThingPasswordParamTypeId},
     {shellyPlugThingClassId, shellyPlugThingPasswordParamTypeId},
+    {shellyPlusPlugThingClassId, shellyPlusPlugThingPasswordParamTypeId},
     {shellyRgbw2ThingClassId, shellyRgbw2ThingPasswordParamTypeId},
     {shellyDimmerThingClassId, shellyDimmerThingPasswordParamTypeId},
     {shelly2ThingClassId, shelly2ThingPasswordParamTypeId},
@@ -146,6 +149,7 @@ static QHash<ActionTypeId, ThingClassId> rebootActionTypeMap = {
     {shelly1pmRebootActionTypeId, shelly1pmThingClassId},
     {shelly1lRebootActionTypeId, shelly1lThingClassId},
     {shellyPlugRebootActionTypeId, shellyPlugThingClassId},
+    {shellyPlusPlugRebootActionTypeId, shellyPlusPlugThingClassId},
     {shellyRgbw2RebootActionTypeId, shellyRgbw2ThingClassId},
     {shellyDimmerRebootActionTypeId, shellyDimmerThingClassId},
     {shelly2RebootActionTypeId, shelly2ThingClassId},
@@ -159,6 +163,7 @@ static QHash<ActionTypeId, ThingClassId> powerActionTypesMap = {
     {shelly1pmPowerActionTypeId, shelly1pmThingClassId},
     {shelly1lPowerActionTypeId, shelly1lThingClassId},
     {shellyPlugPowerActionTypeId, shellyPlugThingClassId},
+    {shellyPlusPlugPowerActionTypeId, shellyPlusPlugThingClassId},
     {shellyEmPowerActionTypeId, shellyEmThingClassId},
     {shellyEm3PowerActionTypeId, shellyEm3ThingClassId},
     {shelly2Channel1ActionTypeId, shelly2ThingClassId},
@@ -172,6 +177,7 @@ static QHash<ActionTypeId, ThingClassId> powerActionParamTypesMap = {
     {shelly1pmPowerActionTypeId, shelly1pmPowerActionPowerParamTypeId},
     {shelly1lPowerActionTypeId, shelly1lPowerActionPowerParamTypeId},
     {shellyPlugPowerActionTypeId, shellyPlugPowerActionPowerParamTypeId},
+    {shellyPlusPlugPowerActionTypeId, shellyPlusPlugPowerActionPowerParamTypeId},
     {shellyEmPowerActionTypeId, shellyEmPowerActionPowerParamTypeId},
     {shellyEm3PowerActionTypeId, shellyEm3PowerActionPowerParamTypeId},
     {shelly2Channel1ActionTypeId, shelly2Channel1ActionChannel1ParamTypeId},
@@ -235,6 +241,7 @@ static QHash<ActionTypeId, ThingClassId> updateActionTypesMap = {
     {shelly2PerformUpdateActionTypeId, shelly2ThingClassId},
     {shelly25PerformUpdateActionTypeId, shelly25ThingClassId},
     {shellyPlugPerformUpdateActionTypeId, shellyPlugThingClassId},
+    {shellyPlusPlugPerformUpdateActionTypeId, shellyPlusPlugThingClassId},
     {shellyRgbw2PerformUpdateActionTypeId, shellyRgbw2ThingClassId},
     {shellyDimmerPerformUpdateActionTypeId, shellyDimmerThingClassId},
     {shellyButton1PerformUpdateActionTypeId, shellyButton1ThingClassId},
@@ -260,6 +267,12 @@ static QHash<ThingClassId, ParamTypeId> longpushMaxDurationSettingIds = {
 static QHash<ThingClassId, ParamTypeId> multipushTimeBetweenPushesSettingIds = {
     {shellyButton1ThingClassId, shellyButton1SettingsMultipushTimeBetweenPushesParamTypeId},
     {shellyI3ThingClassId, shellyI3SettingsMultipushTimeBetweenPushesParamTypeId}
+};
+static QHash<ThingClassId, ParamTypeId> defaultStateSettingIds = {
+    {shellyPlusPlugThingClassId, shellyPlusPlugSettingsDefaultStateParamTypeId}
+};
+static QHash<ThingClassId, ParamTypeId> ledModeSettingIds = {
+    {shellyPlusPlugThingClassId, shellyPlusPlugSettingsLedModeParamTypeId}
 };
 
 IntegrationPluginShelly::IntegrationPluginShelly()
@@ -292,6 +305,8 @@ void IntegrationPluginShelly::discoverThings(ThingDiscoveryInfo *info)
             namePattern = QRegExp("^shelly1l-[0-9A-Z]+$");
         } else if (info->thingClassId() == shellyPlugThingClassId) {
             namePattern = QRegExp("^shellyplug(-s)?-[0-9A-Z]+$");
+        } else if (info->thingClassId() == shellyPlusPlugThingClassId) {
+            namePattern = QRegExp("^(ShellyPlusPlugS|ShellyPlug(US|IT|UK))-[0-9A-Z]+$");
         } else if (info->thingClassId() == shellyRgbw2ThingClassId) {
             namePattern = QRegExp("^shellyrgbw2-[0-9A-Z]+$");
         } else if (info->thingClassId() == shellyDimmerThingClassId) {
@@ -299,7 +314,7 @@ void IntegrationPluginShelly::discoverThings(ThingDiscoveryInfo *info)
         } else if (info->thingClassId() == shelly2ThingClassId) {
             namePattern = QRegExp("^shellyswitch-[0-9A-Z]+$");
         } else if (info->thingClassId() == shelly25ThingClassId) {
-            namePattern = QRegExp("^shellyswitch25-[0-9A-Z]+$");
+            namePattern = QRegExp("^(shellyswitch25|ShellyPlus2PM)-[0-9A-Z]+$");
         } else if (info->thingClassId() == shellyButton1ThingClassId) {
             namePattern = QRegExp("^shellybutton1-[0-9-A-Z]+$");
         } else if (info->thingClassId() == shellyEmThingClassId) {
@@ -356,10 +371,12 @@ void IntegrationPluginShelly::setupThing(ThingSetupInfo *info)
     if (idParamTypeMap.contains(thing->thingClassId())) {
 
         QString shellyId = info->thing()->paramValue(idParamTypeMap.value(info->thing()->thingClassId())).toString();
-        if (!shellyId.contains("Plus")) {
-            setupGen1(info);
-        } else {
+        if (shellyId.contains("Plus")
+                || shellyId.startsWith("ShellyPlug") // Plus plug variants don't have Plus in the name, but are camelcased as opposed to 1st gen plugs
+                ) {
             setupGen2(info);
+        } else {
+            setupGen1(info);
         }
 
         return;
@@ -467,7 +484,7 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
             QVariantMap params;
             params.insert("id", relay - 1);
             params.insert("on", on);
-            ShellyRpcReply *reply = m_rpcClients.value(thing)->sendRequest("Switch.Set", params);
+            ShellyRpcReply *reply = m_rpcClients.value(thing)->sendRequest("Switch.Set", params); // Switch.Set not supported by Shelly Plus 2PM in shutter mode; will return error "No handler for Switch.Set"
             connect(reply, &ShellyRpcReply::finished, info, [info](ShellyRpcReply::Status status, const QVariantMap &/*response*/){
                 info->finish(status == ShellyRpcReply::StatusSuccess ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
             });
@@ -658,65 +675,117 @@ void IntegrationPluginShelly::executeAction(ThingActionInfo *info)
     }
 
     if (action.actionTypeId() == shellyRollerOpenActionTypeId) {
-        url.setPath(QString("/roller/%1").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
-        QUrlQuery query;
-        query.addQueryItem("go", "open");
-        url.setQuery(query);
-        QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
-        connect(reply, &QNetworkReply::finished, info, [info, reply](){
-            info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
-        });
+        if (shellyId.contains("Plus")) {
+            QVariantMap params;
+            int channelNbr = info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1;
+            params.insert("id", channelNbr);
+            ShellyRpcReply *reply = m_rpcClients.value(thing)->sendRequest("Cover.Open", params);
+            connect(reply, &ShellyRpcReply::finished, info, [info](ShellyRpcReply::Status status, const QVariantMap &/*response*/){
+                info->finish(status == ShellyRpcReply::StatusSuccess ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+            });
+        } else {
+            url.setPath(QString("/roller/%1").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
+            QUrlQuery query;
+            query.addQueryItem("go", "open");
+            url.setQuery(query);
+            QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
+            connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+            connect(reply, &QNetworkReply::finished, info, [info, reply](){
+                info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+            });
+        }
         return;
     }
 
     if (action.actionTypeId() == shellyRollerCloseActionTypeId) {
-        url.setPath(QString("/roller/%1").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
-        QUrlQuery query;
-        query.addQueryItem("go", "close");
-        url.setQuery(query);
-        QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
-        connect(reply, &QNetworkReply::finished, info, [info, reply](){
-            info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
-        });
+        if (shellyId.contains("Plus")) {
+            QVariantMap params;
+            int channelNbr = info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1;
+            params.insert("id", channelNbr);
+            ShellyRpcReply *reply = m_rpcClients.value(thing)->sendRequest("Cover.Close", params);
+            connect(reply, &ShellyRpcReply::finished, info, [info](ShellyRpcReply::Status status, const QVariantMap &/*response*/){
+                info->finish(status == ShellyRpcReply::StatusSuccess ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+            });
+        } else {
+            url.setPath(QString("/roller/%1").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
+            QUrlQuery query;
+            query.addQueryItem("go", "close");
+            url.setQuery(query);
+            QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
+            connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+            connect(reply, &QNetworkReply::finished, info, [info, reply](){
+                info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+            });
+        }
         return;
     }
 
     if (action.actionTypeId() == shellyRollerStopActionTypeId) {
-        url.setPath(QString("/roller/%1").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
-        QUrlQuery query;
-        query.addQueryItem("go", "stop");
-        url.setQuery(query);
-        QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
-        connect(reply, &QNetworkReply::finished, info, [info, reply](){
-            info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
-        });
+        if (shellyId.contains("Plus")) {
+            QVariantMap params;
+            int channelNbr = info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1;
+            params.insert("id", channelNbr);
+            ShellyRpcReply *reply = m_rpcClients.value(thing)->sendRequest("Cover.Stop", params);
+            connect(reply, &ShellyRpcReply::finished, info, [info](ShellyRpcReply::Status status, const QVariantMap &/*response*/){
+                info->finish(status == ShellyRpcReply::StatusSuccess ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+            });
+        } else {
+            url.setPath(QString("/roller/%1").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
+            QUrlQuery query;
+            query.addQueryItem("go", "stop");
+            url.setQuery(query);
+            QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
+            connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+            connect(reply, &QNetworkReply::finished, info, [info, reply](){
+                info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+            });
+        }
         return;
     }
 
     if (action.actionTypeId() == shellyRollerCalibrateActionTypeId) {
-        url.setPath(QString("/roller/%1/calibrate").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
-        QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
-        connect(reply, &QNetworkReply::finished, info, [info, reply](){
-            info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
-        });
+        if (shellyId.contains("Plus")) {
+            QVariantMap params;
+            int channelNbr = info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1;
+            params.insert("id", channelNbr);
+            ShellyRpcReply *reply = m_rpcClients.value(thing)->sendRequest("Cover.Calibrate", params);
+            connect(reply, &ShellyRpcReply::finished, info, [info](ShellyRpcReply::Status status, const QVariantMap &/*response*/){
+                info->finish(status == ShellyRpcReply::StatusSuccess ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+            });
+        } else {
+            url.setPath(QString("/roller/%1/calibrate").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
+            QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
+            connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+            connect(reply, &QNetworkReply::finished, info, [info, reply](){
+                info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+            });
+        }
         return;
     }
 
     if (action.actionTypeId() == shellyRollerPercentageActionTypeId) {
-        url.setPath(QString("/roller/%1").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
-        QUrlQuery query;
-        query.addQueryItem("go", "to_pos");
-        query.addQueryItem("roller_pos", QString::number(100 - info->action().paramValue(shellyRollerPercentageActionPercentageParamTypeId).toUInt()));
-        url.setQuery(query);
-        QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
-        connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
-        connect(reply, &QNetworkReply::finished, info, [info, reply](){
-            info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
-        });
+        if (shellyId.contains("Plus")) {
+            QVariantMap params;
+            int channelNbr = info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1;
+            int positionTarget = info->action().paramValue(shellyRollerPercentageActionPercentageParamTypeId).toInt();
+            params.insert("id", channelNbr);
+            params.insert("pos", positionTarget);
+            ShellyRpcReply *reply = m_rpcClients.value(thing)->sendRequest("Cover.GoToPosition", params);
+            connect(reply, &ShellyRpcReply::finished, info, [info](ShellyRpcReply::Status status, const QVariantMap &/*response*/){
+                info->finish(status == ShellyRpcReply::StatusSuccess ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+            });
+        } else {
+            url.setPath(QString("/roller/%1").arg(info->thing()->paramValue(shellyRollerThingChannelParamTypeId).toInt() - 1));
+            QUrlQuery query;
+            query.addQueryItem("go", "to_pos");
+            query.addQueryItem("roller_pos", info->action().paramValue(shellyRollerPercentageActionPercentageParamTypeId).toString());
+            url.setQuery(query);
+            QNetworkReply *reply = hardwareManager()->networkManager()->get(QNetworkRequest(url));
+            connect(reply, &QNetworkReply::finished, &QNetworkReply::deleteLater);
+            connect(reply, &QNetworkReply::finished, info, [info, reply](){
+                info->finish(reply->error() == QNetworkReply::NoError ? Thing::ThingErrorNoError : Thing::ThingErrorHardwareFailure);
+            });
+        }
         return;
     }
 
@@ -1152,14 +1221,24 @@ void IntegrationPluginShelly::onMulticastMessageReceived(const QHostAddress &sou
                              thing->stateValue(shellyEm3CurrentPowerPhaseAStateTypeId).toDouble() +
                              thing->stateValue(shellyEm3CurrentPowerPhaseBStateTypeId).toDouble() +
                              thing->stateValue(shellyEm3CurrentPowerPhaseCStateTypeId).toDouble());
-        thing->setStateValue(shellyEm3TotalEnergyConsumedStateTypeId,
-                             thing->stateValue(shellyEm3EnergyConsumedPhaseAStateTypeId).toDouble() +
-                             thing->stateValue(shellyEm3EnergyConsumedPhaseBStateTypeId).toDouble() +
-                             thing->stateValue(shellyEm3EnergyConsumedPhaseCStateTypeId).toDouble());
-        thing->setStateValue(shellyEm3TotalEnergyProducedStateTypeId,
-                             thing->stateValue(shellyEm3EnergyProducedPhaseAStateTypeId).toDouble() +
-                             thing->stateValue(shellyEm3EnergyProducedPhaseBStateTypeId).toDouble() +
-                             thing->stateValue(shellyEm3EnergyProducedPhaseCStateTypeId).toDouble());
+        double totalConsumption = thing->stateValue(shellyEm3EnergyConsumedPhaseAStateTypeId).toDouble() +
+                thing->stateValue(shellyEm3EnergyConsumedPhaseBStateTypeId).toDouble() +
+                thing->stateValue(shellyEm3EnergyConsumedPhaseCStateTypeId).toDouble();
+        if (totalConsumption >= 0) {
+            thing->setStateValue(shellyEm3TotalEnergyConsumedStateTypeId, totalConsumption);
+        } else {
+            // There seems to be a bug in the Shelly 3EM that occationally gives -0.001 for the totals.
+            qCWarning(dcShelly()) << "Detected negative value on shelly total consumption counter. Ignoring value." << qUtf8Printable(jsonDoc.toJson());
+        }
+        double totalProduction = thing->stateValue(shellyEm3EnergyProducedPhaseAStateTypeId).toDouble() +
+                thing->stateValue(shellyEm3EnergyProducedPhaseBStateTypeId).toDouble() +
+                thing->stateValue(shellyEm3EnergyProducedPhaseCStateTypeId).toDouble();
+        if (totalProduction >= 0) {
+            thing->setStateValue(shellyEm3TotalEnergyProducedStateTypeId, totalProduction);
+        } else {
+            // There seems to be a bug in the Shelly 3EM that occationally gives -0.001 for the totals.
+            qCWarning(dcShelly()) << "Detected negative value on shelly total production counter. Ignoring value." << qUtf8Printable(jsonDoc.toJson());
+        }
     }
     if (thing->thingClassId() == shellyEmThingClassId) {
         foreach (Thing *child, myThings().filterByParentId(thing->id()).filterByThingClassId(shellyEmChannelThingClassId)) {
@@ -1589,14 +1668,102 @@ void IntegrationPluginShelly::setupGen2(ThingSetupInfo *info)
             }
             qCDebug(dcShelly) << "Init response:" << response;
             m_rpcClients.insert(info->thing(), client);
-            info->finish(Thing::ThingErrorNoError);
 
-            if (myThings().filterByParentId(info->thing()->id()).count() == 0) {
-                if (info->thing()->thingClassId() == shelly1pmThingClassId) {
+            if (info->thing()->thingClassId() == shelly1pmThingClassId) {
+
+                info->finish(Thing::ThingErrorNoError);
+
+                if (myThings().filterByParentId(info->thing()->id()).count() == 0) {
                     ThingDescriptor switchChild(shellySwitchThingClassId, info->thing()->name() + " switch", QString(), info->thing()->id());
                     switchChild.setParams(ParamList() << Param(shellySwitchThingChannelParamTypeId, 1));
                     emit autoThingsAppeared({switchChild});
                 }
+                return;
+            }
+
+            if (info->thing()->thingClassId() == shelly25ThingClassId) {
+                // Make sure the shelly 2.5 is in the mode we expect it to be (roller/cover or relay/switch)
+                bool rollerMode = info->thing()->paramValue(rollerModeParamTypeMap.value(info->thing()->thingClassId())).toBool();
+                QVariantMap params;
+                if(rollerMode) {
+                    params.insert("name", "cover");
+                } else {
+                    params.insert("name", "switch");
+                }
+                ShellyRpcReply *reply2 = client->sendRequest("Shelly.SetProfile", params);
+                connect(reply2, &ShellyRpcReply::finished, info, [info](ShellyRpcReply::Status status, const QVariantMap &/*response*/){
+                    if (status != ShellyRpcReply::StatusSuccess) {
+                        qCWarning(dcShelly) << "Error during shelly setup";
+                        info->finish(Thing::ThingErrorHardwareFailure, QT_TR_NOOP("Unable to configure shelly device."));
+                        return;
+                    }
+                    info->finish(Thing::ThingErrorNoError);
+                });
+
+                if (myThings().filterByParentId(info->thing()->id()).count() == 0) {
+                    ThingDescriptor switchChild(shellySwitchThingClassId, info->thing()->name() + " switch 1", QString(), info->thing()->id());
+                    switchChild.setParams(ParamList() << Param(shellySwitchThingChannelParamTypeId, 1));
+                    emit autoThingsAppeared({switchChild});
+                    ThingDescriptor switch2Child(shellySwitchThingClassId, info->thing()->name() + " switch 2", QString(), info->thing()->id());
+                    switch2Child.setParams(ParamList() << Param(shellySwitchThingChannelParamTypeId, 2));
+                    emit autoThingsAppeared({switch2Child});
+                }
+
+                if (rollerMode == true) {
+                    ThingDescriptor rollerShutterChild(shellyRollerThingClassId, info->thing()->name() + " connected shutter", QString(), info->thing()->id());
+                    rollerShutterChild.setParams(ParamList() << Param(shellyRollerThingChannelParamTypeId, 1));
+                    emit autoThingsAppeared({rollerShutterChild});
+                // Create 2 measurement channels for Shelly Plus 2PM (unless in roller mode)
+                }  else {
+                    ThingDescriptor channelChild(shellyPowerMeterChannelThingClassId, info->thing()->name() + " channel 1", QString(), info->thing()->id());
+                    channelChild.setParams(ParamList() << Param(shellyPowerMeterChannelThingChannelParamTypeId, 1));
+                    emit autoThingsAppeared({channelChild});
+                    ThingDescriptor channel2Child(shellyPowerMeterChannelThingClassId, info->thing()->name() + " channel 2", QString(), info->thing()->id());
+                    channel2Child.setParams(ParamList() << Param(shellyPowerMeterChannelThingChannelParamTypeId, 2));
+                    emit autoThingsAppeared({channel2Child});
+                }
+                return;
+            }
+
+            if (info->thing()->thingClassId() == shellyPlusPlugThingClassId) {
+                // Set default state & led mode of the Plus Plug (S)
+                QString defaultState = "off";
+                QString ledMode = "switch";
+                defaultState = info->thing()->setting(defaultStateSettingIds.value(info->thing()->thingClassId())).toString();
+                QVariantMap config;
+                config.insert("initial_state", defaultState);
+                QVariantMap params;
+                params.insert("id", 0);
+                params.insert("config", config);
+
+                ShellyRpcReply *reply2 = client->sendRequest("Switch.SetConfig", params);
+                connect(reply2, &ShellyRpcReply::finished, info, [info](ShellyRpcReply::Status status, const QVariantMap &/*response*/){
+                    if (status != ShellyRpcReply::StatusSuccess) {
+                        qCWarning(dcShelly) << "Error during shelly setup";
+                        info->finish(Thing::ThingErrorHardwareFailure);
+                        return;
+                    }
+                    info->finish(Thing::ThingErrorNoError);
+                });
+
+                ledMode = info->thing()->setting(ledModeSettingIds.value(info->thing()->thingClassId())).toString();
+                QVariantMap leds;
+                leds.insert("mode", ledMode);
+                QVariantMap config2;
+                config2.insert("leds", leds);
+                QVariantMap params2;
+                params2.insert("config", config2);
+
+                ShellyRpcReply *reply3 = client->sendRequest("PLUGS_UI.SetConfig", params2);
+                connect(reply3, &ShellyRpcReply::finished, info, [info](ShellyRpcReply::Status status, const QVariantMap &/*response*/){
+                    if (status != ShellyRpcReply::StatusSuccess) {
+                        qCWarning(dcShelly) << "Error during shelly setup";
+                        info->finish(Thing::ThingErrorHardwareFailure);
+                        return;
+                    }
+                });
+                return;
+
             }
         });
     });
@@ -1617,14 +1784,65 @@ void IntegrationPluginShelly::setupGen2(ThingSetupInfo *info)
         qCDebug(dcShelly) << "notification received" << qUtf8Printable(QJsonDocument::fromVariant(notification).toJson());
         if (notification.contains("switch:0")) {
             QVariantMap switch0 = notification.value("switch:0").toMap();
-            if (switch0.contains("apower") && thing->hasState("currentPower")) {
+            if (switch0.contains("apower") && thing->hasState("currentPower")) { // for shellyplus1pm
                 thing->setStateValue("currentPower", switch0.value("apower").toDouble());
             }
-            if (switch0.contains("aenergy") && thing->hasState("totalEnergyConsumed")) {
-                thing->setStateValue("totalEnergyConsumed", notification.value("switch:0").toMap().value("aenergy").toMap().value("total").toDouble() / 1000);
+            Thing *parentThing = myThings().filterByParentId(thing->id()).findByParams({Param(shellyPowerMeterChannelThingChannelParamTypeId, 1)});
+            if (parentThing) {
+                if (switch0.contains("apower")) {
+                    parentThing->setStateValue("currentPower", switch0.value("apower").toDouble());
+                }
+                if (switch0.contains("aenergy")) {
+                    parentThing->setStateValue("totalEnergyConsumed", notification.value("switch:0").toMap().value("aenergy").toMap().value("total").toDouble() / 1000);
+                }
+            } else {
+                if (switch0.contains("aenergy") && thing->hasState("totalEnergyConsumed")) { // for shellyplus1pm
+                    thing->setStateValue("totalEnergyConsumed", notification.value("switch:0").toMap().value("aenergy").toMap().value("total").toDouble() / 1000);
+                }
             }
-            if (switch0.contains("output") && thing->hasState("power")) {
+            if (switch0.contains("output") && thing->hasState("power")) { // for shellyplus1pm
                 thing->setStateValue("power", switch0.value("output").toBool());
+            } else if (switch0.contains("output") && thing->hasState("channel1")) { // for shellyplus2pm
+                thing->setStateValue("channel1", switch0.value("output").toBool());
+            }
+        }
+        if (notification.contains("switch:1")) {
+            QVariantMap switch1 = notification.value("switch:1").toMap();
+            Thing *parentThing = myThings().filterByParentId(thing->id()).findByParams({Param(shellyPowerMeterChannelThingChannelParamTypeId, 2)});
+            if (parentThing) {
+                if (switch1.contains("apower")) {
+                    parentThing->setStateValue("currentPower", switch1.value("apower").toDouble());
+                }
+                if (switch1.contains("aenergy")) {
+                    parentThing->setStateValue("totalEnergyConsumed", notification.value("switch:1").toMap().value("aenergy").toMap().value("total").toDouble() / 1000);
+                }
+            }
+            if (switch1.contains("output") && thing->hasState("channel2")) { // for shellyplus2pm
+                thing->setStateValue("channel2", switch1.value("output").toBool());
+            }
+        }
+        if (notification.contains("cover:0")) {
+            QVariantMap cover0 = notification.value("cover:0").toMap();
+            Thing *t = myThings().filterByParentId(thing->id()).findByParams({Param(shellyRollerThingChannelParamTypeId, 1)});
+            if (cover0.contains("apower") && t) {
+                t->setStateValue("currentPower", cover0.value("apower").toDouble());
+            }
+            if (cover0.contains("aenergy") && t) {
+                t->setStateValue("totalEnergyConsumed", notification.value("cover:0").toMap().value("aenergy").toMap().value("total").toDouble());
+            }
+            if (cover0.contains("current_pos") && t) {
+                t->setStateValue("percentage", notification.value("cover:0").toMap().value("current_pos").toInt());
+            }
+            if (cover0.contains("state") && t) {
+                QString coverState = notification.value("cover:0").toMap().value("state").toString();
+                bool movingBool = false;
+                if (coverState == "opening" || coverState == "closing" || coverState == "calibrating") {
+                    movingBool = true;
+                }
+                t->setStateValue("moving", movingBool);
+            }
+            if (cover0.contains("output") && thing->hasState("channel1")) { // for shellyplus2pm
+                thing->setStateValue("power", cover0.value("output").toBool());
             }
         }
         if (notification.contains("input:0")) {
@@ -1635,7 +1853,56 @@ void IntegrationPluginShelly::setupGen2(ThingSetupInfo *info)
                 t->emitEvent("pressed");
             }
         }
+        if (notification.contains("input:1")) {
+            QVariantMap input1 = notification.value("input:1").toMap();
+            Thing *t = myThings().filterByParentId(thing->id()).findByParams({Param(shellySwitchThingChannelParamTypeId, 2)});
+            if (t) {
+                t->setStateValue("power", input1.value("state").toBool());
+                t->emitEvent("pressed");
+            }
+        }
     });
+
+    // Handle thing settings of devices
+    if (info->thing()->thingClassId() == shellyPlusPlugThingClassId) {
+        connect(info->thing(), &Thing::settingChanged, this, [this, thing, client, shellyId](const ParamTypeId &settingTypeId, const QVariant &value) {
+            if (settingTypeId == shellyPlusPlugSettingsDefaultStateParamTypeId) { // this works
+                QString defaultState = value.toString();
+                QVariantMap config;
+                config.insert("initial_state", defaultState);
+                QVariantMap params;
+                params.insert("id", 0);
+                params.insert("config", config);
+
+                ShellyRpcReply *reply3 = client->sendRequest("Switch.SetConfig", params);
+                connect(reply3, &ShellyRpcReply::finished, thing, [thing](ShellyRpcReply::Status status, const QVariantMap &/*response*/){
+                    if (status != ShellyRpcReply::StatusSuccess) {
+                        qCWarning(dcShelly) << "Error setting new value";
+                        return;
+                    }
+                });
+            };
+            if (settingTypeId == shellyPlusPlugSettingsLedModeParamTypeId) { // this gives a segmentation fault
+                QString ledMode = value.toString();
+                QVariantMap leds;
+                leds.insert("mode", ledMode);
+                QVariantMap config;
+                config.insert("leds", leds);
+                QVariantMap params;
+                params.insert("config", config);
+
+                ShellyRpcReply *reply3 = client->sendRequest("PLUGS_UI.SetConfig", params);
+                connect(reply3, &ShellyRpcReply::finished, thing, [thing](ShellyRpcReply::Status status, const QVariantMap &/*response*/){
+                    if (status != ShellyRpcReply::StatusSuccess) {
+                        qCWarning(dcShelly) << "Error setting LED mode";
+                        return;
+                    }
+                });
+            }
+
+        });
+    }
+
 }
 
 void IntegrationPluginShelly::setupShellyChild(ThingSetupInfo *info)
