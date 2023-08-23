@@ -126,5 +126,3 @@ for(plugin, PLUGINS) {
         error("Invalid plugin \"$${plugin}\".")
     }
 }
-
-SUBDIRS += \
