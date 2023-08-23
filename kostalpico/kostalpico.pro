@@ -3,7 +3,7 @@ include(../plugins.pri)
 QT += network
 QT += core
 
-TARGET = $$qtLibraryTarget(nymea_integrationplugikostalpico)
+TARGET = $$qtLibraryTarget(nymea_integrationpluginkostalpico)
 
 QMAKE_CXXFLAGS_WARN_ON += -Wno-reorder
 
