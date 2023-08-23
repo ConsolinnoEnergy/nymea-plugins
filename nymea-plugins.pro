@@ -37,7 +37,7 @@ PLUGIN_DIRS = \
     homeconnect         \
     keba                \
     kodi                \
-    kostalpico          \
+    kostalpiko          \
     lgsmarttv           \
     lifx                \
     mecelectronics      \

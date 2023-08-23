@@ -7,7 +7,7 @@
 class KostalNetworkReply : public QObject {
   Q_OBJECT
 
-  friend class KostalPicoConnection;
+  friend class KostalPikoConnection;
 
 public:
 

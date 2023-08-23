@@ -1,54 +1,46 @@
 {
-    "name": "kostalpico",
-    "displayName": "Kostal Pico MP Plus",
+    "name": "kostalpiko",
+    "displayName": "Kostal Piko MP Plus",
     "id": "9f3b66c7-3ca1-4f2a-9659-348627ee1ae3",
     "vendors": [
         {
-            "name": "kostalpico",
-            "displayName": "Kostal Pico MP Plus",
+            "name": "kostalpiko",
+            "displayName": "Kostal Piko MP Plus",
             "id": "43da1800-ebf8-45bd-9b58-66e3475d41d7",
             "thingClasses": [
-            {
-                "name": "connection",
-                "displayName": "Kostal System",
-                "id": "74c35c37-56fb-4fa1-8404-5ffa7f10612c",
-                "setupMethod": "JustAdd",
-                "createMethods": ["Discovery"],
-                "interfaces": ["connectable"],
-                "paramTypes": [
                 {
-                    "id": "990e01f6-c887-451a-8a36-88fb8e91819e",
-                    "name":"macAddress",
-                    "displayName": "MAC address",
-                    "type": "QString",
-                    "inputType": "MacAddress",
-                    "defaultValue": ""
-                                        }
-                ],
-                "stateTypes": [
+                    "id": "74c35c37-56fb-4fa1-8404-5ffa7f10612c",
+                    "name": "connection",
+                    "displayName": "Kostal System",
+                    "setupMethod": "JustAdd",
+                    "createMethods": ["Discovery"],
+                    "interfaces": ["connectable"],
+                    "paramTypes": [
+                        {
+                            "id": "990e01f6-c887-451a-8a36-88fb8e91819e",
+                            "name":"macAddress",
+                            "displayName": "MAC address",
+                            "type": "QString",
+                            "inputType": "MacAddress",
+                            "defaultValue": ""
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "0b828d1d-ca58-4fef-a437-e5ee7fd1ddea",
+                            "name": "connected",
+                            "displayName": "Reachable",
+                            "displayNameEvent": "Reachable changed",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
+                        }
+                    ]
+                },
                 {
-                    "id": "0b828d1d-ca58-4fef-a437-e5ee7fd1ddea",
-                    "name": "connected",
-                    "displayName": "Reachable",
-                    "displayNameEvent": "Reachable changed",
-                    "type": "bool",
-                    "defaultValue": false,
-                    "cached": false
-                }
-                ],
-                "actionTypes": [
-
-                ],
-                "eventTypes": [
-
-                ]
-            },
-
-
-                {
-                    "name": "kostalpico",
-                    "displayName": "Kostal Pico MP Plus",
                     "id": "67dbb390-5267-40af-bde9-80fbca07e82a",
+                    "name": "kostalpiko",
+                    "displayName": "Kostal Piko MP Plus",
                     "setupMethod": "JustAdd",
                     "createMethods": ["Discovery"],
                     "interfaces": ["smartmeterproducer", "solarinverter", "connectable"],
@@ -91,9 +83,7 @@
                             "defaultValue": 0.00,
                             "cached": true
                         }
-                    ],
-                    "actionTypes": []
-
+                    ]
                 }
             ]
         }
