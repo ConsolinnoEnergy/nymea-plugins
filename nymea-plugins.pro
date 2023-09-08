@@ -2,7 +2,7 @@ TEMPLATE = subdirs
 
 PLUGIN_DIRS = \
     anel                \
-    aqi                 \ 
+    aqi                 \
     avahimonitor        \
     awattar             \
     bimmerconnected     \
@@ -20,8 +20,11 @@ PLUGIN_DIRS = \
     dweetio             \
     dynatrace           \
     easee               \
+    eebus               \
     elgato              \
     eq-3                \
+    espuino             \
+    evbox               \
     fastcom             \
     fems                \
     flowercare          \
@@ -34,6 +37,7 @@ PLUGIN_DIRS = \
     homeconnect         \
     keba                \
     kodi                \
+    kostalpiko          \
     lgsmarttv           \
     lifx                \
     mecelectronics      \
@@ -45,34 +49,35 @@ PLUGIN_DIRS = \
     nanoleaf            \
     netatmo             \
     networkdetector     \
+    notifyevents        \
     nuki                \
     mcp3008             \
     onewire             \
-    openuv              \ 
+    openuv              \
     openweathermap      \
     osdomotics          \
     philipshue          \
     powerfox            \
     pushbullet          \
     pushnotifications   \
-    shelly              \
-    solarlog            \
-    systemmonitor       \
     reversessh          \
     senic               \
     serialportcommander \
     sgready             \
+    shelly              \
     simpleheatpump      \
     simplesmartconsumer \
-    sma                 \
+    solarlog            \
     somfytahoma         \
     sonos               \
+    spothinta           \
     sunposition         \
+    systemmonitor       \
     tado                \
     tasmota             \
     tcpcommander        \
     telegram            \
-    tempo               \ 
+    tempo               \
     texasinstruments    \
     tplink              \
     tuya                \
@@ -125,4 +130,3 @@ for(plugin, PLUGINS) {
         error("Invalid plugin \"$${plugin}\".")
     }
 }
-

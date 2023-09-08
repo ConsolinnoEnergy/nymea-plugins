@@ -12,5 +12,11 @@ More information about the SG ready interface can be found on following website:
 
 https://www.waermepumpe.de/normen-technik/sg-ready/ 
 
+| Nymea Naming  | Consolinno Naming | Norm Naming       | S1 | S2 |
+| ------------- | ----------------- |-------------------|----|----|
+| off           | aus (off)         | Betriebszustand 1 | 1  | 0  |
+| low           | normal (normal)   | Betriebszustand 2 | 0  | 0  |
+| standard      | erhöht (increased)| Betriebszustand 3 | 0  | 1  |
+| high          | hoch (high)       | Betriebszustand 4 | 1  | 1  |
 
 

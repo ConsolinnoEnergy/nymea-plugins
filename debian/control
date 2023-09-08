@@ -64,6 +64,7 @@ Package: nymea-plugin-bimmerconnected
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends},
+         rustc,
 Description: nymea integration plugin for bimmerconnected
  This package contains a nymea integration plugin for BMW cars with
  BMW Connect via the bimmerconnected community project.
@@ -197,6 +198,13 @@ Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin for easee
  This package contains the nymea integration plugin for devices from Easee
 
+Package: nymea-plugin-eebus
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Conflicts: nymea-plugins-translations (< 1.0.1)
+Description: nymea integration plugin for eebus
+ This package contains the nymea integration plugin for devices from EEBUS
 
 Package: nymea-plugin-elgato
 Architecture: any
@@ -205,6 +213,24 @@ Depends: ${shlibs:Depends},
 Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin for elgato
  This package contains the nymea integration plugin for devices from Elgato
+
+
+Package: nymea-plugin-espuino
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Conflicts: nymea-plugins-translations (< 1.0.1)
+Description: nymea integration plugin for ESPuino
+ This package contains the nymea integration plugin for ESPuino devices.
+
+
+Package: nymea-plugin-evbox
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Description: nymea integration plugin for EVBox
+ This package contains the nymea integration plugin for EVBox wallboxes
+ implementing the Protocol Max v4.
 
 
 Package: nymea-plugin-fastcom
@@ -313,6 +339,15 @@ Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin for kodi
  This package contains the nymea integration plugin for kodi
 
+Package: nymea-plugin-kostalpiko
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Conflicts: nymea-plugins-translations (< 1.0.1)
+Description: nymea.io plugin for Kostal Piko MP Plus
+ The nymea daemon is a plugin based IoT (Internet of Things) server.
+ This package will install the nymea.io plugin for Kostal Piko MP Plus smartmeter.
+
 
 Package: nymea-plugin-lgsmarttv
 Architecture: any
@@ -384,6 +419,15 @@ Description: nymea integration plugin for myStrom devices
  This package will add support for myStrom devices to nymea.
 
 
+Package: nymea-plugin-nanoleaf
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Conflicts: nymea-plugins-translations (< 1.0.1)
+Description: nymea integration plugin for nanoleaf
+ This package contains the nymea integration plugin for nanoleaf devices.
+
+
 Package: nymea-plugin-neatobotvac
 Architecture: any
 Depends: ${shlibs:Depends},
@@ -391,6 +435,7 @@ Depends: ${shlibs:Depends},
          python3-pip,
          libffi-dev,
          libssl-dev,
+         rustc,
 Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin for neato
  This package contains the nymea integration plugin for Neato Botvac robots.
@@ -405,15 +450,6 @@ Description: nymea integration plugin for netatmo
  This package contains the nymea integration plugin for the netatmo weather station.
 
 
-Package: nymea-plugin-nanoleaf
-Architecture: any
-Depends: ${shlibs:Depends},
-         ${misc:Depends},
-Conflicts: nymea-plugins-translations (< 1.0.1)
-Description: nymea integration plugin for nanoleaf
- This package contains the nymea integration plugin for nanoleaf devices.
-
-
 Package: nymea-plugin-networkdetector
 Architecture: any
 Depends: ${shlibs:Depends},
@@ -422,6 +458,14 @@ Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin for networkdetector
  This package contains the nymea integration plugin for detecting and monitoring
  network devices via basic networking mechanisms (ARP, ICMP..).
+
+
+Package: nymea-plugin-notifyevents
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Description: nymea integration plugin for Notify.Events
+ This package contains the nymea integration plugin for Notify.Events.
 
 
 Package: nymea-plugin-nuki
@@ -727,6 +771,15 @@ Description: nymea integration plugin for Sonos smart speakers
  This package contains the nymea integration plugin for Sonos smart speakers.
 
 
+Package: nymea-plugin-spothinta
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Description: nymea integration plugin for spot-hinta.fi
+ This package contains the nymea integration plugin to retrieve Finlands 
+ spotmarket energy prices from spot-hinta.fi.
+
+
 Package: nymea-plugin-sunposition
 Architecture: any
 Depends: ${misc:Depends},
@@ -770,15 +823,6 @@ Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin to send and receive strings over a serial port
  This package contains the nymea integration plugin for sending and receiving
  arbitrary data via serial ports.
-
-
-Package: nymea-plugin-sma
-Architecture: any
-Depends: ${shlibs:Depends},
-         ${misc:Depends},
-Conflicts: nymea-plugins-translations (< 1.0.1)
-Description: nymea integration plugin for SMA solar inverters
- This package contains the nymea integration plugin for SMA solar inverters.
 
 
 Package: nymea-plugin-systemmonitor
