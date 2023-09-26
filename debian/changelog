@@ -1,3 +1,9 @@
+nymea-plugins (1.7.100-2) buster focal jammy; urgency=medium
+
+* Adapt to new versioning schema
+
+ -- Florian Knab <f.knab@consolinno.de> Thu, 19 Sep 2023 7:50:53 +0200
+
 nymea-plugins (1.7.100-1) jammy; urgency=medium
 
   * Add plugin for kostal pico inverter
