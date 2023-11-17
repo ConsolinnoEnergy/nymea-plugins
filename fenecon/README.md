@@ -12,3 +12,17 @@ This should be a default setting.
 If not, please ask your installer to enable the REST Api.
 If the connection should not work, update your FEMS REST Api configuration,
 and set the default port to 8084.
+
+
+## Supported Things
+
+* Fenecon Home 10?
+* Fenecon Home 20 & 30?
+
+## Requirements
+
+* 
+
+## More information
+
+* [Fenecon Dokumente - Modbus/TCP - Lese-/Schreibzugriff](https://docs.fenecon.de/de/_/latest/fems/fems-app/OEM_App_Modbus_TCP.html)
