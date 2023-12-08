@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 *
-* Copyright 2013 - 2022, nymea GmbH
+* Copyright 2013 - 2023, nymea GmbH
 * Contact: contact@nymea.io
 *
 * This file is part of nymea.
@@ -31,13 +31,11 @@
 #ifndef INTEGRATIONPLUGINFRONIUS_H
 #define INTEGRATIONPLUGINFRONIUS_H
 
-#include "integrations/integrationplugin.h"
-#include "froniussolarconnection.h"
+#include <integrations/integrationplugin.h>
+#include <network/networkaccessmanager.h>
+#include <network/networkdevicediscovery.h>
 
-#include <QHash>
-#include <QNetworkReply>
-#include <QTimer>
-#include <QUuid>
+#include "froniussolarconnection.h"
 
 class PluginTimer;
 
@@ -60,6 +58,7 @@ private:
     PluginTimer *m_connectionRefreshTimer = nullptr;
 
     QHash<FroniusSolarConnection *, Thing *> m_froniusConnections;
+    QHash<Thing *, NetworkDeviceMonitor *> m_monitors;
 
     void refreshConnection(FroniusSolarConnection *connection);
 
@@ -68,6 +67,9 @@ private:
     void updateMeters(FroniusSolarConnection *connection);
     void updateStorages(FroniusSolarConnection *connection);
 
+    void markInverterAsDisconnected(Thing *thing);
+    void markMeterAsDisconnected(Thing *thing);
+    void markStorageAsDisconnected(Thing *thing);
 };
 
 #endif // INTEGRATIONPLUGINFRONIUS_H

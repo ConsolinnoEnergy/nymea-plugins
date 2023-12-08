@@ -37,6 +37,8 @@
 
 #include <coap/coap.h>
 #include <QHostAddress>
+#include <QNetworkRequest>
+#include <QUrlQuery>
 
 class ZeroConfServiceBrowser;
 class PluginTimer;
@@ -55,8 +57,11 @@ public:
     explicit IntegrationPluginShelly();
     ~IntegrationPluginShelly() override;
 
+
     void init() override;
     void discoverThings(ThingDiscoveryInfo *info) override;
+    void startPairing(ThingPairingInfo *info) override;
+    void confirmPairing(ThingPairingInfo *info, const QString &username, const QString &password) override;
     void setupThing(ThingSetupInfo *info) override;
     void postSetupThing(Thing *thing) override;
     void thingRemoved(Thing *thing) override;
@@ -76,9 +81,11 @@ private:
     void setupShellyChild(ThingSetupInfo *info);
 
     QHostAddress getIP(Thing *thing) const;
+    bool isGen2(const QString &shellyId) const;
 
     void handleInputEvent(Thing *thing, const QString &buttonName, const QString &inputEventString, int inputEventCount);
 
+    QNetworkRequest createHttpRequest(Thing *thing, const QString &path, const QUrlQuery &urlQuery = QUrlQuery());
     QVariantMap createRpcRequest(const QString &method);
 
 private:

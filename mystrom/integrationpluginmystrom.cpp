@@ -44,6 +44,12 @@
 // API doc:
 // https://api.mystrom.ch/
 
+QList<int> supportedPlugs {
+    101, // Switch CH v1
+    106, // Switch CH v2
+    107  // Switch EU
+};
+
 IntegrationPluginMyStrom::IntegrationPluginMyStrom()
 {
 }
@@ -93,7 +99,7 @@ void IntegrationPluginMyStrom::discoverThings(ThingDiscoveryInfo *info)
             qCDebug(dcMyStrom) << "Info response:" << qUtf8Printable(jsonDoc.toJson());
 
             QVariantMap deviceInfo = jsonDoc.toVariant().toMap();
-            if (deviceInfo.value("type").toInt() == 107) {
+            if (supportedPlugs.contains(deviceInfo.value("type").toInt())) {
                 ThingDescriptor descriptor(switchThingClassId, entry.name(), entry.hostAddress().toString());
                 descriptor.setParams({Param(switchThingIdParamTypeId, entry.txt("id"))});
                 info->addThingDescriptor(descriptor);
@@ -135,14 +141,14 @@ void IntegrationPluginMyStrom::setupThing(ThingSetupInfo *info)
 
         qCDebug(dcMyStrom()) << "Device info:" << qUtf8Printable(jsonDoc.toJson(QJsonDocument::Indented));
         QVariantMap deviceInfo = jsonDoc.toVariant().toMap();
-        if (deviceInfo.value("type").toInt() != 107) {
+        if (!supportedPlugs.contains(deviceInfo.value("type").toInt())) {
             qCWarning(dcMyStrom()) << "This device does not seem to be a myStrom WiFi switch";
             info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP("This device does not seem to be a myStrom WiFi switch."));
             return;
         }
         info->finish(Thing::ThingErrorNoError);
 
-        info->thing()->setStateValue("connected", true);
+        info->thing()->setStateValue(switchConnectedStateTypeId, true);
 
         pluginStorage()->beginGroup(info->thing()->id().toString());
         pluginStorage()->setValue("cachedAddress", infoUrl.host());
@@ -165,6 +171,7 @@ void IntegrationPluginMyStrom::postSetupThing(Thing *thing)
                     if (reply->error() != QNetworkReply::NoError) {
                         qCWarning(dcMyStrom()) << "Error fetching report from myStrom device:" << reply->errorString();
                         thing->setStateValue(switchConnectedStateTypeId, false);
+                        thing->setStateValue(switchCurrentPowerStateTypeId, 0);
                         return;
                     }
                     QByteArray data = reply->readAll();

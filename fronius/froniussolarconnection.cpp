@@ -46,6 +46,30 @@ QHostAddress FroniusSolarConnection::address() const
     return m_address;
 }
 
+void FroniusSolarConnection::setAddress(const QHostAddress &address)
+{
+    if (m_address == address)
+        return;
+
+    m_address = address;
+
+    // The address has changed, let's clean up any queue and refresh
+
+    // Note: the destructor will take care about the cleanup of any pending replies
+    qDeleteAll(m_requestQueue);
+    m_requestQueue.clear();
+
+    if (m_currentReply) {
+        m_currentReply->deleteLater();
+        m_currentReply = nullptr;
+    }
+
+    if (m_address.isNull()) {
+        m_available = false;
+        emit availableChanged(m_available);
+    }
+}
+
 bool FroniusSolarConnection::available() const
 {
     return m_available;
@@ -188,11 +212,13 @@ void FroniusSolarConnection::sendNextRequest()
 
     m_currentReply = m_requestQueue.dequeue();
 
-    qCDebug(dcFronius()) << "Connection: Sending request" << m_currentReply->request().url().toString();
+//    qCDebug(dcFronius()) << "Connection: Sending request" << m_currentReply->request().url().toString();
     m_currentReply->setNetworkReply(m_networkManager->get(m_currentReply->request()));
 
     connect(m_currentReply, &FroniusNetworkReply::finished, this, [=](){
-        qCDebug(dcFronius()) << "Connection: Request finished" << m_currentReply->networkReply()->error();
+        if (m_currentReply->networkReply()->error() != QNetworkReply::NoError) {
+            qCWarning(dcFronius()) << "Connection: Request finished with error:" << m_currentReply->networkReply()->error() << "for url" << m_currentReply->request().url().toString();
+        }
 
         // Note: the network reply will be deleted in the destructor
         m_currentReply->deleteLater();

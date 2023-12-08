@@ -11,7 +11,7 @@
                 {
                     "id": "f810b66a-7177-4397-9771-4229abaabbb6",
                     "name": "shelly1",
-                    "displayName": "Shelly 1/Plus 1",
+                    "displayName": "Shelly 1",
                     "createMethods": ["discovery"],
                     "interfaces": [ "gateway", "wirelessconnectable", "update" ],
                     "paramTypes": [
@@ -21,6 +21,14 @@
                             "displayName": "Shelly ID",
                             "type": "QString",
                             "readOnly": true
+                        },
+                        {
+                            "id": "da0587f1-2fd5-46b5-8f9c-726a853cb034",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
                         },
                         {
                             "id": "fa1aa0f6-93b2-410d-a2c5-7b2f45eae679",
@@ -108,9 +116,97 @@
                     ]
                 },
                 {
+                    "id": "83766db4-a553-4df7-aeff-35fb18c01f3a",
+                    "name": "shellyPlus1",
+                    "displayName": "Shelly Plus 1",
+                    "createMethods": ["discovery"],
+                    "setupMethod": "enterpin",
+                    "interfaces": [ "gateway", "wirelessconnectable", "update" ],
+                    "paramTypes": [
+                        {
+                            "id": "41cf8c80-b641-46fd-a329-2b81ecf9d445",
+                            "name":"id",
+                            "displayName": "Shelly ID",
+                            "type": "QString",
+                            "readOnly": true
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "231365ce-45d6-4087-8ed6-1de3b0ef0485",
+                            "name": "power",
+                            "displayName": "Powered",
+                            "displayNameEvent": "Turned on/off",
+                            "displayNameAction": "Turn on/off",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": true,
+                            "ioType": "digitalOutput"
+                        },
+                        {
+                            "id": "30c5bbb2-7b02-445b-af16-8a082321383b",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "displayNameEvent": "Connected changed",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
+                        },
+                        {
+                            "id": "f2b1f70c-dab0-474d-81bd-816ff3c63f47",
+                            "name": "signalStrength",
+                            "displayName": "Signal strength",
+                            "displayNameEvent": "Signal strength changed",
+                            "type": "uint",
+                            "unit": "Percentage",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "2c312a9e-ae76-4042-8030-89c8c86320e9",
+                            "name": "updateStatus",
+                            "displayName": "Update status",
+                            "displayNameEvent": "Update status changed",
+                            "type": "QString",
+                            "possibleValues": ["idle", "available", "updating"],
+                            "defaultValue": "idle"
+                        },
+                        {
+                            "id": "3fed15bd-500b-4cce-9b21-a931f411b587",
+                            "name": "currentVersion",
+                            "displayName": "Firmware version",
+                            "displayNameEvent": "Firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "d236c735-012c-44c7-919e-809cae89de55",
+                            "name": "availableVersion",
+                            "displayName": "Available firmware version",
+                            "displayNameEvent": "Available firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        }
+                    ],
+                    "actionTypes": [
+                        {
+                            "id": "212aaf17-faf1-4495-8475-0718b9b39628",
+                            "name": "reboot",
+                            "displayName": "Reboot"
+                        },
+                        {
+                            "id": "fa3a8bd6-182f-443f-ae41-d2c4aee6339d",
+                            "name": "performUpdate",
+                            "displayName": "Update firmware"
+                        }
+                    ]
+                },
+                {
                     "id": "30e74e9f-57f4-4bbc-b0df-f2c4f28b2f06",
                     "name": "shelly1pm",
-                    "displayName": "Shelly 1PM/Plus 1PM",
+                    "displayName": "Shelly 1PM",
                     "createMethods": ["discovery"],
                     "interfaces": [ "gateway", "smartmeterconsumer", "wirelessconnectable", "update" ],
                     "paramTypes": [
@@ -120,6 +216,14 @@
                             "displayName": "Shelly ID",
                             "type": "QString",
                             "readOnly": true
+                        },
+                        {
+                            "id": "4ce97119-2791-4283-a3a8-16eb31b3dc71",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
                         },
                         {
                             "id": "99a31711-0029-461e-9117-2834451175c1",
@@ -226,6 +330,105 @@
                     ]
                 },
                 {
+                    "id": "4c497fe1-c399-463a-9a73-0c5f4ebac100",
+                    "name": "shellyPlus1pm",
+                    "displayName": "Shelly Plus 1PM",
+                    "createMethods": ["discovery"],
+                    "setupMethod": "enterpin",
+                    "interfaces": [ "gateway", "smartmeterconsumer", "wirelessconnectable", "update" ],
+                    "paramTypes": [
+                        {
+                            "id": "0d97dbf6-0545-4953-ad71-4888df37df70",
+                            "name":"id",
+                            "displayName": "Shelly ID",
+                            "type": "QString",
+                            "readOnly": true
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "bc425ba1-7776-4004-ba67-b256db7c511d",
+                            "name": "power",
+                            "displayName": "Powered",
+                            "displayNameAction": "Turn on/off",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": true,
+                            "ioType": "digitalOutput"
+                        },
+                        {
+                            "id": "1b0ecbb2-5ed6-439e-81fb-5788ed8679e2",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
+                        },
+                        {
+                            "id": "bffa3472-a09f-4e85-9d31-0b966e415cd2",
+                            "name": "signalStrength",
+                            "displayName": "Signal strength",
+                            "type": "uint",
+                            "unit": "Percentage",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "c9515efd-f16a-4a29-97e1-516d1d5a6a93",
+                            "name": "updateStatus",
+                            "displayName": "Update status",
+                            "type": "QString",
+                            "possibleValues": ["idle", "available", "updating"],
+                            "defaultValue": "idle"
+                        },
+                        {
+                            "id": "e3859bc0-f96d-4fa1-958b-0e087a39a0e6",
+                            "name": "currentVersion",
+                            "displayName": "Firmware version",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "0dda20f7-e13e-494d-8351-c4401ded6c1e",
+                            "name": "availableVersion",
+                            "displayName": "Available firmware version",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "76e87d1f-bc65-4f63-b692-106861827633",
+                            "name": "totalEnergyConsumed",
+                            "displayName": "Total energy consumed",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "40e63755-7220-4c7c-9c6a-fe5d7e230a35",
+                            "name": "currentPower",
+                            "displayName": "Current power consumption",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0,
+                            "cached": false
+                        }
+                    ],
+                    "actionTypes": [
+                        {
+                            "id": "b18211d8-528b-4bff-93c2-ce6a8b55759e",
+                            "name": "reboot",
+                            "displayName": "Reboot"
+                        },
+                        {
+                            "id": "0cabc075-9abc-49be-a50d-e8a8d7637d03",
+                            "name": "performUpdate",
+                            "displayName": "Update firmware"
+                        }
+                    ]
+                },
+                {
                     "id": "20754114-1591-48b5-af2f-8c9966adb7c4",
                     "name": "shelly1l",
                     "displayName": "Shelly 1L",
@@ -238,6 +441,14 @@
                             "displayName": "Shelly ID",
                             "type": "QString",
                             "readOnly": true
+                        },
+                        {
+                            "id": "988313b8-fa9e-4507-805e-8855f39e804f",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
                         },
                         {
                             "id": "b7c4c031-77ec-4ce7-a499-5bb8bf117fe8",
@@ -358,6 +569,14 @@
                             "readOnly": true
                         },
                         {
+                            "id": "64e9559a-b6fa-42b9-bdd4-6e1d14c200c5",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
+                        },
+                        {
                             "id": "521303e2-ef93-47df-8acb-fb1f8f78aae9",
                             "name": "username",
                             "displayName": "Username (optional)",
@@ -475,6 +694,14 @@
                             "readOnly": true
                         },
                         {
+                            "id": "1190e5e6-edc0-4584-a8eb-ee09e42bf8e0",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
+                        },
+                        {
                             "id": "4fb3c690-0183-4fc4-affa-1404788b2dcc",
                             "name": "username",
                             "displayName": "Username (optional)",
@@ -578,6 +805,256 @@
                     ]
                 },
                 {
+                    "id": "86b037f5-c7f8-4778-b6d1-2b11c4ba1027",
+                    "name": "shellyPlus25",
+                    "displayName": "Shelly Plus 2PM",
+                    "createMethods": ["discovery"],
+                    "interfaces": [ "gateway", "wirelessconnectable", "update" ],
+                    "setupMethod": "enterpin",
+                    "paramTypes": [
+                        {
+                            "id": "0cd68080-5da5-44c6-a1c2-12af086a16de",
+                            "name":"id",
+                            "displayName": "Shelly ID",
+                            "type": "QString",
+                            "readOnly": true
+                        },
+                        {
+                            "id": "0b45bc3d-f598-484b-8de4-03bc67b90664",
+                            "name": "rollerMode",
+                            "displayName": "Roller shutter mode",
+                            "type": "bool",
+                            "defaultValue": false
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "8f4fe4d4-7036-4a1a-9960-091a4a7f6f02",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "displayNameEvent": "Connected changed",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
+                        },
+                        {
+                            "id": "01158eee-3605-45c2-8b6d-2c0a69321c5b",
+                            "name": "signalStrength",
+                            "displayName": "Signal strength",
+                            "displayNameEvent": "Signal strength changed",
+                            "type": "uint",
+                            "unit": "Percentage",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "395a188b-c2e2-40d1-a5f2-9ed4a9ff558f",
+                            "name": "updateStatus",
+                            "displayName": "Update status",
+                            "displayNameEvent": "Update status changed",
+                            "type": "QString",
+                            "possibleValues": ["idle", "available", "updating"],
+                            "defaultValue": "idle"
+                        },
+                        {
+                            "id": "c1f5d20a-3b06-4405-afca-20dfd41e3a34",
+                            "name": "currentVersion",
+                            "displayName": "Firmware version",
+                            "displayNameEvent": "Firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "32134deb-8e37-4d65-ae10-aad0cb44ff7b",
+                            "name": "availableVersion",
+                            "displayName": "Available firmware version",
+                            "displayNameEvent": "Available firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "bf969a1f-aa8a-40aa-8e50-af37b8b0ffe6",
+                            "name": "channel1",
+                            "displayName": "Power channel 1",
+                            "displayNameEvent": "Channel 1 turned on or off",
+                            "displayNameAction": "Turn channel 1 on or off",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": true,
+                            "ioType": "digitalOutput"
+                        },
+                        {
+                            "id": "43b41b49-def1-469b-b993-788647dc8839",
+                            "name": "channel2",
+                            "displayName": "Power channel 2",
+                            "displayNameEvent": "Channel 2 turned on or off",
+                            "displayNameAction": "Turn channel 2 on or off",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": true,
+                            "ioType": "digitalOutput"
+                        }
+                    ],
+                    "actionTypes": [
+                        {
+                            "id": "7714490b-117d-4d25-a695-9e151997f128",
+                            "name": "reboot",
+                            "displayName": "Reboot"
+                        },
+                        {
+                            "id": "9d5e04b8-cac4-49ce-9e32-efc3a06beb4b",
+                            "name": "performUpdate",
+                            "displayName": "Update firmware"
+                        }
+                    ]
+                },
+                {
+                    "id": "2c470ea4-6ef2-4aa2-b2f3-b6d8750ac577",
+                    "name": "shellyPlusPlug",
+                    "displayName": "Shelly Plus Plug S/US/UK/IT",
+                    "createMethods": ["discovery"],
+                    "interfaces": [ "powersocket", "smartmeterconsumer", "wirelessconnectable", "update" ],
+                    "paramTypes": [
+                        {
+                            "id": "ed5fcf4d-b102-4018-a9c9-0e7e9f01650d",
+                            "name":"id",
+                            "displayName": "Shelly ID",
+                            "type": "QString",
+                            "readOnly": true
+                        },
+                        {
+                            "id": "c0276036-aba0-4161-bba6-86979a151611",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
+                        },
+                        {
+                            "id": "c6b1e47a-d7c3-4c7a-aac5-18c035fd4f79",
+                            "name": "username",
+                            "displayName": "Username (optional)",
+                            "type": "QString"
+                        },
+                        {
+                            "id": "42798bf7-cca6-4730-ba8e-04dac3d99a47",
+                            "name": "password",
+                            "displayName": "Password (optional)",
+                            "type": "QString"
+                        }
+                    ],
+                    "settingsTypes": [
+                        {
+                            "id": "d0c0fbe7-42e6-426c-b1ec-c286a11ce52d",
+                            "name": "defaultState",
+                            "displayName": "Default state",
+                            "allowedValues": ["on", "off", "restore_last"],
+                            "defaultValue": "off",
+                            "type": "QString"
+                        },
+                        {
+                            "id": "c7d8d0f4-21c9-4222-961d-2d3080588301",
+                            "name": "ledMode",
+                            "displayName": "LED mode",
+                            "allowedValues": ["power", "switch", "off"],
+                            "defaultValue": "switch",
+                            "type": "QString"
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "87a60ee4-a6b8-463a-a4bc-c7c5e412239f",
+                            "name": "power",
+                            "displayName": "Powered",
+                            "displayNameEvent": "Turned on/off",
+                            "displayNameAction": "Turn on/off",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": true,
+                            "ioType": "digitalOutput"
+                        },
+                        {
+                            "id": "ee89944e-eab9-4554-9c7b-0b433f3cf287",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "displayNameEvent": "Connected changed",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
+                        },
+                        {
+                            "id": "e244927d-0003-4107-83e1-3fad923cf738",
+                            "name": "signalStrength",
+                            "displayName": "Signal strength",
+                            "displayNameEvent": "Signal strength changed",
+                            "type": "uint",
+                            "unit": "Percentage",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "8e16b8c8-6981-4eb9-88fe-a863f263f5ba",
+                            "name": "updateStatus",
+                            "displayName": "Update status",
+                            "displayNameEvent": "Update status changed",
+                            "type": "QString",
+                            "possibleValues": ["idle", "available", "updating"],
+                            "defaultValue": "idle"
+                        },
+                        {
+                            "id": "78174fac-2cec-4f1b-94c4-d413dd1a54ba",
+                            "name": "currentVersion",
+                            "displayName": "Firmware version",
+                            "displayNameEvent": "Firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "89da9eb8-a01f-4bc2-9d96-d2d6305a08d7",
+                            "name": "availableVersion",
+                            "displayName": "Available firmware version",
+                            "displayNameEvent": "Available firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "5493ecc3-8596-436b-9334-0fe4154656ec",
+                            "name": "totalEnergyConsumed",
+                            "displayName": "Total energy consumed",
+                            "displayNameEvent": "Total consumed energy changed",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "1dcc910d-ab0e-4c31-b6fa-8105324e416b",
+                            "name": "currentPower",
+                            "displayName": "Current power consumption",
+                            "displayNameEvent": "Current power consumption changed",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0,
+                            "cached": false
+                        }
+                    ],
+                    "actionTypes": [
+                        {
+                            "id": "e4a997c5-072f-4212-9ccc-7bfebd20b333",
+                            "name": "reboot",
+                            "displayName": "Reboot"
+                        },
+                        {
+                            "id": "ae862b2d-0bad-4c37-9d7f-b1fca93f00a0",
+                            "name": "performUpdate",
+                            "displayName": "Update firmware"
+                        }
+                    ]
+                },
+                {
                     "id": "22229a6d-2af8-44e0-bea9-310a0f2769ef",
                     "name": "shellyPlug",
                     "displayName": "Shelly Plug/PlugS",
@@ -590,6 +1067,14 @@
                             "displayName": "Shelly ID",
                             "type": "QString",
                             "readOnly": true
+                        },
+                        {
+                            "id": "8aa73fb6-fdb9-45f1-ac10-73933290c1b1",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
                         },
                         {
                             "id": "42797a00-1591-4021-8f4c-2a170189911b",
@@ -718,6 +1203,14 @@
                             "displayName": "Shelly ID",
                             "type": "QString",
                             "readOnly": true
+                        },
+                        {
+                            "id": "51e32b3c-f5de-4d54-abf5-24f9373d0ed3",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
                         },
                         {
                             "id": "0b060c1a-3b9b-42d7-87f8-41b7b64a7eb8",
@@ -874,6 +1367,14 @@
                             "readOnly": true
                         },
                         {
+                            "id": "ede766a3-ccd8-411d-b35a-d1b14422f2f3",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
+                        },
+                        {
                             "id": "2df0d509-d4b5-407a-835a-6b6392653e10",
                             "name": "username",
                             "displayName": "Username (optional)",
@@ -993,6 +1494,14 @@
                             "displayName": "Shelly ID",
                             "type": "QString",
                             "readOnly": true
+                        },
+                        {
+                            "id": "6db63b23-1513-4d63-8837-cafe51e1b283",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
                         },
                         {
                             "id": "cc4a3365-b302-4782-9eec-ee6b66df8ed6",
@@ -1164,6 +1673,14 @@
                             "displayName": "Shelly ID",
                             "type": "QString",
                             "readOnly": true
+                        },
+                        {
+                            "id": "e53d9a35-c5e0-42d4-8d96-cf6cd595789d",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
                         },
                         {
                             "id": "34a20277-bf0c-4fd5-8ae1-b3019681fa82",
@@ -1351,6 +1868,14 @@
                             "readOnly": true
                         },
                         {
+                            "id": "a9373316-4484-4be0-a153-bfbc1940c63f",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
+                        },
+                        {
                             "id": "1ea30a6f-5139-4452-8e23-0c525494c9c8",
                             "name": "username",
                             "displayName": "Username (optional)",
@@ -1471,6 +1996,14 @@
                             "displayName": "Shelly ID",
                             "type": "QString",
                             "readOnly": true
+                        },
+                        {
+                            "id": "5d898676-acc6-47de-a42d-0b9b9710286c",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
                         },
                         {
                             "id": "ee942141-3102-4b6a-87dc-0fc6481924e5",
@@ -1659,7 +2192,439 @@
                             "displayName": "Reboot device"
                         }
                     ]
-
+                },
+                {
+                    "id": "d59f08e4-64e3-49f1-96e1-60b63136e3d9",
+                    "name": "shellyFlood",
+                    "displayName": "Shelly Flood",
+                    "createMethods": ["discovery"],
+                    "interfaces": ["watersensor", "temperaturesensor", "wirelessconnectable", "battery", "update"],
+                    "paramTypes": [
+                        {
+                            "id": "9c35b068-d099-4278-b10f-8d9ee8e20597",
+                            "name":"id",
+                            "displayName": "Shelly ID",
+                            "type": "QString",
+                            "readOnly": true
+                        },
+                        {
+                            "id": "3e392be4-4129-4856-92b6-1d72e7c02523",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
+                        },
+                        {
+                            "id": "7fb6d4fa-ce51-4863-b1c8-1ff4bc2b1aa7",
+                            "name": "username",
+                            "displayName": "Username (optional)",
+                            "type": "QString"
+                        },
+                        {
+                            "id": "3f810961-cac8-4d85-9e0b-5580dd94a2ec",
+                            "name": "password",
+                            "displayName": "Password (optional)",
+                            "type": "QString"
+                        }
+                    ],
+                    "settingsTypes": [
+                        {
+                            "id": "db6b2930-05f0-476e-9c9c-d9f89f05dc59",
+                            "name": "rainSensor",
+                            "displayName": "Rain sensor",
+                            "type": "bool",
+                            "defaultValue": false
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "c8ecb7c4-da20-49b4-a086-8c137d3dc349",
+                            "name": "waterDetected",
+                            "displayName": "Water detected",
+                            "displayNameEvent": "Water detected",
+                            "type": "bool",
+                            "defaultValue": false
+                        },
+                        {
+                            "id": "1f62ad7a-5200-4807-ad5d-7d3bff1f8966",
+                            "name": "temperature",
+                            "displayName": "Temperature",
+                            "displayNameEvent": "Temperature changed",
+                            "type": "double",
+                            "unit": "DegreeCelsius",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "0c445ba9-091d-4cca-bca1-b15c51a95d0f",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "displayNameEvent": "Connected or disconnected",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
+                        },
+                        {
+                            "id": "bbb6d325-9712-4f29-81b6-65fd09264a99",
+                            "name": "signalStrength",
+                            "displayName": "Signal strength",
+                            "displayNameEvent": "Signal strength changed",
+                            "type": "uint",
+                            "unit": "Percentage",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "e321f13e-8efc-4882-8498-def48b3e8ae4",
+                            "name": "batteryLevel",
+                            "displayName": "Battery level",
+                            "displayNameEvent": "Battery level changed",
+                            "type": "int",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "unit": "Percentage",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "0b657f84-f09c-46af-ac28-069b2b67bac3",
+                            "name": "batteryCritical",
+                            "displayName": "Battery level critical",
+                            "displayNameEvent": "Battery critical changed",
+                            "type": "bool",
+                            "defaultValue": false
+                        },
+                        {
+                            "id": "a5120193-9396-45c5-bd16-e92a229899db",
+                            "name": "updateStatus",
+                            "displayName": "Update status",
+                            "displayNameEvent": "Update status changed",
+                            "type": "QString",
+                            "possibleValues": ["idle", "available", "updating"],
+                            "defaultValue": "idle"
+                        },
+                        {
+                            "id": "15c1f27c-2379-4df0-afa9-086b63282d2a",
+                            "name": "currentVersion",
+                            "displayName": "Current firmware version",
+                            "displayNameEvent": "Current firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "e86ef323-4531-459f-9c8c-d150a93ad208",
+                            "name": "availableVersion",
+                            "displayName": "Available firmware version",
+                            "displayNameEvent": "Available firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        }
+                    ],
+                    "actionTypes": [
+                        {
+                            "id": "0263209a-65b2-4521-a241-db597fb003ea",
+                            "name": "performUpdate",
+                            "displayName": "Start firmware update"
+                        }
+                    ]
+                },
+                {
+                    "id": "7317eb8a-fa6d-41a3-9ff5-0da3feacc960",
+                    "name": "shellySmoke",
+                    "displayName": "Shelly Smoke",
+                    "createMethods": ["discovery"],
+                    "interfaces": ["firesensor", "temperaturesensor", "wirelessconnectable", "battery", "update"],
+                    "paramTypes": [
+                        {
+                            "id": "3ec27a9e-c92b-4c05-bde9-3ef546b0db0a",
+                            "name":"id",
+                            "displayName": "Shelly ID",
+                            "type": "QString",
+                            "readOnly": true
+                        },
+                        {
+                            "id": "87344da6-b58a-42f8-b958-d3c940300992",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
+                        },
+                        {
+                            "id": "9068fb98-534c-461b-902d-03d43ff10582",
+                            "name": "username",
+                            "displayName": "Username (optional)",
+                            "type": "QString"
+                        },
+                        {
+                            "id": "5931bdaf-7b3d-402c-a7fd-fb9a7238e36f",
+                            "name": "password",
+                            "displayName": "Password (optional)",
+                            "type": "QString"
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "a16585f7-7cc6-49b0-848c-d7da2237ba77",
+                            "name": "fireDetected",
+                            "displayName": "Fire detected",
+                            "displayNameEvent": "Fire detected",
+                            "type": "bool",
+                            "defaultValue": false
+                        },
+                        {
+                            "id": "3e3606ba-8c2d-41b0-a434-171dccd97795",
+                            "name": "temperature",
+                            "displayName": "Temperature",
+                            "displayNameEvent": "Temperature changed",
+                            "type": "double",
+                            "unit": "DegreeCelsius",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "a1d0350f-d71d-4bd2-b5c7-f928d9c561bb",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "displayNameEvent": "Connected or disconnected",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
+                        },
+                        {
+                            "id": "dd7205f4-2431-4ed5-8127-d31800c442a7",
+                            "name": "signalStrength",
+                            "displayName": "Signal strength",
+                            "displayNameEvent": "Signal strength changed",
+                            "type": "uint",
+                            "unit": "Percentage",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "61090a03-b3ff-4b21-a5b8-2ad27bbdf1a5",
+                            "name": "batteryLevel",
+                            "displayName": "Battery level",
+                            "displayNameEvent": "Battery level changed",
+                            "type": "int",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "unit": "Percentage",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "1ce8e795-65a7-4e10-815d-0cb8e9f2ec7e",
+                            "name": "batteryCritical",
+                            "displayName": "Battery level critical",
+                            "displayNameEvent": "Battery critical changed",
+                            "type": "bool",
+                            "defaultValue": false
+                        },
+                        {
+                            "id": "34b839d7-0043-44c9-8bf9-136059141ff9",
+                            "name": "updateStatus",
+                            "displayName": "Update status",
+                            "displayNameEvent": "Update status changed",
+                            "type": "QString",
+                            "possibleValues": ["idle", "available", "updating"],
+                            "defaultValue": "idle"
+                        },
+                        {
+                            "id": "4750db5f-6380-4528-9a5e-216c32dc1709",
+                            "name": "currentVersion",
+                            "displayName": "Current firmware version",
+                            "displayNameEvent": "Current firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "0633052d-5b6c-480b-8208-23b25018c11f",
+                            "name": "availableVersion",
+                            "displayName": "Available firmware version",
+                            "displayNameEvent": "Available firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        }
+                    ],
+                    "actionTypes": [
+                        {
+                            "id": "09dc2e58-149c-4131-bd1b-e039a5133f72",
+                            "name": "performUpdate",
+                            "displayName": "Start firmware update"
+                        }
+                    ]
+                },
+                {
+                    "id": "f032e312-0911-450e-9456-67c27f31bebd",
+                    "name": "shellyGas",
+                    "displayName": "Shelly Gas",
+                    "createMethods": ["discovery"],
+                    "interfaces": ["gassensor", "wirelessconnectable", "update"],
+                    "paramTypes": [
+                        {
+                            "id": "f5b3cd5a-07d3-4084-a223-0d6242a180cb",
+                            "name":"id",
+                            "displayName": "Shelly ID",
+                            "type": "QString",
+                            "readOnly": true
+                        },
+                        {
+                            "id": "5c414606-2a2e-4251-b9fc-0442457f4111",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
+                        },
+                        {
+                            "id": "57916ac9-ae2e-41d4-8f67-2d16138672f7",
+                            "name": "username",
+                            "displayName": "Username (optional)",
+                            "type": "QString"
+                        },
+                        {
+                            "id": "9802c341-0c1c-45f9-bc9c-6e03472e55f2",
+                            "name": "password",
+                            "displayName": "Password (optional)",
+                            "type": "QString"
+                        }
+                    ],
+                    "settingsTypes": [
+                        {
+                            "id": "2f58325e-718d-4529-8f7e-453c911b0974",
+                            "name": "buzzerVolume",
+                            "displayName": "Buzzer volume",
+                            "type": "uint",
+                            "minValue": 1,
+                            "maxValue": 11,
+                            "defaultValue": 11
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "f7549376-226f-42aa-ae0e-1a62884908d8",
+                            "name": "gasLevel",
+                            "displayName": "Gas level",
+                            "displayNameEvent": "Gas leve changed",
+                            "type": "double",
+                            "unit": "PartsPerMillion",
+                            "defaultValue": 0,
+                            "minValue": 0,
+                            "maxValue": 65535
+                        },
+                        {
+                            "id": "4c912d66-398f-4c82-9ae1-a08d191cfbc7",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "displayNameEvent": "Connected or disconnected",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
+                        },
+                        {
+                            "id": "71a6ef7a-c116-4cc6-94ab-943c0aad4d5f",
+                            "name": "signalStrength",
+                            "displayName": "Signal strength",
+                            "displayNameEvent": "Signal strength changed",
+                            "type": "uint",
+                            "unit": "Percentage",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "8ceb701b-7a6d-4f81-a09e-72e8ace12057",
+                            "name": "updateStatus",
+                            "displayName": "Update status",
+                            "displayNameEvent": "Update status changed",
+                            "type": "QString",
+                            "possibleValues": ["idle", "available", "updating"],
+                            "defaultValue": "idle"
+                        },
+                        {
+                            "id": "98911e5d-16f6-4502-a7df-111c7007a660",
+                            "name": "currentVersion",
+                            "displayName": "Current firmware version",
+                            "displayNameEvent": "Current firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "8c805225-86fb-4a50-b8af-4bbe0b4d7dde",
+                            "name": "availableVersion",
+                            "displayName": "Available firmware version",
+                            "displayNameEvent": "Available firmware version changed",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "efbc314f-d3e4-4558-9736-e7499d2bd8ba",
+                            "name": "sensorOperation",
+                            "displayName": "Sensor operation",
+                            "type": "QString",
+                            "possibleValues": ["warmup", "normal", "fault", "unknown"],
+                            "defaultValue": "unknown"
+                        },
+                        {
+                            "id": "36d55e34-27a5-4e1d-9c87-9f89c65e8aed",
+                            "name": "selfTest",
+                            "displayName": "Self test",
+                            "type": "QString",
+                            "possibleValues": ["not_completed", "completed", "running", "pending"],
+                            "defaultValue": "not_completed"
+                        },
+                        {
+                            "id": "eb69d7d4-0947-4829-a3de-c0c0f94124bd",
+                            "name": "gas",
+                            "displayName": "Gas level index",
+                            "type": "QString",
+                            "possibleValues": ["none", "mild", "heavy", "test", "unknown"],
+                            "defaultValue": "unknown"
+                        },
+                        {
+                            "id": "5bc36b2c-4110-44ec-816f-8a3421343bb4",
+                            "name": "valveState",
+                            "displayName": "Valve state",
+                            "type": "QString",
+                            "possibleValues": ["closed", "opened", "not_connected", "failure", "closing", "opening", "checking", "unknown"],
+                            "defaultValue": "unknown"
+                        }
+                    ],
+                    "actionTypes": [
+                        {
+                            "id": "8aa54702-b76f-46a1-a23b-1fc6d699eea8",
+                            "name": "performUpdate",
+                            "displayName": "Start firmware update"
+                        },
+                        {
+                            "id": "28016a8c-fb0e-4c1b-9f8d-787eedadf0e0",
+                            "name": "selfTest",
+                            "displayName": "Perform self test"
+                        },
+                        {
+                            "id": "c9cf63b5-0582-441f-9508-1d45c468d9f4",
+                            "name": "mute",
+                            "displayName": "Mute active alarm"
+                        },
+                        {
+                            "id": "53455722-50b5-4597-b8d9-195b6dc65e96",
+                            "name": "unmute",
+                            "displayName": "Unmute active alarm"
+                        },
+                        {
+                            "id": "ae583f53-aced-439d-a7d6-82bd1e48477d",
+                            "name": "openValve",
+                            "displayName": "Open valve"
+                        },
+                        {
+                            "id": "9e46233b-d6d4-42f7-9cdc-a08cf72a5b49",
+                            "name": "closeValve",
+                            "displayName": "Close valve"
+                        }
+                    ]
                 },
                 {
                     "id": "6de35a17-0f54-4397-894d-4321b64c53d1",
@@ -1745,6 +2710,14 @@
                             "displayName": "Shelly ID",
                             "type": "QString",
                             "readOnly": true
+                        },
+                        {
+                            "id": "ec1bc52c-ca1b-4599-9ba7-7ca40d62faab",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
                         },
                         {
                             "id": "21e11417-b862-44e6-828f-d65207328630",
@@ -2034,6 +3007,256 @@
                     ]
                 },
                 {
+                    "id": "d7962c7c-82fe-4d2c-8e79-0b9ff2ee5573",
+                    "name": "shellyPro3EM",
+                    "displayName": "Shelly Pro 3EM",
+                    "createMethods": ["discovery"],
+                    "interfaces": [ "energymeter", "wirelessconnectable", "update"],
+                    "paramTypes": [
+                        {
+                            "id": "0896373b-545e-4765-9ea6-22c4161c916d",
+                            "name":"id",
+                            "displayName": "Shelly ID",
+                            "type": "QString",
+                            "readOnly": true
+                        },
+                        {
+                            "id": "32e1d2a2-7d03-466e-aa87-0fc507ae2d3a",
+                            "name": "username",
+                            "displayName": "Username (optional)",
+                            "type": "QString"
+                        },
+                        {
+                            "id": "5713d503-7975-4500-a254-23aa1e3a97f9",
+                            "name": "password",
+                            "displayName": "Password (optional)",
+                            "type": "QString"
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "a29300d0-cfde-465b-9aca-9f48f15360bc",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
+                        },
+                        {
+                            "id": "837618f5-cb59-40c1-a7b7-c036d9d8772f",
+                            "name": "signalStrength",
+                            "displayName": "Signal strength",
+                            "type": "uint",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "unit": "Percentage",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "c09b5307-b0f8-4cc3-95f2-544513424623",
+                            "name": "totalEnergyConsumed",
+                            "displayName": "Total consumed energy",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "8e6ddedc-7764-470d-b319-36b39c9ff62e",
+                            "name": "totalEnergyProduced",
+                            "displayName": "Total returned energy",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "eec71598-e307-4917-abb3-53a2b8c14625",
+                            "name": "currentPower",
+                            "displayName": "Current power",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "a2577f97-70c5-406c-90df-63228c6ce30b",
+                            "name": "currentPowerPhaseA",
+                            "displayName": "Power usage (Phase A)",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "821e323f-0f51-4a81-a1c4-c31b8f41fa19",
+                            "name": "currentPhaseA",
+                            "displayName": "Current (Phase A)",
+                            "type": "double",
+                            "unit": "Ampere",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "134e412f-5a2e-4e65-b4f2-e8f0698e7000",
+                            "name": "voltagePhaseA",
+                            "displayName": "Voltage (Phase A)",
+                            "type": "double",
+                            "unit": "Volt",
+                            "defaultValue": 0,
+                            "cached": false,
+                            "filter": "adaptive"
+                        },
+                        {
+                            "id": "0cce4d7b-c673-401b-a654-b2e3ab27bd61",
+                            "name": "energyConsumedPhaseA",
+                            "displayName": "Total consumed energy (Phase A)",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "9042012f-64e7-4594-a900-599f635f93b1",
+                            "name": "energyProducedPhaseA",
+                            "displayName": "Total returned energy (Phase A)",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "0852caaa-6704-4b03-8ba6-c1460c2f023d",
+                            "name": "currentPowerPhaseB",
+                            "displayName": "Power usage (Phase B)",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "f1ea6d35-c74a-43e3-8f06-8387a4595b51",
+                            "name": "currentPhaseB",
+                            "displayName": "Current (Phase B)",
+                            "type": "double",
+                            "unit": "Ampere",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "37bcd9a2-1f98-45e1-83bc-e9bfb40d0353",
+                            "name": "voltagePhaseB",
+                            "displayName": "Voltage (Phase B)",
+                            "type": "double",
+                            "unit": "Volt",
+                            "defaultValue": 0,
+                            "cached": false,
+                            "filter": "adaptive"
+                        },
+                        {
+                            "id": "aef8d193-75c6-431f-b013-0a5c08d6225d",
+                            "name": "energyConsumedPhaseB",
+                            "displayName": "Total consumed energy (Phase B)",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "74c234fd-22c9-4eab-ab8f-e0ba17b7403a",
+                            "name": "energyProducedPhaseB",
+                            "displayName": "Total returned energy (Phase B)",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "0c615174-562b-428a-9879-687cfeb5a9bd",
+                            "name": "currentPowerPhaseC",
+                            "displayName": "Power usage (Phase C)",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "b75373ed-acd5-4980-a0f1-565db2f1351c",
+                            "name": "currentPhaseC",
+                            "displayName": "Current (Phase C)",
+                            "type": "double",
+                            "unit": "Ampere",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "f6d5128a-305f-488b-b586-b52ba163c8a7",
+                            "name": "voltagePhaseC",
+                            "displayName": "Voltage (Phase C)",
+                            "type": "double",
+                            "unit": "Volt",
+                            "defaultValue": 0,
+                            "cached": false,
+                            "filter": "adaptive"
+                        },
+                        {
+                            "id": "cf1761b5-09b5-4688-8875-40627fa945bc",
+                            "name": "energyConsumedPhaseC",
+                            "displayName": "Total consumed energy (Phase C)",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "6a30cfcf-601d-4fdc-9465-f58b5d0caab8",
+                            "name": "energyProducedPhaseC",
+                            "displayName": "Total returned energy (Phase C)",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "839f3192-1841-4293-b60f-8e7976510d36",
+                            "name": "updateStatus",
+                            "displayName": "Update status",
+                            "type": "QString",
+                            "possibleValues": ["idle", "available", "updating"],
+                            "defaultValue": "idle"
+                        },
+                        {
+                            "id": "a8c8e190-ab9f-49f7-9690-f12fb49920cb",
+                            "name": "currentVersion",
+                            "displayName": "Current firmware version",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "2acba99c-9c4a-40bb-850a-036312995e8b",
+                            "name": "availableVersion",
+                            "displayName": "Available firmware version",
+                            "type": "QString",
+                            "defaultValue": ""
+                        },
+                        {
+                            "id": "f8621a0a-5b03-4a78-be48-934472b82900",
+                            "name": "power",
+                            "displayName": "Powered",
+                            "displayNameAction": "Turn on or off",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": true,
+                            "ioType": "digitalOutput"
+                        }
+                    ],
+                    "actionTypes": [
+                        {
+                            "id": "9b268961-5aa4-4a59-a533-aeaf8c376919",
+                            "name": "performUpdate",
+                            "displayName": "Start firmware update"
+                        },
+                        {
+                            "id": "b0043a22-21e4-4dfc-a813-2a11908a6c04",
+                            "name": "reset",
+                            "displayName": "Reset data"
+                        }
+                    ]
+                },
+                {
                     "id": "bcc7326d-555a-4763-80ce-7354e67cc700",
                     "name": "shellyEm",
                     "displayName": "Shelly EM",
@@ -2047,6 +3270,14 @@
                             "displayName": "Shelly ID",
                             "type": "QString",
                             "readOnly": true
+                        },
+                        {
+                            "id": "a64286ea-5532-412e-9c97-fa8c7a71439c",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
                         },
                         {
                             "id": "61957e60-4b77-4aa7-893f-e94559cac15c",
@@ -2318,6 +3549,14 @@
                             "readOnly": true
                         },
                         {
+                            "id": "aeac9b68-561e-4b3c-af1c-c24af3bb0d4d",
+                            "name": "coapMode",
+                            "displayName": "CoIoT peer mode",
+                            "type": "QString",
+                            "allowedValues": ["unicast", "multicast"],
+                            "defaultValue": "unicast"
+                        },
+                        {
                             "id": "ea210ec8-37ed-4479-9454-48cc06a1df88",
                             "name": "username",
                             "displayName": "Username (optional)",
@@ -2500,6 +3739,7 @@
                             "displayNameEvent": "Position changed",
                             "displayNameAction": "Set position",
                             "type": "int",
+                            "unit": "Percentage",
                             "defaultValue": 0,
                             "minValue": 0,
                             "maxValue": 100,
@@ -2526,6 +3766,48 @@
                             "id": "4e2d8a7b-821e-4ee8-9f9b-f774d631845f",
                             "name": "calibrate",
                             "displayName": "Calibrate"
+                        }
+                    ]
+                },
+                {
+                    "id": "dffcc66b-bb93-4de0-9ad4-0b2ca0fa813a",
+                    "name": "shellyAddonTempSensor",
+                    "displayName": "Shelly Addon temperature sensor",
+                    "createMethods": ["auto"],
+                    "interfaces": ["temperaturesensor", "wirelessconnectable"],
+                    "paramTypes": [
+                        {
+                            "id": "85845b89-0c78-4f9b-8107-d179604e1ad8",
+                            "name": "addonId",
+                            "displayName": "ID",
+                            "type": "QString"
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "982846ff-e045-4e4d-8959-b5ea65b83082",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "type": "bool",
+                            "defaultValue": false
+                        },
+                        {
+                            "id": "5e9ed1dd-a1f7-4755-ac6f-30013580d363",
+                            "name": "signalStrength",
+                            "displayName": "Signal strength",
+                            "type": "uint",
+                            "unit": "Percentage",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "b0062fc6-8fa1-4754-904a-c18614114998",
+                            "name": "temperature",
+                            "displayName": "Temperature",
+                            "type": "double",
+                            "unit": "DegreeCelsius",
+                            "defaultValue": 0
                         }
                     ]
                 }

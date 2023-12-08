@@ -61,6 +61,7 @@ void IntegrationPluginBosswerk::discoverThings(ThingDiscoveryInfo *info)
     // Unauthorized page which looks unique enough.
     // If this proves to not be reliable enough, one more option would be to connect to TCP port 8899 which is open
     // and responds to a proprietary binary protocol which would need to be reverse engineered first.
+    connect(discoveryReply, &NetworkDeviceDiscoveryReply::finished, discoveryReply, &NetworkDeviceDiscoveryReply::deleteLater);
     connect(discoveryReply, &NetworkDeviceDiscoveryReply::networkDeviceInfoAdded, info, [=](const NetworkDeviceInfo &networkDeviceInfo){
         qCDebug(dcBosswerk()) << "Probing device" << networkDeviceInfo.address();
 
@@ -157,10 +158,11 @@ void IntegrationPluginBosswerk::setupThing(ThingSetupInfo *info)
     timer = hardwareManager()->pluginTimerManager()->registerTimer(5);
     m_timers.insert(thing, timer);
 
-    connect(monitor, &NetworkDeviceMonitor::reachableChanged, thing, [timer, thing](bool reachable) {
+    connect(monitor, &NetworkDeviceMonitor::reachableChanged, thing, [this, timer, thing](bool reachable) {
         thing->setStateValue(mix00ConnectedStateTypeId, reachable);
         if (reachable) {
             timer->start();
+            pollDevice(thing);
         } else {
             timer->stop();
             thing->setStateValue(mix00CurrentPowerStateTypeId, 0);
@@ -168,7 +170,9 @@ void IntegrationPluginBosswerk::setupThing(ThingSetupInfo *info)
     });
 
     connect(timer, &PluginTimer::timeout, thing, [this, thing](){
-        pollDevice(thing);
+        if (m_deviceMonitors.value(thing)->reachable()) {
+            pollDevice(thing);
+        }
     });
 
     pollDevice(thing);

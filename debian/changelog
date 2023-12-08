@@ -1,3 +1,211 @@
+nymea-plugins (1.8.3) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Shelly plus addon
+  * Fronius: Add precise discovery
+
+ -- jenkins <developer@nymea.io>  Thu, 17 Aug 2023 14:10:48 +0200
+
+nymea-plugins (1.8.2) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Shelly: Don't print password in debug logs
+  * Fronius: Remove a non critical but spamming warning message
+
+  [ Simon Stürz ]
+  * go-eCharger: improve API V2 refreshing to reduce wallbox load
+
+  [ Michael Zanetti ]
+  * Easee: Various fixes after beta testing
+
+ -- jenkins <developer@nymea.io>  Tue, 18 Jul 2023 12:21:46 +0200
+
+nymea-plugins (1.8.1) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Shelly: Mark devices offline on any polling network error
+  * EVBox: Fix processing erraneous packets that still pass the CRC
+    check and a double action finish() call
+
+ -- jenkins <developer@nymea.io>  Wed, 07 Jun 2023 15:51:28 +0200
+
+nymea-plugins (1.8.0) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * go-e: Add possibility to control charging phases
+  * Shelly: Reconfigure CoAP on gen 1 shellies if they don't send any
+    data
+  * Notify.Events: Fix a typo in meta.json
+  * New Plugin: Easee
+  * EQ-3, Tado: Update thermostats windowOpenDetected states
+  * Shelly: Fix creation of children for the Plus 2PM
+  * Meross: Fix polling for totalEnergy
+  * EVBox: Split thing class into one with and one without meter
+  * Shelly: Add support for the Shelly Pro 3EM
+  * Update extendedclosable interfaces
+  * Bosswerk: Don't poll the device when it's unreachable
+  * Sunposition: Add new rpi build for simplejson
+  * Shelly: Rework Gen 2 device handling
+
+  [ Simon Stürz ]
+  * go-eCharger: Fix API V2 energy value parsing
+
+  [ Jenkins ]
+  * Philips Hue: Add support for Hue Tap Dial
+
+  [ Michael Zanetti ]
+  * Tado: Suppress a warning when thermostat is off
+
+  [ Simon Stürz ]
+  * Fronius: Fix PV power if there are multiple inverters
+
+ -- jenkins <developer@nymea.io>  Tue, 16 May 2023 12:59:26 +0200
+
+nymea-plugins (1.7.0) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Netatmo: Add min/max values for co2 sensors
+  * Add support for Shelly Plus 2PM
+  * EVBox: Rework plugin to allow addressing multiple boxes on same bus
+
+  [ Simon Stürz ]
+  * Fronius: Set energy live states to 0 if not connected
+  * go-eCharger: Set energy live states to 0 if not connected
+  * Keba: Set energy live states to 0 if not connected
+  * mystrom: Set current power to 0 if not connected
+  * powerfox: Set current power to 0 if not connected
+  * solarlog: Set energy states to 0 if not connected
+
+  [ Michael Zanetti ]
+  * AQI: Add min/max values to pressure state
+  * Netatmo: Add min/max values to pressure state
+  * SensorTag: Add min/max to pressure state
+  * New plugin: Notify.Events
+  * Kodi: Rework setup
+  * Update python plugin dependencies to include dependabot alerts
+  * Shelly: Workaround bad counter values
+  * PushNotifications: Add more options for sending push notifications
+  * Shelly plus plug s
+
+ -- jenkins <developer@nymea.io>  Tue, 07 Mar 2023 19:21:45 +0100
+
+nymea-plugins (1.6.3) jammy; urgency=medium
+
+
+ -- jenkins <developer@nymea.io>  Wed, 01 Feb 2023 12:17:57 +0100
+
+nymea-plugins (1.6.2) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * go-e: Improve error messages
+  * Update python deps to certifi
+  * EVBox: Mark discovery as weak
+
+ -- jenkins <developer@nymea.io>  Mon, 16 Jan 2023 14:35:44 +0100
+
+nymea-plugins (1.6.1) jammy; urgency=medium
+
+  [ Simon Stürz ]
+  * Netatmo: fix OAuth2 credentials loading from api key provider
+
+ -- jenkins <developer@nymea.io>  Fri, 23 Dec 2022 11:32:21 +0100
+
+nymea-plugins (1.6.0) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * AQI: Reorder interfaces based on their relevancy
+
+  [ Jenkins ]
+  * Wemo: Change link in Readme
+  * TP-Link: Added urls to read me
+
+  [ Christian Fetzer ]
+  * New plugin: ESPuino
+
+  [ Jenkins ]
+  * Shelly: Add note regarding time sync needed to display total power
+    measurements
+
+  [ Simon Stürz ]
+  * Move SMA plugin to nymea-plugins-modbus repository
+
+  [ Michael Zanetti ]
+  * New plugin: EVBox
+  * MQTT client: Fix a crash when failing to connect to the internal
+    broker
+  * MCP3008: Upate RPi.GPIO dependency
+
+  [ Simon Stürz ]
+  * Netatmo: Update login mechanism and add missing modules
+
+  [ Jenkins ]
+  * Bump certifi from 2017.4.17 to 2022.12.7 in /fastcom
+  * Bump certifi from 2020.12.5 to 2022.12.7 in /neatobotvac
+  * Bump certifi from 2020.12.5 to 2022.12.7 in /yamahaavr
+  * Bump certifi from 2021.10.8 to 2022.12.7 in /daikinairco
+  * Bump certifi from 2021.10.8 to 2022.12.7 in /bimmerconnected
+
+  [ Michael Zanetti ]
+  * New Plugin: spothinta
+
+ -- jenkins <developer@nymea.io>  Wed, 14 Dec 2022 23:58:37 +0100
+
+nymea-plugins (1.5.1) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Shelly: Fix shelly 2.5 roller position
+  * Bose: Fix unitialized compiler warning
+  * Shelly: Fix total energy consumed for 1 Plus PM
+
+ -- jenkins <developer@nymea.io>  Mon, 07 Nov 2022 20:39:50 +0100
+
+nymea-plugins (1.5.0) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Shelly: Allow choosing between unicast and multicast CoIoT
+  * TP-Link: Disable caching for some states where it's not needed
+
+  [ Jenkins ]
+  * Bump oauthlib from 3.2.0 to 3.2.1 in /daikinairco
+
+  [ Michael Zanetti ]
+  * MecMeter: Reduce some load by uncaching and rounding some states
+
+  [ Simon Stürz ]
+  * Clean up network device discovery replies due to mechanism update
+
+  [ Michael Zanetti ]
+  * go-e: Drop flooding useless debug print
+
+  [ Jenkins ]
+  * shelly: improve shelly readme notes and fix typo in integrations
+    card
+
+  [ Michael Zanetti ]
+  * AQI: Update to new interface specification
+  * Shelly: Add support for flood, smoke and gas sensors
+
+  [ Simon Stürz ]
+  * bimmerconnected: Update python requirements
+
+  [ Michael Zanetti ]
+  * SMA: Disable caching for frequently changing states
+  * go-e: Uncache some states
+  * go-e: Fix charging state
+
+ -- jenkins <developer@nymea.io>  Wed, 26 Oct 2022 13:53:45 +0200
+
+nymea-plugins (1.4.1) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Tempo: Properly handle expired tokens
+  * Fronius: Improve and translate error message for the user
+  * MyStrom: Fix discovery for Swiss plugs
+  * Shelly: Fix color state for rgbw2
+  * Fronius: Fix generating childs with multiple fronius connections
+
+ -- jenkins <developer@nymea.io>  Mon, 26 Sep 2022 17:40:12 +0200
+
 nymea-plugins (1.4.0) jammy; urgency=medium
 
   [ Michael Zanetti ]
