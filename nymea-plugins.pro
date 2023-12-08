@@ -19,8 +19,11 @@ PLUGIN_DIRS = \
     dht                 \
     dweetio             \
     dynatrace           \
+    easee               \
     elgato              \
     eq-3                \
+    espuino             \
+    evbox               \
     fastcom             \
     flowercare          \
     fronius             \
@@ -43,6 +46,7 @@ PLUGIN_DIRS = \
     nanoleaf            \
     netatmo             \
     networkdetector     \
+    notifyevents        \
     nuki                \
     mcp3008             \
     onewire             \
@@ -53,18 +57,18 @@ PLUGIN_DIRS = \
     powerfox            \
     pushbullet          \
     pushnotifications   \
-    shelly              \
-    solarlog            \
-    systemmonitor       \
     reversessh          \
     senic               \
     serialportcommander \
     sgready             \
+    shelly              \
     simpleheatpump      \
-    sma                 \
+    solarlog            \
     somfytahoma         \
     sonos               \
+    spothinta           \
     sunposition         \
+    systemmonitor       \
     tado                \
     tasmota             \
     tcpcommander        \
