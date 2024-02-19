@@ -23,6 +23,7 @@ PLUGIN_DIRS = \
     easee               \
     eebus               \
     elgato              \
+    emh                 \
     eq-3                \
     espuino             \
     evbox               \
