@@ -20,21 +20,21 @@
                             "name": "ipSMGW",
                             "displayName": "IP address of SMGW",
                             "type": "QString",
-                            "defaultValue": "0.0.0.0"
+                            "defaultValue": "192.168.58.59"
                         },
                         {
                             "id": "fd42379e-304b-4a76-820d-2e2ee553bb4b",
                             "name": "digestUser",
                             "displayName": "HKS2 Username",
                             "type": "QString",
-                            "defaultValue": "username"
+                            "defaultValue": "enqs"
                         },
                         {
                             "id": "389fb63e-6c69-4187-929e-5856b81561a7",
                             "name": "digestPass",
                             "displayName": "HKS2 Password",
                             "type": "QString",
-                            "defaultValue": "username"
+                            "defaultValue": "abc123+-ABC%"
                         }
                     ],
                     "paramTypes": [
@@ -58,9 +58,7 @@
                             "displayName": "ID of HKS2 user at SMGW",
                             "type": "QString",
                             "defaultValue": "xx"
-                        }
-                    ],
-                    "settingsTypes": [
+                        },
                         {
                             "id": "92e75c6a-5a12-4b36-af53-9c19a4cbab00",
                             "name": "ipSMGW",
@@ -82,6 +80,9 @@
                             "type": "QString",
                             "defaultValue": "username"
                         }
+                    ],
+                    "settingsTypes": [
+                        
                     ],
                     "stateTypes": [
                         {

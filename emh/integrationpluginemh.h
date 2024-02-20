@@ -56,11 +56,11 @@ private:
 
     PluginTimer *m_timer = nullptr;
     CURL *curl;
-    std::string baseUrl;
+    //std::string baseUrl;
     long statusCode;
 
     Json::Value responseStringToJson(std::string response);
-    CURLcode sendCurlRequest(std::string resource, std::string &response, long &httpCode);
+    CURLcode sendCurlRequest(std::string baseUrl, std::string resource, std::string digestUser, std::string digestPass, std::string &response, long &statusCode);
 
 };
 
