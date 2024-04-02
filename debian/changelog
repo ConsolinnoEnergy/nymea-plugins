@@ -1,3 +1,9 @@
+nymea-plugins (1.7.102) buster focal jammy; urgency=medium
+
+* Keba discovery updated to recognize new models.
+
+ -- Sebastian Ringer <s.ringer@consolinno.de> Di, 2 Apr 2024 16:53:53 +0200
+
 nymea-plugins (1.7.101) buster focal jammy; urgency=medium
 
 * EV charger interface fix

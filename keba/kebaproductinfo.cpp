@@ -123,18 +123,24 @@ KebaProductInfo::KebaProductInfo(const QString &productString) :
     } else if (seriesValue.toLower() == QChar('b')) {
         m_series = SeriesXWlan;
         qCDebug(dcKeba()) << "Series: X (Wlan)";
-    } else if (seriesValue.toLower() == QChar('c')) {
+    } else if (seriesValue.toLower() == QChar('c')) {   // Outdated. String is not in manual (V3.32) anymore.
         m_series = SeriesXWlan3G;
         qCDebug(dcKeba()) << "Series: X (Wlan + 3G)";
     } else if (seriesValue.toLower() == QChar('e')) {
         m_series = SeriesXWlan4G;
         qCDebug(dcKeba()) << "Series: X (Wlan + 4G)";
-    } else if (seriesValue.toLower() == QChar('g')) {
+    } else if (seriesValue.toLower() == QChar('g')) {   // Outdated. String is not in manual (V3.32) anymore.
         m_series = SeriesX3G;
         qCDebug(dcKeba()) << "Series: X (3G)";
     } else if (seriesValue.toLower() == QChar('h')) {
         m_series = SeriesX4G;
         qCDebug(dcKeba()) << "Series: X (4G)";
+    } else if (seriesValue.toLower() == QChar('s')) {
+        m_series = SeriesXWlan4GnoLM;
+        qCDebug(dcKeba()) << "Series: X (Wlan + 4G, w/o LM)";
+    } else if (seriesValue.toLower() == QChar('u')) {
+        m_series = SeriesXWlanNoLM;
+        qCDebug(dcKeba()) << "Series: X (Wlan, w/o LM)";
     } else {
         m_isValid = false;
         return;
@@ -178,9 +184,15 @@ KebaProductInfo::KebaProductInfo(const QString &productString) :
     } else if (authValue.toLower() == QChar('r')) {
         m_authorization = Rfid;
         qCDebug(dcKeba()) << "Authorization: RFID";
-    } else if (authValue.toLower() == QChar('k')) {
+    } else if (authValue.toLower() == QChar('k')) {   // Outdated. String is not in manual (V3.32) anymore.
         m_authorization = Key;
         qCDebug(dcKeba()) << "Authorization: Key";
+    } else if (authValue.toLower() == QChar('a')) {
+        m_authorization = RfidPlc;
+        qCDebug(dcKeba()) << "Authorization: RFID, PLC";
+    } else if (authValue.toLower() == QChar('p')) {
+        m_authorization = Plc;
+        qCDebug(dcKeba()) << "Authorization: PLC";
     } else {
         m_isValid = false;
         return;
