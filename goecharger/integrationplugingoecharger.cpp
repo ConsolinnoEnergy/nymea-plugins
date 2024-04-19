@@ -549,7 +549,7 @@ void IntegrationPluginGoECharger::updateV1(Thing *thing, const QVariantMap &stat
         break;
     case CarStateWaitForCar:
         thing->setStateValue(goeHomeCarStatusStateTypeId, "Waiting for vehicle");
-        thing->setStateValue(goeHomePluggedInStateTypeId, false);
+        thing->setStateValue(goeHomePluggedInStateTypeId, true);
         break;
     case CarStateChargedCarConnected:
         thing->setStateValue(goeHomeCarStatusStateTypeId, "Charging finished and vehicle still connected");
