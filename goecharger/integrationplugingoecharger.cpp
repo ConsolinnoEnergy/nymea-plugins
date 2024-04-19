@@ -116,6 +116,12 @@ void IntegrationPluginGoECharger::setupThing(ThingSetupInfo *info)
     if (m_monitors.contains(thing))
         hardwareManager()->networkDeviceDiscovery()->unregisterMonitor(m_monitors.take(thing));
 
+    if (m_sessionEnergyValues.contains(thing))
+        m_sessionEnergyValues.remove(thing);
+
+    if (m_totalEnergyValues.contains(thing))
+        m_totalEnergyValues.remove(thing);
+
     // Create the monitor
     NetworkDeviceMonitor *monitor = hardwareManager()->networkDeviceDiscovery()->registerMonitor(macAddress);
     m_monitors.insert(thing, monitor);
@@ -127,12 +133,23 @@ void IntegrationPluginGoECharger::setupThing(ThingSetupInfo *info)
         return;
     }
 
+    QList<float> sessionEnergyList{};
+    m_sessionEnergyValues.insert(info->thing(), sessionEnergyList);
+    QList<float> totalEnergyList{};
+    m_totalEnergyValues.insert(info->thing(), totalEnergyList);
+
     // Clean up in case the setup gets aborted
     connect(info, &ThingSetupInfo::aborted, monitor, [=](){
         if (m_monitors.contains(thing)) {
             qCDebug(dcGoECharger()) << "Unregister monitor because setup has been aborted.";
             hardwareManager()->networkDeviceDiscovery()->unregisterMonitor(m_monitors.take(thing));
         }
+
+        if (m_sessionEnergyValues.contains(thing))
+            m_sessionEnergyValues.remove(thing);
+
+        if (m_totalEnergyValues.contains(thing))
+            m_totalEnergyValues.remove(thing);
     });
 
     connect(monitor, &NetworkDeviceMonitor::reachableChanged, thing, [=](bool reachable){
@@ -267,6 +284,13 @@ void IntegrationPluginGoECharger::thingRemoved(Thing *thing)
         hardwareManager()->pluginTimerManager()->unregisterTimer(m_refreshTimer);
         m_refreshTimer = nullptr;
     }
+
+    // Clean up lists for outlier checking
+    if (m_sessionEnergyValues.contains(thing))
+        m_sessionEnergyValues.remove(thing);
+
+    if (m_totalEnergyValues.contains(thing))
+        m_totalEnergyValues.remove(thing);
 }
 
 void IntegrationPluginGoECharger::executeAction(ThingActionInfo *info)
@@ -565,8 +589,59 @@ void IntegrationPluginGoECharger::updateV1(Thing *thing, const QVariantMap &stat
     if (temperatureSensorList.count() >= 4)
         thing->setStateValue(goeHomeTemperatureSensor4StateTypeId, temperatureSensorList.at(3).toDouble());
 
-    thing->setStateValue(goeHomeTotalEnergyConsumedStateTypeId, statusMap.value("eto").toUInt() / 10.0);
-    thing->setStateValue(goeHomeSessionEnergyStateTypeId, statusMap.value("dws").toUInt() / 360000.0);
+    // Check for outliers. As a consequence of that, the value written to the state is not the most recent. It is several cycles old, depending on the window size.
+    if (m_totalEnergyValues.contains(thing)) {
+        QList<float>& valueList = m_totalEnergyValues.operator[](thing);
+        valueList.append(statusMap.value("eto").toUInt() / 10.0);
+        if (valueList.length() > m_windowLength) {
+            valueList.removeFirst();
+            uint centerIndex;
+            if (m_windowLength % 2 == 0) {
+                centerIndex = m_windowLength / 2;
+            } else {
+                centerIndex = (m_windowLength - 1)/ 2;
+            }
+            float testValue{valueList.at(centerIndex)};
+            if (isOutlier(valueList)) {
+                qCDebug(dcGoECharger()) << "Outlier check: the value" << testValue << " is an outlier. Sample window:" << valueList;
+            } else {
+                //qCDebug(dcGoECharger()) << "Outlier check: the value" << testValue << " is legit.";
+
+                float currentValue{thing->stateValue(goeHomeTotalEnergyConsumedStateTypeId).toFloat()};
+                if (testValue != currentValue) {    // Yes, we are comparing floats here! This is one of the rare cases where you can actually do that. Tested, works as intended.
+                    //qCDebug(dcGoECharger()) << "Outlier check: the new value is different than the current value (" << currentValue << "). Writing new value to state.";
+                    thing->setStateValue(goeHomeTotalEnergyConsumedStateTypeId, testValue);
+                }
+            }
+        }
+    }
+
+    if (m_sessionEnergyValues.contains(thing)) {
+        QList<float>& valueList = m_sessionEnergyValues.operator[](thing);
+        valueList.append(statusMap.value("dws").toUInt() / 360000.0);
+        if (valueList.length() > m_windowLength) {
+            valueList.removeFirst();
+            uint centerIndex;
+            if (m_windowLength % 2 == 0) {
+                centerIndex = m_windowLength / 2;
+            } else {
+                centerIndex = (m_windowLength - 1)/ 2;
+            }
+            float testValue{valueList.at(centerIndex)};
+            if (isOutlier(valueList)) {
+                qCDebug(dcGoECharger()) << "Outlier check: the value" << testValue << " is an outlier. Sample window:" << valueList;
+            } else {
+                //qCDebug(dcGoECharger()) << "Outlier check: the value" << testValue << " is legit.";
+
+                float currentValue{thing->stateValue(goeHomeSessionEnergyStateTypeId).toFloat()};
+                if (testValue != currentValue) {    // Yes, we are comparing floats here! This is one of the rare cases where you can actually do that. Tested, works as intended.
+                    //qCDebug(dcGoECharger()) << "Outlier check: the new value is different than the current value (" << currentValue << "). Writing new value to state.";
+                    thing->setStateValue(goeHomeSessionEnergyStateTypeId, testValue);
+                }
+            }
+        }
+    }
+
     thing->setStateValue(goeHomeUpdateAvailableStateTypeId, (statusMap.value("upd").toUInt() == 0 ? false : true));
     thing->setStateValue(goeHomeFirmwareVersionStateTypeId, statusMap.value("fwv").toString());
     // FIXME: check if we can use amx since it is better for pv charging, not all version seen implement this
@@ -633,7 +708,10 @@ void IntegrationPluginGoECharger::updateV1(Thing *thing, const QVariantMap &stat
     thing->setStateValue(goeHomeCurrentPowerPhaseBStateTypeId, powerPhaseB);
     thing->setStateValue(goeHomeCurrentPowerPhaseCStateTypeId, powerPhaseC);
 
-    thing->setStateValue(goeHomeCurrentPowerStateTypeId, currentPower);
+    // The value for "currentPower" can sometimes be unreasonably high. We know the Go-e charger can at most charge with 22 kW. Set a cutoff at
+    // 23 kW (not 22 kW to leave some wiggle room) and ignore any values that are higher.
+    if (currentPower < 23000)
+        thing->setStateValue(goeHomeCurrentPowerStateTypeId, currentPower);
 
     // Check how many phases are actually charging, and update the phase count only if something happens on the phases (current or power)
     if (amperePhaseA != 0 || amperePhaseB != 0 || amperePhaseC != 0) {
@@ -1112,11 +1190,59 @@ void IntegrationPluginGoECharger::updateV2(Thing *thing, const QVariantMap &stat
             thing->setStateValue(goeHomeTemperatureSensor4StateTypeId, temperatureSensorList.at(3).toDouble());
     }
 
-    if (statusMap.contains("eto"))
-        thing->setStateValue(goeHomeTotalEnergyConsumedStateTypeId, statusMap.value("eto").toUInt() / 1000.0); // Wh -> kWh
+    // Check for outliers. As a consequence of that, the value written to the state is not the most recent. It is several cycles old, depending on the window size.
+    if (statusMap.contains("eto") && m_totalEnergyValues.contains(thing)) {
+        QList<float>& valueList = m_totalEnergyValues.operator[](thing);
+        valueList.append(statusMap.value("eto").toUInt() / 1000.0); // Wh -> kWh
+        if (valueList.length() > m_windowLength) {
+            valueList.removeFirst();
+            uint centerIndex;
+            if (m_windowLength % 2 == 0) {
+                centerIndex = m_windowLength / 2;
+            } else {
+                centerIndex = (m_windowLength - 1)/ 2;
+            }
+            float testValue{valueList.at(centerIndex)};
+            if (isOutlier(valueList)) {
+                qCDebug(dcGoECharger()) << "Outlier check: the value" << testValue << " is an outlier. Sample window:" << valueList;
+            } else {
+                //qCDebug(dcGoECharger()) << "Outlier check: the value" << testValue << " is legit.";
 
-    if (statusMap.contains("wh"))
-        thing->setStateValue(goeHomeSessionEnergyStateTypeId, statusMap.value("wh").toUInt() / 1000.0); // Wh -> kWh
+                float currentValue{thing->stateValue(goeHomeTotalEnergyConsumedStateTypeId).toFloat()};
+                if (testValue != currentValue) {    // Yes, we are comparing floats here! This is one of the rare cases where you can actually do that. Tested, works as intended.
+                    //qCDebug(dcGoECharger()) << "Outlier check: the new value is different than the current value (" << currentValue << "). Writing new value to state.";
+                    thing->setStateValue(goeHomeTotalEnergyConsumedStateTypeId, testValue);
+                }
+            }
+        }
+    }
+
+    if (statusMap.contains("wh") && m_sessionEnergyValues.contains(thing)) {
+        QList<float>& valueList = m_sessionEnergyValues.operator[](thing);
+        valueList.append(statusMap.value("wh").toUInt() / 1000.0);  // Wh -> kWh
+        if (valueList.length() > m_windowLength) {
+            valueList.removeFirst();
+            uint centerIndex;
+            if (m_windowLength % 2 == 0) {
+                centerIndex = m_windowLength / 2;
+            } else {
+                centerIndex = (m_windowLength - 1)/ 2;
+            }
+            float testValue{valueList.at(centerIndex)};
+            if (isOutlier(valueList)) {
+                qCDebug(dcGoECharger()) << "Outlier check: the value" << testValue << " is an outlier. Sample window:" << valueList;
+            } else {
+                //qCDebug(dcGoECharger()) << "Outlier check: the value" << testValue << " is legit.";
+
+                float currentValue{thing->stateValue(goeHomeSessionEnergyStateTypeId).toFloat()};
+                if (testValue != currentValue) {    // Yes, we are comparing floats here! This is one of the rare cases where you can actually do that. Tested, works as intended.
+                    //qCDebug(dcGoECharger()) << "Outlier check: the new value is different than the current value (" << currentValue << "). Writing new value to state.";
+                    thing->setStateValue(goeHomeSessionEnergyStateTypeId, testValue);
+                }
+            }
+        }
+    }
+
 
     if (statusMap.contains("upd"))
         thing->setStateValue(goeHomeUpdateAvailableStateTypeId, (statusMap.value("upd").toUInt() == 0 ? false : true));
@@ -1218,7 +1344,10 @@ void IntegrationPluginGoECharger::updateV2(Thing *thing, const QVariantMap &stat
         thing->setStateValue(goeHomeCurrentPowerPhaseBStateTypeId, powerPhaseB);
         thing->setStateValue(goeHomeCurrentPowerPhaseCStateTypeId, powerPhaseC);
 
-        thing->setStateValue(goeHomeCurrentPowerStateTypeId, currentPower);
+        // The value for "currentPower" can sometimes be unreasonably high. We know the Go-e charger can at most charge with 22 kW. Set a cutoff at
+        // 23 kW (not 22 kW to leave some wiggle room) and ignore any values that are higher.
+        if (currentPower < 23000)
+            thing->setStateValue(goeHomeCurrentPowerStateTypeId, currentPower);
 
         // Check how many phases are actually charging, and update the phase count only if something happens on the phases (current or power)
         if (amperePhaseA != 0 || amperePhaseB != 0 || amperePhaseC != 0) {
@@ -1574,4 +1703,51 @@ void IntegrationPluginGoECharger::markAsDisconnected(Thing *thing)
     thing->setStateValue("currentPowerPhaseB", 0);
     thing->setStateValue("currentPowerPhaseC", 0);
     thing->setStateValue("frequency", 0);
+}
+
+// This method uses the Hampel identifier (https://blogs.sas.com/content/iml/2021/06/01/hampel-filter-robust-outliers.html) to test if the value in the center of the window is an outlier or not.
+// The input is a list of floats that contains the window of values to look at. The method will return true if the center value of that list is an outlier according to the Hampel
+// identifier. If the value is not an outlier, the method will return false.
+// The center value of the list is the one at (length / 2) for even length and ((length - 1) / 2) for odd length.
+bool IntegrationPluginGoECharger::isOutlier(const QList<float>& list)
+{
+    int const windowLength{list.length()};
+    if (windowLength < 3) {
+        qCWarning(dcGoECharger()) << "Outlier check not working. Not enough values in the list.";
+        return true;    // Unknown if the value is an outlier, but return true to not use the value because it can't be checked.
+    }
+
+    // This is the variable you can change to tweak outlier detection. It scales the size of the range in which values are deemed not an outlier. Increase the number to increase the
+    // range (less values classified as an outlier), lower the number to reduce the range (more values classified as an outlier).
+    uint const hampelH{3};
+
+    float const madNormalizeFactor{1.4826};
+    //qCDebug(dcGoECharger()) << "Hampel identifier: the input list -" << list;
+    QList<float> sortedList{list};
+    std::sort(sortedList.begin(), sortedList.end());
+    //qCDebug(dcGoECharger()) << "Hampel identifier: the sorted list -" << sortedList;
+    uint medianIndex;
+    if (windowLength % 2 == 0) {
+        medianIndex = windowLength / 2;
+    } else {
+        medianIndex = (windowLength - 1)/ 2;
+    }
+    float const median{sortedList.at(medianIndex)};
+    //qCDebug(dcGoECharger()) << "Hampel identifier: the median -" << median;
+
+    QList<float> madList;
+    for (int i = 0; i < windowLength; ++i) {
+        madList.append(std::abs(median - sortedList.at(i)));
+    }
+    //qCDebug(dcGoECharger()) << "Hampel identifier: the mad list -" << madList;
+
+    std::sort(madList.begin(), madList.end());
+    //qCDebug(dcGoECharger()) << "Hampel identifier: the sorted mad list -" << madList;
+    float const hampelIdentifier{hampelH * madNormalizeFactor * madList.at(medianIndex)};
+    //qCDebug(dcGoECharger()) << "Hampel identifier: the calculated Hampel identifier" << hampelIdentifier;
+
+    bool isOutlier{std::abs(list.at(medianIndex) - median) > hampelIdentifier};
+    //qCDebug(dcGoECharger()) << "Hampel identifier: the value" << list.at(medianIndex) << " is an outlier?" << isOutlier;
+
+    return isOutlier;
 }
