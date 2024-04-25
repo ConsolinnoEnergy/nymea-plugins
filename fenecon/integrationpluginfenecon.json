@@ -16,32 +16,32 @@
                     "createMethods": ["discovery"],
                     "interfaces": ["connectable"],
                     "paramTypes": [
-                    {
-                        "id": "297e85cc-e2aa-41fe-a27a-c3904b2e7f70",
-                        "name": "macAddress",
-                        "displayName": "MAC address",
-                        "type": "QString",
-                        "inputType": "MacAddress",
-                        "defaultValue": ""
-                    }
+                        {
+                            "id": "297e85cc-e2aa-41fe-a27a-c3904b2e7f70",
+                            "name": "macAddress",
+                            "displayName": "MAC address",
+                            "type": "QString",
+                            "inputType": "MacAddress",
+                            "defaultValue": ""
+                        }
                     ],
                     "stateTypes": [
-                    {
-                        "id": "98e4476f-e745-4a7f-b795-19269cb70c40",
-                        "name": "connected",
-                        "displayName": "Reachable",
-                        "displayNameEvent": "Reachable changed",
-                        "type": "bool",
-                        "defaultValue": false
-                    },
-                    {
-                    "id": "d0c8d4c7-3e6c-4ac0-80ae-247cec9fc4b0",
-                    "name": "status",
-                    "displayName": "Fems Status",
-                    "displayNameEvent": "Status changed",
-                    "type": "int",
-                    "defaultValue": false
-                    }
+                        {
+                            "id": "98e4476f-e745-4a7f-b795-19269cb70c40",
+                            "name": "connected",
+                            "displayName": "Reachable",
+                            "displayNameEvent": "Reachable changed",
+                            "type": "bool",
+                            "defaultValue": false
+                        },
+                        {
+                            "id": "d0c8d4c7-3e6c-4ac0-80ae-247cec9fc4b0",
+                            "name": "status",
+                            "displayName": "Fems Status",
+                            "displayNameEvent": "Status changed",
+                            "type": "int",
+                            "defaultValue": false
+                        }
                     ],
                     "actionTypes": [
 
@@ -82,7 +82,7 @@
                             "displayName": "Charging state",
                             "displayNameEvent": "Charging state changed",
                             "type": "QString",
-                           "possibleValues": ["idle", "charging", "discharging"],
+                            "possibleValues": ["idle", "charging", "discharging"],
                             "defaultValue": "idle",
                             "cached": false
                         },
@@ -186,9 +186,6 @@
                         }
                     ]
                 },
-
-
-
                 {
                     "id": "58fd5e1d-8090-4b7a-ac70-a77a3f662d40",
                     "name": "meter",
@@ -423,13 +420,11 @@
                             "defaultValue": 0.00,
                             "cached": false
                         }
-
-
+                    ]
+                }
             ]
         }
     ]
-}
-]
 }
 
 
