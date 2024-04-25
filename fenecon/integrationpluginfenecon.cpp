@@ -441,7 +441,7 @@ void IntegrationPluginFenecon::updateStorages(FemsConnection *connection) {
             if (child != nullptr) {
               qCDebug(dcFenecon()) << "calling child ValueToAddThing";
               this->addValueToThing(child, batteryChargingEnergyStateTypeId,
-                                    var, DOUBLE, 0);
+                                    var, DOUBLE, -3);
             }
             qCDebug(dcFenecon()) << "Add Value to thing done";
             checkBatteryState(parentThing);
@@ -476,7 +476,7 @@ void IntegrationPluginFenecon::updateStorages(FemsConnection *connection) {
             QVariant var =
                 QVariant::fromValue((this->getValueOfRequestedData(&jsonDoc)));
             addValueToThing(parentThing, batteryThingClassId,
-                            batteryDischarginEnergyStateTypeId, var, DOUBLE, 0);
+                            batteryDischarginEnergyStateTypeId, var, DOUBLE, -3);
             checkBatteryState(parentThing);
           });
 
