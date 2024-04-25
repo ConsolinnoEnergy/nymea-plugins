@@ -1367,27 +1367,18 @@ void IntegrationPluginFenecon::checkBatteryState(Thing *parentThing) {
   qCDebug(dcFenecon()) << "Checking Battery State";
   Thing *thing = GetThingByParentAndClassId(parentThing, batteryThingClassId);
   if (thing != nullptr) {
-    QVariant chargingEnergy =
-        thing->stateValue(batteryChargingEnergyStateTypeId);
-    QVariant dischargingEnergy =
-        thing->stateValue(batteryDischarginEnergyStateTypeId);
-    qCDebug(dcFenecon()) << "Getting stateValues";
-    int charging = chargingEnergy.toInt();
-    int discharging = dischargingEnergy.toInt();
-    qCDebug(dcFenecon()) << "charging: " << charging
-                         << " discharging: " << discharging;
+    double currentBatteryPower = thing->stateValue(batteryCurrentPowerStateTypeId).toDouble();
     // TODO: ASSUMPTION! + READ Doc. In Code
-    if (charging != 0 && charging > discharging) {
-      this->batteryState = "charging";
-    } else if (discharging != 0 && discharging > charging) {
+    if (currentBatteryPower < 0)
+    {
       this->batteryState = "discharging";
-    } else if (discharging == charging) {
+    } else if (currentBatteryPower > 0) {
+      this->batteryState = "charging";
+    } else {
       this->batteryState = "idle";
     }
-
     QVariant var = this->batteryState;
     qCDebug(dcFenecon()) << "Setting Battery State: " << this->batteryState;
-    this->addValueToThing(thing, batteryChargingStateStateTypeId, var, QSTRING,
-                          0);
+    this->addValueToThing(thing, batteryChargingStateStateTypeId, var, QSTRING,0);
   }
 }
