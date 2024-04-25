@@ -792,7 +792,7 @@ void IntegrationPluginFenecon::updateMeters(FemsConnection *connection) {
 
   connect(currentGridPowerReply, &FemsNetworkReply::finished, this,
           [this, currentGridPowerReply, parentThing]() {
-            qCDebug(dcFenecon()) << "Current Grid Power";
+            qCDebug(dcFenecon()) << "Current Power";
             if (connectionError(currentGridPowerReply)) {
 
               return;
@@ -812,7 +812,7 @@ void IntegrationPluginFenecon::updateMeters(FemsConnection *connection) {
             QVariant var =
                 QVariant::fromValue((getValueOfRequestedData(&jsonDoc)));
             addValueToThing(parentThing, meterThingClassId,
-                            meterCurrentGridPowerStateTypeId, var, DOUBLE, 0);
+                            meterCurrentPowerStateTypeId, var, DOUBLE, 0);
           });
 
   // ProductionActivePower
@@ -909,7 +909,7 @@ void IntegrationPluginFenecon::updateMeters(FemsConnection *connection) {
       connection->getFemsDataPoint(CONSUMPTION_ACTIVE_POWER);
   connect(currentPower, &FemsNetworkReply::finished, this,
           [this, currentPower, parentThing]() {
-            qCDebug(dcFenecon()) << "Current Power";
+            qCDebug(dcFenecon()) << "Current Grid Power";
             if (connectionError(currentPower)) {
 
               return;
@@ -929,7 +929,7 @@ void IntegrationPluginFenecon::updateMeters(FemsConnection *connection) {
             QVariant var =
                 QVariant::fromValue((getValueOfRequestedData(&jsonDoc)));
             addValueToThing(parentThing, meterThingClassId,
-                            meterCurrentPowerStateTypeId, var, DOUBLE, 0);
+                            meterCurrentGridPowerStateTypeId, var, DOUBLE, 0);
           });
   // ProductionActiveEnergy
   FemsNetworkReply *totalEnergyProduced =
