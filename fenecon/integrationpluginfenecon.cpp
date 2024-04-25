@@ -637,7 +637,7 @@ void IntegrationPluginFenecon::updateStorages(FemsConnection *connection) {
                 QVariant::fromValue((this->getValueOfRequestedData(&jsonDoc)));
             // GET "value" of data
             addValueToThing(parentThing, batteryThingClassId,
-                            batteryCapacityStateTypeId, var, DOUBLE, 0);
+                            batteryCapacityStateTypeId, var, DOUBLE, -3);
           });
 
   // BatteryLevel (SoC)
