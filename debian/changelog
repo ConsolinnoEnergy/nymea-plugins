@@ -1,3 +1,9 @@
+nymea-plugins (1.7.103) buster focal jammy; urgency=medium
+
+* Go-e charger plugin: added code to prevent unreasonable values in power and energy values.
+
+ -- Sebastian Ringer <s.ringer@consolinno.de> Fri, 19 Apr 2024 16:20:53 +0200
+
 nymea-plugins (1.7.102) buster focal jammy; urgency=medium
 
 * Keba discovery updated to recognize new models.
