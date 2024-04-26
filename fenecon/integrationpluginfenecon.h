@@ -69,6 +69,7 @@ private:
   void updateSumState(FemsConnection *connection);
   void updateMeters(FemsConnection *connection);
   void updateStorages(FemsConnection *connection);
+  void updateInverter(FemsConnection *connection);
   bool connectionError(FemsNetworkReply *reply);
   void changeMeterString();
   void checkBatteryState(Thing *parentThing);
@@ -93,6 +94,7 @@ private:
 
   bool batteryCreated = false;
   bool meterCreated = false;
+  bool inverterCreated = false;
 };
 
 #endif // INTEGRATIONPLUGINFENECON_H
