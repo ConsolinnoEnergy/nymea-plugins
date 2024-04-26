@@ -34,7 +34,7 @@ static int id_increment = 0;
 
 IntegrationPluginFenecon::IntegrationPluginFenecon(QObject *parent)
     : IntegrationPlugin(parent) {
-  qCDebug(dcFenecon()) << "IntegrationPluginsFenecon constructor called";
+  qCDebug(dcFenecon()) << "IntegrationPluginsFenecon constructor called.";
   this->ownId = id_increment++;
 }
 
@@ -118,7 +118,7 @@ void IntegrationPluginFenecon::startPairing(ThingPairingInfo *info) {
   info->finish(
       Thing::ThingErrorNoError,
       QString(QT_TR_NOOP(
-          "Please enter your login credentials for the FEMS connection")));
+          "Please enter your login credentials for the FEMS connection.")));
 }
 
 void IntegrationPluginFenecon::confirmPairing(ThingPairingInfo *info,
