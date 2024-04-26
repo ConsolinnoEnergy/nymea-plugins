@@ -880,14 +880,14 @@ void IntegrationPluginFenecon::updateSumState(FemsConnection *connection) {
           qCDebug(dcFenecon()) << "Checking fo Updating States";
           QVariant varBool = QVariant::fromValue(true);
           // FEMS STATE == FAULT on 3
-          if (var.toInt() == 3) {
-            varBool.setValue(false);
-          }
+          // if (var.toInt() == 3) {
+          //   varBool.setValue(false);
+          // }
           qCDebug(dcFenecon()) << "ADDING CONNECTION STATE: " << varBool;
           // TODO addValueToThingOverload( instead of QVariant -> boolean)
           addValueToThing(parentThing, meterThingClassId, meterConnectedStateTypeId, varBool, MY_BOOLEAN, 0);
           addValueToThing(parentThing, batteryThingClassId, batteryConnectedStateTypeId, varBool, MY_BOOLEAN, 0);
-          addValueToThing(parentThing, inverterThingClassId, batteryConnectedStateTypeId, varBool, MY_BOOLEAN, 0);
+          addValueToThing(parentThing, inverterThingClassId, inverterConnectedStateTypeId, varBool, MY_BOOLEAN, 0);
         }
       });
 }
