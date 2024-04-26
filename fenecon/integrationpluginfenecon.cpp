@@ -836,6 +836,60 @@ void IntegrationPluginFenecon::updateInverter(FemsConnection *connection) {
             addValueToThing(parentThing, inverterThingClassId, inverterCurrentPowerProductionDcStateTypeId, correctedVar, DOUBLE, 0);
           });
 
+  // totalEnergyProduced
+  FemsNetworkReply *currentEnergyProduction =
+      connection->getFemsDataPoint(GRID_PRODUCTION_ACTIVE_DC_ENERGY);
+  connect(currentEnergyProduction, &FemsNetworkReply::finished, this,
+          [this, currentEnergyProduction, parentThing]() {
+            qCDebug(dcFenecon()) << "Energy Production";
+            if (connectionError(currentEnergyProduction)) {
+
+              return;
+            }
+            QByteArray data =
+                currentEnergyProduction->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFenecon()) << "Inverter: Failed to parse JSON data"
+                                     << data << ":" << error.errorString();
+
+              return;
+            }
+            QVariant var = QVariant::fromValue((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, inverterThingClassId, inverterTotalEnergyProducedStateTypeId, var, DOUBLE, -3);
+          });
+
+  // totalEnergyProducedAc
+  FemsNetworkReply *currentEnergyProductionAc =
+      connection->getFemsDataPoint(GRID_PRODUCTION_ACTIVE_AC_ENERGY);
+  connect(currentEnergyProductionAc, &FemsNetworkReply::finished, this,
+          [this, currentEnergyProductionAc, parentThing]() {
+            qCDebug(dcFenecon()) << "Energy Production";
+            if (connectionError(currentEnergyProductionAc)) {
+
+              return;
+            }
+            QByteArray data =
+                currentEnergyProductionAc->networkReply()->readAll();
+            QJsonParseError error;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+
+            // Check JSON Reply
+            bool jsonE = jsonError(data);
+            if (jsonE) {
+              qCWarning(dcFenecon()) << "Inverter: Failed to parse JSON data"
+                                     << data << ":" << error.errorString();
+
+              return;
+            }
+            QVariant var = QVariant::fromValue((getValueOfRequestedData(&jsonDoc)));
+            addValueToThing(parentThing, inverterThingClassId, inverterProductionAcActiveEnergyStateTypeId, var, DOUBLE, -3);
+          });
+
   qCDebug(dcFenecon()) << "Inverter done";
 }
 

@@ -313,24 +313,6 @@
                             "cached": false
                         },
                         {
-                            "id": "bcfe42ef-26c8-4911-95fa-0b8b0bb2a828",
-                            "name": "productionAcActiveEnergy",
-                            "displayName": "Energy produced ac",
-                            "displayNameEvent": "Energy production ac changed",
-                            "type": "double",
-                            "unit": "KiloWattHour",
-                            "defaultValue": 0
-                        },
-                        {
-                            "id": "dcfd468e-e2cf-468a-bb61-a1c2ed429667",
-                            "name": "totalEnergyProducedDc",
-                            "displayName": "Energy produced dc",
-                            "displayNameEvent": "Energy production dc changed",
-                            "type": "double",
-                            "unit": "KiloWattHour",
-                            "defaultValue": 0
-                        },
-                        {
                             "id": "66dfc072-6e6f-4df8-b4af-94066c52bfaa",
                             "name": "totalEnergyProduced",
                             "displayName": "Energy produced",
@@ -454,6 +436,15 @@
                             "unit": "Watt",
                             "defaultValue": 0,
                             "cached": false
+                        },
+                        {
+                            "id": "bcfe42ef-26c8-4911-95fa-0b8b0bb2a828",
+                            "name": "productionAcActiveEnergy",
+                            "displayName": "Energy produced ac",
+                            "displayNameEvent": "Energy production ac changed",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
                         }
                     ]
                 }
