@@ -654,17 +654,35 @@ void IntegrationPluginGoECharger::updateV1(Thing *thing, const QVariantMap &stat
     thing->setStateValue(goeHomeAdapterConnectedStateTypeId, (statusMap.value("adi").toUInt() == 0 ? false : true));
 
     uint amaLimit = statusMap.value("ama").toUInt();
-    uint cableLimit = statusMap.value("cbl").toUInt();
+    uint cableLimit = statusMap.value("cbl").toUInt();    
 
     thing->setStateValue(goeHomeAbsoluteMaxAmpereStateTypeId, amaLimit);
     thing->setStateValue(goeHomeCableType2AmpereStateTypeId, cableLimit);
 
-    // Set the limit for the max charging amps
-    if (cableLimit != 0) {
-        thing->setStateMaxValue(goeHomeMaxChargingCurrentStateTypeId, qMin(amaLimit, cableLimit));
-    } else {
-        thing->setStateMaxValue(goeHomeMaxChargingCurrentStateTypeId, amaLimit);
+    if (statusMap.contains("var")) {
+        uint variant = statusMap.value("var").toUInt();
+        uint variantLimit = 16; // 11 kW
+        if (variant == 22) // 22 kW
+            variantLimit = 32;
+
+        thing->setStateValue(goeHomeModelMaxAmpereStateTypeId, variantLimit);
     }
+
+    uint modelLimit = thing->stateValue(goeHomeModelMaxAmpereStateTypeId).toUInt();
+
+    // Set the limit for the max charging amps
+    uint finalLimit = 0;
+    if (cableLimit != 0) {
+        finalLimit = qMin(amaLimit, cableLimit);
+    } else {
+        finalLimit = amaLimit;
+    }
+    // Check hardware variant: 11 -> 16A and 22 -> 32A
+    if (modelLimit != 0)
+        finalLimit = qMin(finalLimit, modelLimit);
+
+    thing->setStateMaxValue(goeHomeMaxChargingCurrentStateTypeId, finalLimit);
+
 
     // Parse nrg array
     uint voltagePhaseA = 0; uint voltagePhaseB = 0; uint voltagePhaseC = 0;
