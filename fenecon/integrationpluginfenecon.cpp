@@ -529,8 +529,13 @@ void IntegrationPluginFenecon::updateStorages(FemsConnection *connection) {
             QVariant var =
                 QVariant::fromValue((this->getValueOfRequestedData(&jsonDoc)));
             // GET "value" of data
-            addValueToThing(parentThing, batteryThingClassId,
-                            batteryCurrentPowerStateTypeId, var, DOUBLE, 0);
+            Thing *thing = GetThingByParentAndClassId(parentThing, inverterThingClassId);
+            double inverterPower = thing->stateValue(inverterCurrentPowerStateTypeId).toDouble();
+            double doubleVar = var.toDouble();
+            doubleVar += inverterPower;
+            doubleVar *= -1;
+            QVariant correctedVar = QVariant(doubleVar);
+            addValueToThing(parentThing, batteryThingClassId, batteryCurrentPowerStateTypeId, correctedVar, DOUBLE, 0);
           });
 
   // CurrentPowerA
@@ -1151,7 +1156,7 @@ void IntegrationPluginFenecon::updateMeters(FemsConnection *connection) {
 
         QVariant var = QVariant::fromValue((getValueOfRequestedData(&jsonDoc)));
         addValueToThing(parentThing, meterThingClassId,
-                        meterCurrentPowerPhaseAStateTypeId, var, DOUBLE, -3);
+                        meterCurrentPowerPhaseAStateTypeId, var, DOUBLE, 0);
       });
 
   // GridActivePowerL2
@@ -1180,7 +1185,7 @@ void IntegrationPluginFenecon::updateMeters(FemsConnection *connection) {
 
         QVariant var = QVariant::fromValue((getValueOfRequestedData(&jsonDoc)));
         addValueToThing(parentThing, meterThingClassId,
-                        meterCurrentPowerPhaseBStateTypeId, var, DOUBLE, -3);
+                        meterCurrentPowerPhaseBStateTypeId, var, DOUBLE, 0);
       });
 
   // GridActivePowerL3
@@ -1209,7 +1214,7 @@ void IntegrationPluginFenecon::updateMeters(FemsConnection *connection) {
 
         QVariant var = QVariant::fromValue((getValueOfRequestedData(&jsonDoc)));
         addValueToThing(parentThing, meterThingClassId,
-                        meterCurrentPowerPhaseCStateTypeId, var, DOUBLE, -3);
+                        meterCurrentPowerPhaseCStateTypeId, var, DOUBLE, 0);
       });
 
   // HERE TEST CONNECTION! if Meter asymmetric -> check meter0 first -> if
