@@ -112,6 +112,9 @@ private:
     QHash<Thing *, QNetworkReply *> m_pendingReplies;
     QHash<Thing *, NetworkDeviceMonitor *> m_monitors;
 
+    QHash<Thing *, uint> m_noReplyCounter;
+    const uint NO_REPLY_MAX{3};
+
     // General methods
     void setupGoeHome(ThingSetupInfo *info);
     QNetworkRequest buildStatusRequest(Thing *thing);
@@ -150,6 +153,7 @@ private slots:
     void onMqttClientV2Disconnected(MqttChannel* channel);
 
     void markAsDisconnected(Thing *thing);
+    void markAsConnected(Thing *thing);
 };
 
 #endif // INTEGRATIONPLUGINGOECHARGER_H
