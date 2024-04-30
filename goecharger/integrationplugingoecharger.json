@@ -69,7 +69,8 @@
                                 "Charging finished and vehicle still connected"
                             ],
                             "defaultValue": "Ready but no vehicle connected",
-                            "suggestLogging": true
+                            "suggestLogging": true,
+                            "cached": false
                         },
                         {
                             "id": "6cb155b1-0831-47bc-8657-17ca68716684",
@@ -78,7 +79,8 @@
                             "displayNameEvent": "Car plugged in changed",
                             "type": "bool",
                             "defaultValue": false,
-                            "suggestLogging": true
+                            "suggestLogging": true,
+                            "cached": false
                         },
                         {
                             "id": "48c6cdb8-9fc1-4c14-95df-3e2c62e59361",
@@ -87,7 +89,8 @@
                             "displayNameEvent": "Charging changed",
                             "type": "bool",
                             "defaultValue": false,
-                            "suggestLogging": true
+                            "suggestLogging": true,
+                            "cached": false
                         },
                         {
                             "id": "d80e1ed8-c3ae-4b68-bf86-21b4d7b2b201",
@@ -101,7 +104,8 @@
                                 "Automatic"
                             ],
                             "defaultValue": "Open",
-                            "suggestLogging": true
+                            "suggestLogging": true,
+                            "cached": false
                         },
                         {
                             "id": "8a7ab9f1-0143-494c-98ee-69f94125fe42",
@@ -112,7 +116,8 @@
                             "displayNameEvent": "Allow charging changed",
                             "defaultValue": false,
                             "writable": true,
-                            "suggestLogging": true
+                            "suggestLogging": true,
+                            "cached": false
                         },
                         {
                             "id": "446fb786-bfbe-4938-963c-73d02184573f",
@@ -126,7 +131,8 @@
                             "maxValue": 32,
                             "defaultValue": 16,
                             "writable": true,
-                            "suggestLogging": true
+                            "suggestLogging": true,
+                            "cached": false
                         },
                         {
                             "id": "58cd977d-22df-48c9-829a-81554130d607",
@@ -138,7 +144,8 @@
                             "minValue": 6,
                             "maxValue": 32,
                             "defaultValue": 32,
-                            "suggestLogging": true
+                            "suggestLogging": true,
+                            "cached": false
                         },
                         {
                             "id": "ede9251d-662e-4d4b-90e3-db3d33c823d3",
@@ -151,7 +158,7 @@
                             "maxValue": 32,
                             "defaultValue": 16,
                             "suggestLogging": true,
-                            "cached": true
+                            "cached": false
                         },
                         {
                             "id": "08b107bc-1284-455d-9e5a-6a1c3adc389f",
@@ -179,7 +186,7 @@
                             "type": "uint",
                             "unit": "Ampere",
                             "defaultValue": 0,
-                            "cached": true
+                            "cached": false
                         },
                         {
                             "id": "d8f5abb6-5db3-4040-8829-553b1d881ce4",
@@ -319,7 +326,8 @@
                             "type": "uint",
                             "minValue": 1,
                             "maxValue": 3,
-                            "defaultValue": 1
+                            "defaultValue": 1,
+                            "cached": false
                         },
                         {
                             "id": "2bf1ebf1-0d8c-4209-ad35-4114d9861832",
@@ -329,7 +337,8 @@
                             "type": "double",
                             "unit": "DegreeCelsius",
                             "defaultValue": 0.0,
-                            "filter": "adaptive"
+                            "filter": "adaptive",
+                            "cached": false
                         },
                         {
                             "id": "558e273a-4028-495a-902a-e4e932a0ae24",
@@ -339,7 +348,8 @@
                             "type": "double",
                             "unit": "DegreeCelsius",
                             "defaultValue": 0.0,
-                            "filter": "adaptive"
+                            "filter": "adaptive",
+                            "cached": false
                         },
                         {
                             "id": "dbf8a5dc-b8f5-437a-ac0c-c4cf8a09aacb",
@@ -349,7 +359,8 @@
                             "type": "double",
                             "unit": "DegreeCelsius",
                             "defaultValue": 0.0,
-                            "filter": "adaptive"
+                            "filter": "adaptive",
+                            "cached": false
                         },
                         {
                             "id": "1953e29f-fe28-4016-9b05-f4baf4c311ff",
@@ -359,7 +370,8 @@
                             "type": "double",
                             "unit": "DegreeCelsius",
                             "defaultValue": 0.0,
-                            "filter": "adaptive"
+                            "filter": "adaptive",
+                            "cached": false
                         },
                         {
                             "id": "5d18b48d-b886-409e-ab2e-336d9c94a55c",
@@ -368,7 +380,7 @@
                             "displayNameEvent": "Firmware version changed",
                             "type": "QString",
                             "defaultValue": "",
-                            "cached": true
+                            "cached": false
                         }
                     ]
                 }
