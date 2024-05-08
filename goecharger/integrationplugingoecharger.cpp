@@ -285,6 +285,11 @@ void IntegrationPluginGoECharger::thingRemoved(Thing *thing)
         m_refreshTimer = nullptr;
     }
 
+    // Clean up no reply counter
+    if (m_noReplyCounter.contains(thing))
+        m_noReplyCounter.remove(thing);
+
+
     // Clean up lists for outlier checking
     if (m_sessionEnergyValues.contains(thing))
         m_sessionEnergyValues.remove(thing);
@@ -466,7 +471,7 @@ void IntegrationPluginGoECharger::setupGoeHome(ThingSetupInfo *info)
                 info->finish(Thing::ThingErrorNoError);
 
                 qCDebug(dcGoECharger()) << "Setup using HTTP finished successfully";
-                thing->setStateValue("connected", true);
+                markAsConnected(thing);
                 updateV1(thing, statusMap);
             }
             break;
@@ -490,7 +495,7 @@ void IntegrationPluginGoECharger::setupGoeHome(ThingSetupInfo *info)
                 info->finish(Thing::ThingErrorNoError);
 
                 qCDebug(dcGoECharger()) << "Setup using HTTP finished successfully";
-                thing->setStateValue("connected", true);
+                markAsConnected(thing);
                 updateV2(thing, statusMap);
             }
             break;
@@ -649,17 +654,35 @@ void IntegrationPluginGoECharger::updateV1(Thing *thing, const QVariantMap &stat
     thing->setStateValue(goeHomeAdapterConnectedStateTypeId, (statusMap.value("adi").toUInt() == 0 ? false : true));
 
     uint amaLimit = statusMap.value("ama").toUInt();
-    uint cableLimit = statusMap.value("cbl").toUInt();
+    uint cableLimit = statusMap.value("cbl").toUInt();    
 
     thing->setStateValue(goeHomeAbsoluteMaxAmpereStateTypeId, amaLimit);
     thing->setStateValue(goeHomeCableType2AmpereStateTypeId, cableLimit);
 
-    // Set the limit for the max charging amps
-    if (cableLimit != 0) {
-        thing->setStateMaxValue(goeHomeMaxChargingCurrentStateTypeId, qMin(amaLimit, cableLimit));
-    } else {
-        thing->setStateMaxValue(goeHomeMaxChargingCurrentStateTypeId, amaLimit);
+    if (statusMap.contains("var")) {
+        uint variant = statusMap.value("var").toUInt();
+        uint variantLimit = 16; // 11 kW
+        if (variant == 22) // 22 kW
+            variantLimit = 32;
+
+        thing->setStateValue(goeHomeModelMaxAmpereStateTypeId, variantLimit);
     }
+
+    uint modelLimit = thing->stateValue(goeHomeModelMaxAmpereStateTypeId).toUInt();
+
+    // Set the limit for the max charging amps
+    uint finalLimit = 0;
+    if (cableLimit != 0) {
+        finalLimit = qMin(amaLimit, cableLimit);
+    } else {
+        finalLimit = amaLimit;
+    }
+    // Check hardware variant: 11 -> 16A and 22 -> 32A
+    if (modelLimit != 0)
+        finalLimit = qMin(finalLimit, modelLimit);
+
+    thing->setStateMaxValue(goeHomeMaxChargingCurrentStateTypeId, finalLimit);
+
 
     // Parse nrg array
     uint voltagePhaseA = 0; uint voltagePhaseB = 0; uint voltagePhaseC = 0;
@@ -1599,7 +1622,7 @@ void IntegrationPluginGoECharger::refreshHttp()
 
             ApiVersion apiVersion = getApiVersion(thing);
             // Valid json data received, connected true
-            thing->setStateValue("connected", true);
+            markAsConnected(thing);
 
             //qCDebug(dcGoECharger()) << "Received" << qUtf8Printable(jsonDoc.toJson());
             QVariantMap statusMap = jsonDoc.toVariant().toMap();
@@ -1624,8 +1647,7 @@ void IntegrationPluginGoECharger::onMqttClientV1Connected(MqttChannel *channel)
         return;
     }
 
-    qCDebug(dcGoECharger()) << thing << "connected";
-    thing->setStateValue("connected", true);
+    markAsConnected(thing);
 }
 
 void IntegrationPluginGoECharger::onMqttClientV1Disconnected(MqttChannel *channel)
@@ -1636,7 +1658,6 @@ void IntegrationPluginGoECharger::onMqttClientV1Disconnected(MqttChannel *channe
         return;
     }
 
-    qCDebug(dcGoECharger()) << thing << "connected";
     markAsDisconnected(thing);
 }
 
@@ -1672,8 +1693,7 @@ void IntegrationPluginGoECharger::onMqttClientV2Connected(MqttChannel *channel)
         return;
     }
 
-    qCDebug(dcGoECharger()) << thing << "connected";
-    thing->setStateValue("connected", true);
+    markAsConnected(thing);
 }
 
 void IntegrationPluginGoECharger::onMqttClientV2Disconnected(MqttChannel *channel)
@@ -1684,25 +1704,47 @@ void IntegrationPluginGoECharger::onMqttClientV2Disconnected(MqttChannel *channe
         return;
     }
 
-    qCDebug(dcGoECharger()) << thing << "connected";
     markAsDisconnected(thing);
 }
 
 void IntegrationPluginGoECharger::markAsDisconnected(Thing *thing)
 {
-    qCDebug(dcGoECharger()) << "Mark device as disconnected" << thing;
-    thing->setStateValue("connected", false);
-    thing->setStateValue("currentPower", 0);
-    thing->setStateValue("voltagePhaseA", 0);
-    thing->setStateValue("voltagePhaseB", 0);
-    thing->setStateValue("voltagePhaseC", 0);
-    thing->setStateValue("currentPhaseA", 0);
-    thing->setStateValue("currentPhaseB", 0);
-    thing->setStateValue("currentPhaseC", 0);
-    thing->setStateValue("currentPowerPhaseA", 0);
-    thing->setStateValue("currentPowerPhaseB", 0);
-    thing->setStateValue("currentPowerPhaseC", 0);
-    thing->setStateValue("frequency", 0);
+    if (m_noReplyCounter.contains(thing)) {
+        uint counter = m_noReplyCounter.value(thing);
+        if (counter > NO_REPLY_MAX) {
+            if (thing->stateValue("connected").toBool()) {
+                qCDebug(dcGoECharger()) << "Device" << thing << "failed to communicate counter:" << (counter + 1);
+                qCDebug(dcGoECharger()) << "Mark device as disconnected" << thing;
+                thing->setStateValue("connected", false);
+                thing->setStateValue("currentPower", 0);
+                thing->setStateValue("voltagePhaseA", 0);
+                thing->setStateValue("voltagePhaseB", 0);
+                thing->setStateValue("voltagePhaseC", 0);
+                thing->setStateValue("currentPhaseA", 0);
+                thing->setStateValue("currentPhaseB", 0);
+                thing->setStateValue("currentPhaseC", 0);
+                thing->setStateValue("currentPowerPhaseA", 0);
+                thing->setStateValue("currentPowerPhaseB", 0);
+                thing->setStateValue("currentPowerPhaseC", 0);
+                thing->setStateValue("frequency", 0);
+            }
+        } else {
+            counter++;
+            qCDebug(dcGoECharger()) << "Device" << thing << "failed to communicate counter:" << counter;
+        }
+    } else {
+        m_noReplyCounter.insert(thing, 1);
+        qCDebug(dcGoECharger()) << "Device" << thing << "failed to communicate counter: 1";
+    }
+}
+
+void IntegrationPluginGoECharger::markAsConnected(Thing *thing)
+{
+    m_noReplyCounter.insert(thing, 0);
+    if (!thing->stateValue("connected").toBool()) {
+        qCDebug(dcGoECharger()) << thing << "connected";
+        thing->setStateValue("connected", true);
+    }
 }
 
 // This method uses the Hampel identifier (https://blogs.sas.com/content/iml/2021/06/01/hampel-filter-robust-outliers.html) to test if the value in the center of the window is an outlier or not.
