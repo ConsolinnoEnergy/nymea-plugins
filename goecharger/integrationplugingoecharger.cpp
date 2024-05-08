@@ -1731,6 +1731,7 @@ void IntegrationPluginGoECharger::markAsDisconnected(Thing *thing)
         } else {
             counter++;
             qCDebug(dcGoECharger()) << "Device" << thing << "failed to communicate counter:" << counter;
+            m_noReplyCounter.insert(thing, counter);
         }
     } else {
         m_noReplyCounter.insert(thing, 1);
