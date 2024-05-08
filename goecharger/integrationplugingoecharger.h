@@ -118,6 +118,12 @@ private:
     QHostAddress getHostAddress(Thing *thing);
     ApiVersion getApiVersion(Thing *thing);
 
+    // Outlier detection
+    bool isOutlier(const QList<float>& list);
+    int m_windowLength{7};
+    QHash<Thing *, QList<float>> m_sessionEnergyValues;
+    QHash<Thing *, QList<float>> m_totalEnergyValues;
+
     // API V1
     void updateV1(Thing *thing, const QVariantMap &statusMap);
     QNetworkRequest buildConfigurationRequestV1(const QHostAddress &address, const QString &configuration);
