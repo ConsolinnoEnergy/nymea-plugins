@@ -10,12 +10,6 @@ nymea-plugins (1.7.102) buster focal jammy; urgency=medium
 
  -- Sebastian Ringer <s.ringer@consolinno.de> Di, 2 Apr 2024 16:53:53 +0200
 
-nymea-plugins (1.7.101) buster focal jammy; urgency=medium
-
-* EV charger interface fix
-
- -- Leonhard Heizinger <l.heizinger@consolinno.de> Fr, 9 Feb 2024 7:50:53 +0200
-
 nymea-plugins (1.7.100-2) buster focal jammy; urgency=medium
 
 * Adapt to new versioning schema
