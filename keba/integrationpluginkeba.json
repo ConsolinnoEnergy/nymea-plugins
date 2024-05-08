@@ -78,7 +78,7 @@
                             "displayName": "Number of connected phases",
                             "displayNameEvent": "Number of connected phases changed",
                             "type": "uint",
-                            "minValue": 0,
+                            "minValue": 1,
                             "maxValue": 3,
                             "defaultValue": 1
                         },
@@ -475,7 +475,7 @@
                             "displayName": "Number of connected phases",
                             "displayNameEvent": "Number of connected phases changed",
                             "type": "uint",
-                            "minValue": 0,
+                            "minValue": 1,
                             "maxValue": 3,
                             "defaultValue": 3
                         },
