@@ -1,3 +1,27 @@
+nymea-plugins (1.7.104) buster focal jammy; urgency=medium
+
+* Go-e charger plugin: Disconnected state slower to trigger. Fixed hardware charge current limit not set correctly for api version 1.
+
+ -- Sebastian Ringer <s.ringer@consolinno.de> Tue, 30 Apr 2024 16:22:53 +0200
+
+nymea-plugins (1.7.103) buster focal jammy; urgency=medium
+
+* Go-e charger plugin: added code to prevent unreasonable values in power and energy values.
+
+ -- Sebastian Ringer <s.ringer@consolinno.de> Fri, 19 Apr 2024 16:20:53 +0200
+
+nymea-plugins (1.7.102) buster focal jammy; urgency=medium
+
+* Keba discovery updated to recognize new models.
+
+ -- Sebastian Ringer <s.ringer@consolinno.de> Di, 2 Apr 2024 16:53:53 +0200
+
+nymea-plugins (1.7.101) buster focal jammy; urgency=medium
+
+* EV charger interface fix
+
+ -- Leonhard Heizinger <l.heizinger@consolinno.de> Fr, 9 Feb 2024 7:50:53 +0200
+
 nymea-plugins (1.7.100-2) buster focal jammy; urgency=medium
 
 * Adapt to new versioning schema

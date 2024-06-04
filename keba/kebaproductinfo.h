@@ -76,7 +76,9 @@ public:
         SeriesXWlan3G,
         SeriesXWlan4G,
         SeriesX3G,
-        SeriesX4G
+        SeriesX4G,
+        SeriesXWlan4GnoLM,
+        SeriesXWlanNoLM
     };
     Q_ENUM(Series)
 
@@ -91,7 +93,9 @@ public:
     enum Authorization {
         NoAuthorization,
         Rfid,
-        Key
+        Key,
+        RfidPlc,
+        Plc
     };
     Q_ENUM(Authorization)
 
