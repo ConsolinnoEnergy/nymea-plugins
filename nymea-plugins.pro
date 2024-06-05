@@ -3,6 +3,7 @@ TEMPLATE = subdirs
 PLUGIN_DIRS = \
     anel                \
     aqi                 \
+    askoma              \
     avahimonitor        \
     awattar             \
     bimmerconnected     \

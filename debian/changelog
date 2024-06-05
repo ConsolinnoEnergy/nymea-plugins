@@ -3,6 +3,8 @@ nymea-plugins (1.7.105) buster focal jammy; urgency=medium
 * Renamed fems integration to fenecon
 * Fixed displayed values in fenecon integration
 * Fenecon inverter now shown in app
+* Add plugin for Askoma Askoheat+ heating rod.
+
 
  -- Luis Reber <l.reber@consolinno.de> Tue, 04 Jun 2024 08:02:53 +0200
 

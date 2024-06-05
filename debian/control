@@ -40,6 +40,14 @@ Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin to fetch the air quaility index from http://aqicn.org
  This package contains the nymea integration plugin for the air quality index online service
 
+Package: nymea-plugin-askoma
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Conflicts: nymea-plugins-translations (< 1.0.1)
+Description: nymea integration plugin for the Askoheat+ heating rod by Askoma
+ This package contains the nymea integration plugin for the Askoma Askoheat+ heating rod
 
 Package: nymea-plugin-avahimonitor
 Architecture: any

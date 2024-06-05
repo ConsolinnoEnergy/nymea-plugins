@@ -1,0 +1,13 @@
+{
+    "title": "ASKOHEAT+",
+    "tagline": "Connect ASKOHEAT+ heating rod by Askoma to nymea.",
+    "icon": "askoma.png",
+    "stability": "consumer",
+    "offline": true,
+    "technologies": [
+        "network"
+    ],
+    "categories": [
+        "energy"
+    ]
+}
