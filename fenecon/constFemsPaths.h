@@ -31,7 +31,7 @@ static const QString GRID_PRODUCTION_ACTIVE_DC_ENERGY =
 static const QString GRID_CONSUMPTION_ACTIVE_ENERGY =
         "_sum/ConsumptionActiveEnergy";
 
-static const QString PRODCUTION_ACTIVE_POWER = "_sum/ProductionActivePower";
+static const QString PROCDUTION_ACTIVE_POWER = "_sum/ProductionActivePower";
 static const QString PRODUCTION_ACTIVE_AC_POWER =
         "_sum/ProductionAcActivePower";
 static const QString PRODUCTION_ACTIVE_DC_POWER =
