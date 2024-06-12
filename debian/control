@@ -17,7 +17,8 @@ Build-depends: debhelper (>= 0.0.0),
                libsodium-dev,
                libudev-dev,
                libhidapi-dev,
-               libjsoncpp-dev
+               libjsoncpp-dev,
+               libcurl4-openssl-dev
 Standards-Version: 3.9.3
 
 
