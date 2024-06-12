@@ -17,6 +17,7 @@ Build-depends: debhelper (>= 0.0.0),
                libsodium-dev,
                libudev-dev,
                libhidapi-dev,
+               libjsoncpp-dev
 Standards-Version: 3.9.3
 
 
