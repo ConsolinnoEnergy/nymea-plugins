@@ -112,11 +112,20 @@ private:
     QHash<Thing *, QNetworkReply *> m_pendingReplies;
     QHash<Thing *, NetworkDeviceMonitor *> m_monitors;
 
+    QHash<Thing *, uint> m_noReplyCounter;
+    const uint NO_REPLY_MAX{3};
+
     // General methods
     void setupGoeHome(ThingSetupInfo *info);
     QNetworkRequest buildStatusRequest(Thing *thing);
     QHostAddress getHostAddress(Thing *thing);
     ApiVersion getApiVersion(Thing *thing);
+
+    // Outlier detection
+    bool isOutlier(const QList<float>& list);
+    int m_windowLength{7};
+    QHash<Thing *, QList<float>> m_sessionEnergyValues;
+    QHash<Thing *, QList<float>> m_totalEnergyValues;
 
     // API V1
     void updateV1(Thing *thing, const QVariantMap &statusMap);
@@ -144,6 +153,7 @@ private slots:
     void onMqttClientV2Disconnected(MqttChannel* channel);
 
     void markAsDisconnected(Thing *thing);
+    void markAsConnected(Thing *thing);
 };
 
 #endif // INTEGRATIONPLUGINGOECHARGER_H

@@ -1,0 +1,406 @@
+{
+    "name": "askoma",
+    "displayName": "Askoma",
+    "id": "75de5e37-ca9e-4941-b924-ab8d930e67fe",
+    "vendors": [
+        {
+            "name": "askoma",
+            "displayName": "Askoma",
+            "id": "72625c9f-152e-40db-80ef-5eb37c415851",
+            "thingClasses": [
+                {
+                    "name": "askoheat",
+                    "displayName": "ASKOHEAT+",
+                    "id": "cb9d7827-1755-4fef-a5b6-db0ebe2ea5a8",
+                    "createMethods": ["discovery"],
+                    "interfaces": ["smartheatingrod", "connectable", "smartmeterconsumer"],
+                    "paramTypes": [
+                        {
+                            "id": "19fddd29-df2f-45ce-b8b5-0fab84054bf1",
+                            "name":"ipAddress",
+                            "displayName": "IP address",
+                            "type": "QString",
+                            "readOnly": true
+                        },
+                        {
+                            "id": "4e1cf80d-081b-45da-b417-993e74910f85",
+                            "name":"macAddress",
+                            "displayName": "MAC address",
+                            "type": "QString",
+                            "inputType": "MacAddress",
+                            "defaultValue": "",
+                            "readOnly": true
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "15f1937a-5c72-4c4f-97cc-0460c515b300",
+                            "name": "heatingPower",
+                            "displayName": "Heating Power",
+                            "displayNameAction": "Load heating power",
+                            "type": "uint",
+                            "unit": "Watt",
+                            "minValue": 0,
+                            "maxValue": 30000,
+                            "defaultValue": 0,
+                            "writable": true,
+                            "cached": false
+                        },
+                        {
+                            "id": "8d8526ff-b333-45d3-8f49-cc9355bed18a",
+                            "name": "totalEnergyConsumed",
+                            "displayName": "Total energy consumed",
+                            "displayNameEvent": "Total energy consumption changed",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0,
+                            "cached": true
+                        },
+                        {
+                            "id": "e38d063a-7465-4700-aa7a-a6943285157e",
+                            "name": "currentPower",
+                            "displayName": "Active power",
+                            "displayNameEvent": "Power consumtion changed",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "649c30cf-a022-4350-85d4-3d1a42284636",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
+                        },
+                        {
+                            "id": "1dac1b15-554c-4832-8e3c-acc0094b5d87",
+                            "name": "status",
+                            "displayName": "Status",
+                            "displayNameEvent": "Status changed",
+                            "type": "uint",
+                            "unit": "None",
+                            "minValue": 0,
+                            "maxValue": 65535,
+                            "defaultValue": 0,
+                            "writable": false
+                        },
+                        {
+                            "id": "1a94d259-6c6f-4c8d-85db-94cde8d1fca3",
+                            "name": "heater1Active",
+                            "displayName": "Status: Heater 1 is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "743f4c5b-7687-45c6-a2ec-3a4ebda968c1",
+                            "name": "heater2Active",
+                            "displayName": "Status: Heater 2 is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "6ec6f95d-6b98-4f67-918a-9d2e3c0aa1e7",
+                            "name": "heater3Active",
+                            "displayName": "Status: Heater 3 is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "bc03c6bf-6f98-4821-a58d-7cc5c86e799a",
+                            "name": "pumpActive",
+                            "displayName": "Status: Pump is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "2a7bc070-0322-427b-bf5c-23f08a136a1a",
+                            "name": "valveActive",
+                            "displayName": "Status: Valve is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "8e1e857d-60e4-4c91-a1b7-9d852963ed09",
+                            "name": "heaterCurrentFlow",
+                            "displayName": "Status: Heater 1-3 current flow",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "5d6a39c3-2c65-4b4e-975b-6b453a1949b4",
+                            "name": "heatpumpRequestActive",
+                            "displayName": "Status: Heatpump request is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "3d8f0c96-5643-42ec-88ea-3ac85de963f4",
+                            "name": "emergencyModeActive",
+                            "displayName": "Status: Emergency mode is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "f4cfe6f0-75df-4edf-af9a-1c45d96e2e95",
+                            "name": "legionellaProtectionActive",
+                            "displayName": "Status: Legionella protection is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "9c59d39b-20cf-4ac0-9c4f-6e9a0b4b1a23",
+                            "name": "analogInputActive",
+                            "displayName": "Status: Analog input 0-10V is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "6a1d84e0-9cf2-4c7b-9c88-0f1e3ff4a53a",
+                            "name": "loadSetpointActive",
+                            "displayName": "Status: Load setpoint is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "bab63f80-6542-43e8-9d49-4a4e46487b0b",
+                            "name": "loadFeedinActive",
+                            "displayName": "Status: Load feedin is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "b24ff0e7-4082-4847-b95f-7d788c5c63b1",
+                            "name": "autoHeaterOffActive",
+                            "displayName": "Status: Auto heater off is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "3bf67249-03ac-4bb6-aa9b-9d57e98ac6b1",
+                            "name": "pumpRelayFollowUpTimeActive",
+                            "displayName": "Status: Pump relay follow up time is active",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "a6c94877-1b8d-4d28-a998-5e92b7194b3a",
+                            "name": "temperatureLimitReached",
+                            "displayName": "Status: Temperature limit is reached, heaters are switched off",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "32aef8f0-9a0d-48bc-a95d-1f92f7498e1a",
+                            "name": "anyErrorOccured",
+                            "displayName": "Status: Any error occurred",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "writable": false
+                        },
+                        {
+                            "id": "4f7d31e2-efaa-4268-97ee-a108a43117df",
+                            "name": "heaterLoad",
+                            "displayName": "Heater load",
+                            "displayNameEvent": "Heater load changed",
+                            "type": "uint",
+                            "unit": "Watt",
+                            "minValue": 0,
+                            "maxValue": 30000,
+                            "defaultValue": 0,
+                            "writable": false
+                        },
+                        {
+                            "id": "a627ba7c-fb28-4111-a0de-849e4a25bd50",
+                            "name": "heaterStep",
+                            "displayName": "Heater step",
+                            "displayNameEvent": "Heater step changed",
+                            "displayNameAction": "Change heater step",
+                            "type": "uint",
+                            "unit": "None",
+                            "minValue": 0,
+                            "maxValue": 7,
+                            "defaultValue": 0,
+                            "writable": true,
+                            "cached": false
+                        
+                        },
+                        {
+                            "id": "20d76a28-5ca0-417e-9f27-7851157aa1a3",
+                            "name": "setpointValue",
+                            "displayName": "Setpoint value",
+                            "displayNameEvent": "Setpoint value changed",
+                            "displayNameAction": "Load setpoint value",
+                            "type": "int",
+                            "unit": "Watt",
+                            "minValue": 0,
+                            "maxValue": 30000,
+                            "defaultValue": 0,
+                            "writable": true,
+                            "cached": false
+                        
+                        },
+                        {
+                            "id": "a12c1e3e-f98b-4e2b-a3f4-88907d78f54f",
+                            "name": "feedinValue",
+                            "displayName": "Feedin value",
+                            "displayNameEvent": "feedin value changed",
+                            "displayNameAction": "Load feedin value",
+                            "type": "int",
+                            "unit": "Watt",
+                            "minValue": -30000,
+                            "maxValue": 30000,
+                            "defaultValue": 0,
+                            "writable": true,
+                            "cached": false
+                        
+                        },
+                        {
+                            "id": "96687caa-f972-4f43-b5b4-f6f4dca15ee4",
+                            "name": "power",
+                            "displayName": "Power",
+                            "displayNameAction": "Power",
+                            "type": "bool",
+                            "unit": "None",
+                            "defaultValue": false,
+                            "writable": true
+                        },
+                        {
+                            "id": "7266dfe7-3484-4209-bb96-f6f02b247c0d",
+                            "name": "emergencyMode",
+                            "displayName": "Emergency mode",
+                            "displayNameEvent": "Emergency mode changed",
+                            "type": "int",
+                            "unit": "None",
+                            "minValue": 0,
+                            "maxValue": 255,
+                            "defaultValue": 0,
+                            "writable": false
+                        },
+                        {
+                            "id": "77708412-7258-44bb-a405-43f3fedde1a9",
+                            "name": "heatpumpRequest",
+                            "displayName": "Heatpump request",
+                            "displayNameEvent": "Heatpump request changed",
+                            "type": "int",
+                            "unit": "None",
+                            "minValue": 0,
+                            "maxValue": 255,
+                            "defaultValue": 0,
+                            "writable": false
+                        },
+                        {
+                            "id": "af4f02c4-390b-40eb-8609-5d9d5f06ba8f",
+                            "name": "analogInput",
+                            "displayName": "Analog input",
+                            "displayNameEvent": "Analog input changed",
+                            "type": "double",
+                            "unit": "Volt",
+                            "minValue": 0,
+                            "maxValue": 10,
+                            "defaultValue": 0.0,
+                            "writable": false,
+                            "cached": false
+                        
+                        },
+                        {
+                            "id": "b0134b71-9434-4ca9-8a94-cdd348803dd3",
+                            "name": "temperatureSensor0",
+                            "displayName": "Temperature sensor 0",
+                            "displayNameEvent": "Temperature sensor 0 changed",
+                            "type": "double",
+                            "unit": "DegreeCelsius",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0.0,
+                            "writable": false,
+                            "cached": false
+                        
+                        },
+                        {
+                            "id": "c340f3a3-20a3-4154-9930-efc73fd68786",
+                            "name": "temperatureSensor1",
+                            "displayName": "Temperature sensor 1",
+                            "displayNameEvent": "Temperature sensor 1 changed",
+                            "type": "double",
+                            "unit": "DegreeCelsius",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0.0,
+                            "writable": false,
+                            "cached": false
+                        
+                        },
+                        {
+                            "id": "b44c61c8-ac0a-41de-8adf-237afc08ebe7",
+                            "name": "temperatureSensor2",
+                            "displayName": "Temperature sensor 2",
+                            "displayNameEvent": "Temperature sensor 2 changed",
+                            "type": "double",
+                            "unit": "DegreeCelsius",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0.0,
+                            "writable": false,
+                            "cached": false
+                        
+                        },
+                        {
+                            "id": "223f62c0-13d9-4405-8ee2-abe0db910d96",
+                            "name": "temperatureSensor3",
+                            "displayName": "Temperature sensor 3",
+                            "displayNameEvent": "Temperature sensor 3 changed",
+                            "type": "double",
+                            "unit": "DegreeCelsius",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0.0,
+                            "writable": false,
+                            "cached": false
+                        
+                        },
+                        {
+                            "id": "d45f2e7b-34eb-45b1-851c-54b6bce840c9",
+                            "name": "temperatureSensor4",
+                            "displayName": "Temperature sensor 4",
+                            "displayNameEvent": "Temperature sensor 4 changed",
+                            "type": "double",
+                            "unit": "DegreeCelsius",
+                            "minValue": 0,
+                            "maxValue": 100,
+                            "defaultValue": 0.0,
+                            "writable": false,
+                            "cached": false
+                        
+                        },
+                        {
+                            "id": "419ed786-4416-4e61-a503-56e7f00e3520",
+                            "name": "firmwareVersion",
+                            "displayName": "Firmware version",
+                            "type": "QString",
+                            "defaultValue": "0.0.0",
+                            "writable": false
+                        
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

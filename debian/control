@@ -40,6 +40,14 @@ Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin to fetch the air quaility index from http://aqicn.org
  This package contains the nymea integration plugin for the air quality index online service
 
+Package: nymea-plugin-askoma
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Conflicts: nymea-plugins-translations (< 1.0.1)
+Description: nymea integration plugin for the Askoheat+ heating rod by Askoma
+ This package contains the nymea integration plugin for the Askoma Askoheat+ heating rod
 
 Package: nymea-plugin-avahimonitor
 Architecture: any
@@ -241,16 +249,13 @@ Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin for fast.com based internet speed test
  This package contains the nymea integration plugin for performing ineternet speed
  tests using fast.com
-
-Package: nymea-plugin-fems
+ 
+Package: nymea-plugin-fenecon
 Architecture: any
-Section: libs
-Depends: ${shlibs:Depends},
-         ${misc:Depends},
+Depends: ${misc:Depends},
 Conflicts: nymea-plugins-translations (< 1.0.1)
-Description: nymea integration plugin for FEMS System
- This package contains the nymea integration plugin for FEMS state, Battery and Meter
-
+Description: nymea integration plugin for fenecon FEMS and general OpenEMS-Edge.
+ATM: only read values from _sum, ess0 and meter, easy to expand.
 
 Package: nymea-plugin-flowercare
 Architecture: any

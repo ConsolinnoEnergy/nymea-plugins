@@ -3,6 +3,7 @@ TEMPLATE = subdirs
 PLUGIN_DIRS = \
     anel                \
     aqi                 \
+    askoma              \
     avahimonitor        \
     awattar             \
     bimmerconnected     \
@@ -26,7 +27,7 @@ PLUGIN_DIRS = \
     espuino             \
     evbox               \
     fastcom             \
-    fems                \
+    fenecon             \
     flowercare          \
     fronius             \
     garadget            \
