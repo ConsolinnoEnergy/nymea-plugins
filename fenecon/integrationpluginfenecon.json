@@ -1,11 +1,11 @@
 {
-    "name": "fems",
-    "displayName": "Fems",
+    "name": "fenecon",
+    "displayName": "Fenecon",
     "id": "19e10c9b-2dea-4aaf-bbfc-3c28b6450749",
     "vendors": [
         {
-            "name": "fems",
-            "displayName": "Fems",
+            "name": "fenecon",
+            "displayName": "Fenecon",
             "id": "c241f100-35fc-498f-a4a0-61b7ee274470",
             "thingClasses": [
                 {
@@ -13,42 +13,35 @@
                     "displayName": "Fems System",
                     "id": "2649f540-8f17-462d-93f7-79aa9cfc3734",
                     "setupMethod": "userandpassword",
-                    "createMethods": ["user"],
+                    "createMethods": ["discovery"],
                     "interfaces": ["connectable"],
                     "paramTypes": [
-                    {
-                        "id": "297e85cc-e2aa-41fe-a27a-c3904b2e7f70",
-                        "name": "address",
-                        "displayName": "Host address",
-                        "type": "QString",
-                        "inputType": "IPv4Address",
-                        "defaultValue": "192.168.158.2"
-                    },
-                    {
-                        "id": "73814aef-571d-4a42-ba76-5751f128d86b",
-                        "name": "Port",
-                        "displayName": "Port",
-                        "type": "QString",
-                        "defaultValue": "80"
-                    },
-                    {
-
-                       "id": "ede7a93e-36a1-4873-8ff8-d71e621baa6f",
-                       "name": "edge",
-                       "displayName": "Connect to OpenEMS Edge",
-                       "type": "bool",
-                       "defaultValue": "false"
-                    }
+                        {
+                            "id": "297e85cc-e2aa-41fe-a27a-c3904b2e7f70",
+                            "name": "macAddress",
+                            "displayName": "MAC address",
+                            "type": "QString",
+                            "inputType": "MacAddress",
+                            "defaultValue": ""
+                        }
                     ],
                     "stateTypes": [
-                    {
-                        "id": "98e4476f-e745-4a7f-b795-19269cb70c40",
-                        "name": "connected",
-                        "displayName": "Reachable",
-                        "displayNameEvent": "Reachable changed",
-                        "type": "bool",
-                        "defaultValue": false
-                    }
+                        {
+                            "id": "98e4476f-e745-4a7f-b795-19269cb70c40",
+                            "name": "connected",
+                            "displayName": "Reachable",
+                            "displayNameEvent": "Reachable changed",
+                            "type": "bool",
+                            "defaultValue": false
+                        },
+                        {
+                            "id": "d0c8d4c7-3e6c-4ac0-80ae-247cec9fc4b0",
+                            "name": "status",
+                            "displayName": "Fems Status",
+                            "displayNameEvent": "Status changed",
+                            "type": "int",
+                            "defaultValue": false
+                        }
                     ],
                     "actionTypes": [
 
@@ -57,42 +50,6 @@
 
                     ]
                 },
-                {
-
-                "id": "02b61fba-8a08-46ff-bccc-3a4dfcddf351",
-                "name": "femsstatus",
-                "displayName": "Fems Status",
-                "createMethods": ["auto"],
-                "interfaces" : ["connectable"],
-                "paramTypes": [{
-                        "id": "c8dbc321-6c04-412c-a9ee-a06d187f9e76",
-                        "name": "id",
-                        "displayName": "Device ID",
-                        "type": "QString",
-                        "readOnly": true
-                        }
-                      ],
-                "stateTypes": [
-                      {
-                          "id": "37f2eaa7-11da-4868-b945-1dc518ffd6b0",
-                          "name": "connected",
-                          "displayName": "Reachable",
-                          "displayNameEvent": "Reachable changed",
-                          "type": "bool",
-                          "defaultValue": false
-                      },
-                      {
-                          "id": "d0c8d4c7-3e6c-4ac0-80ae-247cec9fc4b0",
-                          "name": "status",
-                          "displayName": "Fems Status",
-                          "displayNameEvent": "Status changed",
-                          "type": "int",
-                          "defaultValue": false
-                      }
-
-                      ]
-                },
-
                 {
                     "id": "62a9f542-4270-4a48-bb4f-bc2f361e734c",
                     "name": "battery",
@@ -125,7 +82,7 @@
                             "displayName": "Charging state",
                             "displayNameEvent": "Charging state changed",
                             "type": "QString",
-                           "possibleValues": ["idle", "charging", "discharging"],
+                            "possibleValues": ["idle", "charging", "discharging"],
                             "defaultValue": "idle",
                             "cached": false
                         },
@@ -135,6 +92,7 @@
                             "displayName": "Charging Energy",
                             "displayNameEvent": "Charging Energy changed",
                             "type": "int",
+                            "unit":"KiloWattHour",
                             "defaultValue": 0,
                             "cached": false
                         },
@@ -144,6 +102,7 @@
                             "displayName": "Discharging Energy",
                             "displayNameEvent": "Discharging energy changed",
                             "type": "int",
+                            "unit":"KiloWattHour",
                             "defaultValue": 0,
                             "cached": false
                         },
@@ -227,9 +186,6 @@
                         }
                     ]
                 },
-
-
-
                 {
                     "id": "58fd5e1d-8090-4b7a-ac70-a77a3f662d40",
                     "name": "meter",
@@ -261,37 +217,6 @@
                             "name": "currentPower",
                             "displayName": "Current power usage",
                             "displayNameEvent": "Current power usage changed",
-                            "type": "double",
-                            "unit": "Watt",
-                            "defaultValue": 0,
-                            "cached": false
-                        },
-                        {
-                            "id": "fae0468a-a188-469e-9b85-004ca884c92f",
-                            "name": "currentPowerProduction",
-                            "displayName": "Current power production",
-                            "displayNameEvent": "Current power production changed",
-                            "type": "double",
-                            "unit": "Watt",
-                            "defaultValue": 0,
-                            "cached": false
-                        },
-                        {
-                            "id": "91d642fd-78f4-4feb-a733-ea2d5ab8de66",
-                            "name": "currentPowerProductionAc",
-                            "displayName": "Current power production ac",
-                            "displayNameEvent": "Current power production ac changed",
-                            "type": "double",
-                            "unit": "Watt",
-                            "defaultValue": 0,
-                            "cached": false
-                        },
-
-                        {
-                            "id": "8fead947-a494-490a-bf65-500edb6cab09",
-                            "name": "currentPowerProductionDc",
-                            "displayName": "Current power production dc",
-                            "displayNameEvent": "Current power production dc changed",
                             "type": "double",
                             "unit": "Watt",
                             "defaultValue": 0,
@@ -388,25 +313,6 @@
                             "cached": false
                         },
                         {
-                            "id": "bcfe42ef-26c8-4911-95fa-0b8b0bb2a828",
-                            "name": "productionAcActiveEnergy",
-                            "displayName": "Energy produced ac",
-                            "displayNameEvent": "Energy production ac changed",
-                            "type": "double",
-                            "unit": "KiloWattHour",
-                            "defaultValue": 0
-                        },
-                        {
-                            "id": "dcfd468e-e2cf-468a-bb61-a1c2ed429667",
-                            "name": "totalEnergyProducedDc",
-                            "displayName": "Energy produced dc",
-                            "displayNameEvent": "Energy production dc changed",
-                            "type": "double",
-                            "unit": "KiloWattHour",
-                            "defaultValue": 0
-                        },
-
-                        {
                             "id": "66dfc072-6e6f-4df8-b4af-94066c52bfaa",
                             "name": "totalEnergyProduced",
                             "displayName": "Energy produced",
@@ -464,13 +370,87 @@
                             "defaultValue": 0.00,
                             "cached": false
                         }
-
-
+                    ]
+                },
+                {
+                    "id": "5e3546a0-8962-46a2-841a-e59d26cc8615",
+                    "name": "inverter",
+                    "displayName": "Fems Inverter",
+                    "createMethods": ["auto"],
+                    "interfaces": [ "solarinverter", "connectable"],
+                    "paramTypes": [
+                        {
+                            "id": "1cf84854-c8ea-4125-b952-082dc206030f",
+                            "name": "id",
+                            "displayName": "Device ID",
+                            "type": "QString",
+                            "inputType": "TextLine",
+                            "readOnly": true
+                        }
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "449f7210-0fdf-43a7-8917-65cd07e04a5c",
+                            "name": "connected",
+                            "displayName": "Reachable",
+                            "displayNameEvent": "Reachable changed",
+                            "type": "bool",
+                            "defaultValue": false,
+                            "cached": false
+                        },
+                        {
+                            "id": "57bb8311-3cd1-4e42-aa14-a88ee37d7e9b",
+                            "name": "currentPower",
+                            "displayName": "Current power usage",
+                            "displayNameEvent": "Current power usage changed",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "a108c6b1-694d-4714-acac-a0b2c9d3f920",
+                            "name": "totalEnergyProduced",
+                            "displayName": "Energy produced",
+                            "displayNameEvent": "Energy production changed",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "91d642fd-78f4-4feb-a733-ea2d5ab8de66",
+                            "name": "currentPowerProductionAc",
+                            "displayName": "Current power production ac",
+                            "displayNameEvent": "Current power production ac changed",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "8fead947-a494-490a-bf65-500edb6cab09",
+                            "name": "currentPowerProductionDc",
+                            "displayName": "Current power production dc",
+                            "displayNameEvent": "Current power production dc changed",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0,
+                            "cached": false
+                        },
+                        {
+                            "id": "bcfe42ef-26c8-4911-95fa-0b8b0bb2a828",
+                            "name": "productionAcActiveEnergy",
+                            "displayName": "Energy produced ac",
+                            "displayNameEvent": "Energy production ac changed",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0
+                        }
+                    ]
+                }
             ]
         }
     ]
-}
-]
 }
 
 

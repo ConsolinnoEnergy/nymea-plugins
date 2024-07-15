@@ -324,7 +324,7 @@
                             "displayName": "Number of charging phases",
                             "displayNameEvent": "Number of charging phases changed",
                             "type": "uint",
-                            "minValue": 1,
+                            "minValue": 0,
                             "maxValue": 3,
                             "defaultValue": 1,
                             "cached": false
