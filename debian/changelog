@@ -1,6 +1,7 @@
 nymea-plugins (1.7.106) buster focal jammy; urgency=medium
  * UNRELEASED, add features for HEMS v1.3.0
  * updated easee integration
+ * EMH SMGW as main meter
 
  -- Leonhard Heizinger <l.heizinger@consolinno.de> Tue, 02 Jul 2024 7:50:53 +0200
 

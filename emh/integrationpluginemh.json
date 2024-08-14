@@ -1,0 +1,147 @@
+{
+    "name": "EMH",
+    "displayName": "EMH",
+    "id": "0a79b582-0357-46dc-84f3-febdc1d9d4df",
+    "vendors": [
+        {
+            "name": "emh",
+            "displayName": "EMH",
+            "id": "76b68090-cc20-4705-ba84-bb1ac35b54e0",
+            "thingClasses": [
+                {
+                    "id": "95978b88-6a9e-416a-9ba2-9fdda9aaa3a3",
+                    "name": "emhHanInterface",
+                    "displayName": "EMH HAN interface",
+                    "createMethods": ["discovery", "user"],
+                    "interfaces": [ "energymeter", "connectable"],
+                    "discoveryParamTypes": [
+                        {
+                            "id": "fa98fc68-52d0-4d92-ae7a-54fb7b7ec813",
+                            "name": "ipSMGW",
+                            "displayName": "IP address of SMGW",
+                            "type": "QString",
+                            "defaultValue": "192.168.58.59"
+                        },
+                        {
+                            "id": "fd42379e-304b-4a76-820d-2e2ee553bb4b",
+                            "name": "digestUser",
+                            "displayName": "HKS2 Username",
+                            "type": "QString",
+                            "defaultValue": "enqs"
+                        },
+                        {
+                            "id": "389fb63e-6c69-4187-929e-5856b81561a7",
+                            "name": "digestPass",
+                            "displayName": "HKS2 Password",
+                            "type": "QString",
+                            "defaultValue": "abc123+-ABC%"
+                        }
+                    ],
+                    "paramTypes": [
+                        {
+                            "id": "d765dc0f-9a1a-4cfb-9a81-d47029c63355",
+                            "name": "meterID",
+                            "displayName": "HUID of smart meter",
+                            "type": "QString",
+                            "defaultValue": "xx"
+                        },
+                        {
+                            "id": "2b5c16a3-ff85-4e33-b017-94e3db496758",
+                            "name": "smgwID",
+                            "displayName": "HUID of SMGW",
+                            "type": "QString",
+                            "defaultValue": "xx"
+                        },
+                        {
+                            "id": "1a2c3560-37fe-48aa-b154-2700d33640cc",
+                            "name": "userID",
+                            "displayName": "ID of HKS2 user at SMGW",
+                            "type": "QString",
+                            "defaultValue": "xx"
+                        },
+                        {
+                            "id": "92e75c6a-5a12-4b36-af53-9c19a4cbab00",
+                            "name": "ipSMGW",
+                            "displayName": "IP address of SMGW",
+                            "type": "QString",
+                            "defaultValue": "0.0.0.0"
+                        },
+                        {
+                            "id": "23d533e5-4e1b-4bcf-ae7b-fd22e88466a9",
+                            "name": "digestUser",
+                            "displayName": "HKS2 Username",
+                            "type": "QString",
+                            "defaultValue": "username"
+                        },
+                        {
+                            "id": "00f39173-4922-4d3e-be2e-cde7130ae40d",
+                            "name": "digestPass",
+                            "displayName": "HKS2 Password",
+                            "type": "QString",
+                            "defaultValue": "username"
+                        }
+                    ],
+                    "settingsTypes": [
+                        
+                    ],
+                    "stateTypes": [
+                        {
+                            "id": "07b275f6-2505-40d0-93a9-8d4e6a254198",
+                            "name": "connected",
+                            "displayName": "Connected",
+                            "displayNameEvent": "Connected changed",
+                            "type": "bool",
+                            "cached": true,
+                            "defaultValue": false
+                        },
+                        {
+                            "id": "58f90639-e4a0-44e2-ba98-b1cfe272f7fb",
+                            "name": "currentPower",
+                            "displayName": "Current power (OBIS 16.7.0)",
+                            "displayNameEvent": "Current power changed",
+                            "type": "double",
+                            "unit": "Watt",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "454bd0d8-3576-49a3-911d-8c769ad9d53e",
+                            "name": "totalEnergyProduced",
+                            "displayName": "Total energy produced (OBIS 2.8.0)",
+                            "displayNameEvent": "Total energy produced changed",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0.00
+                        },
+                        {
+                            "id": "d01feda3-410b-4abe-82f8-de6a6ce03500",
+                            "name": "totalEnergyConsumed",
+                            "displayName": "Total energy consumed (OBIS 1.8.0)",
+                            "displayNameEvent": "Total energy consumed changed",
+                            "type": "double",
+                            "unit": "KiloWattHour",
+                            "defaultValue": 0.00
+                        },
+                        {
+                            "id": "718d4229-ec53-4de5-936c-af6af3af0570",
+                            "name": "currentPhaseA",
+                            "displayName": "Current phase A",
+                            "displayNameEvent": "Current phase A changed",
+                            "type": "double",
+                            "unit": "Ampere",
+                            "defaultValue": 0
+                        },
+                        {
+                            "id": "625fe00d-8614-42e9-8bf0-472f339c69cf",
+                            "name": "voltagePhaseA",
+                            "displayName": "Voltage phase A",
+                            "displayNameEvent": "Voltage phase A changed",
+                            "type": "double",
+                            "unit": "Volt",
+                            "defaultValue": 0
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
