@@ -1,4 +1,4 @@
-nymea-plugins (1.7.106) buster focal jammy; urgency=medium
+nymea-plugins (1.7.106-1) buster focal jammy; urgency=medium
  * updated easee integration
  * EMH SMGW as main meter
 
