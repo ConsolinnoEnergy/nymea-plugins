@@ -1,10 +1,11 @@
-include($$[QT_INSTALL_PREFIX]/include/nymea/plugin.pri)
+include(../plugins.pri)
+
+QT += network websockets
 
 SOURCES += \
-    integrationplugineasee.cpp
+    integrationplugineasee.cpp \
+    signalrconnection.cpp
 
 HEADERS += \
-    integrationplugineasee.h
-QT += \
-    network
-
+    integrationplugineasee.h \
+    signalrconnection.h

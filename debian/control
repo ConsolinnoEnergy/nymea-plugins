@@ -17,6 +17,8 @@ Build-depends: debhelper (>= 0.0.0),
                libsodium-dev,
                libudev-dev,
                libhidapi-dev,
+               libjsoncpp-dev,
+               libcurl4-openssl-dev
 Standards-Version: 3.9.3
 
 
@@ -213,6 +215,14 @@ Depends: ${shlibs:Depends},
 Conflicts: nymea-plugins-translations (< 1.0.1)
 Description: nymea integration plugin for eebus
  This package contains the nymea integration plugin for devices from EEBUS
+
+Package: nymea-plugin-emh
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Conflicts: nymea-plugins-translations (< 1.0.1)
+Description: nymea integration plugin for emh
+ This package contains the nymea integration plugin for devices from emh
 
 Package: nymea-plugin-elgato
 Architecture: any
