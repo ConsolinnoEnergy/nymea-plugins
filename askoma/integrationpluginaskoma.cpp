@@ -513,7 +513,9 @@ void IntegrationPluginAskoma::executeAction(ThingActionInfo *info)
                     {
                         qCWarning(dcAskoma()) << "Execute action: A HTTP error occurred:" << reply->errorString();
                         info->thing()->setStateValue(askoheatConnectedStateTypeId, false);
+                        qCDebug(dcAskoma()) << "Execute action: info->finish()";
                         info->finish(Thing::ThingErrorHardwareFailure);
+                        qCDebug(dcAskoma()) << "Execute action: return";
                         return;
                     }
 
