@@ -47,9 +47,9 @@ void Askoheat::onGetEMA(QNetworkReply *reply, Thing *thing)
         qCDebug(dcAskoma()) << "Update: Requested EMA data and a HTTP error occurred:" << reply->errorString();
         thing->setStateValue(askoheatConnectedStateTypeId, false);
         /* If the connection is lost, we reset the current power to 0. */
-        this->m_heaterLoad = 0;
-        thing->setStateValue(askoheatCurrentPowerStateTypeId, 0);
-        thing->setStateValue(askoheatHeaterLoadStateTypeId, 0);
+        // this->m_heaterLoad = 0;
+        // thing->setStateValue(askoheatCurrentPowerStateTypeId, 0);
+        // thing->setStateValue(askoheatHeaterLoadStateTypeId, 0);
         return;
     }
 

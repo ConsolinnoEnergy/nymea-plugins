@@ -492,9 +492,9 @@ void IntegrationPluginAskoma::executeAction(ThingActionInfo *info)
             if (askoheat->m_power)
             {
                 QString heatingPower = info->action().paramValue(askoheatHeatingPowerActionHeatingPowerParamTypeId).toString();
-                info->thing()->setStateValue(askoheatHeatingPowerStateTypeId, askoheat->m_heatingPower.toUInt());
+                info->thing()->setStateValue(askoheatHeatingPowerStateTypeId, heatingPower.toUInt());
                 info->finish(Thing::ThingErrorNoError);
-
+                
                 qCDebug(dcAskoma()) << "Executing action: set heating power: " << heatingPower.toUInt() << " [W]";
 
                 if (heatingPower == askoheat->m_heatingPower)
