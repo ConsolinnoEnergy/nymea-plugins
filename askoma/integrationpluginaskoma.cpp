@@ -511,13 +511,13 @@ void IntegrationPluginAskoma::executeAction(ThingActionInfo *info)
 
                     if (reply->error() != QNetworkReply::NoError) 
                     {
-                        qCWarningg(dcAskoma()) << "Execute action: A HTTP error occurred:" << reply->errorString();
+                        qCWarning(dcAskoma()) << "Execute action: A HTTP error occurred:" << reply->errorString();
                         info->thing()->setStateValue(askoheatConnectedStateTypeId, false);
                         info->finish(Thing::ThingErrorHardwareFailure);
                         return;
                     }
 
-                    qCWarning(dcAskoma()) << "Execute action: Writing heating power finished successfully.";
+                    qCDebug(dcAskoma()) << "Execute action: Writing heating power finished successfully.";
                     askoheat->m_heatingPower = heatingPower;
                     info->thing()->setStateValue(askoheatHeatingPowerStateTypeId, askoheat->m_heatingPower.toUInt());
                     info->thing()->setStateValue(askoheatConnectedStateTypeId, true);
@@ -617,11 +617,11 @@ void IntegrationPluginAskoma::setHeatingPower(Thing *thing)
 
         if (reply->error() != QNetworkReply::NoError) 
         {
-            qCWarningg(dcAskoma()) << "Plugin timer: A HTTP error occurred:" << reply->errorString();
+            qCWarning(dcAskoma()) << "Plugin timer: A HTTP error occurred:" << reply->errorString();
         }
         else
         {
-            qCWarning(dcAskoma()) << "Plugin Timer: Writing heating power finished successfully.";
+            qCDebug(dcAskoma()) << "Plugin Timer: Writing heating power finished successfully.";
         }
     });
 }
