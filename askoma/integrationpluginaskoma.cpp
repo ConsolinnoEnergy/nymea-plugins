@@ -198,21 +198,17 @@ void IntegrationPluginAskoma::setupThing(ThingSetupInfo *info)
         
         QString hostAddress_string = hostAddress.toString();
 
-        Askoheat *askoheat;// = new Askoheat(MacAddress_string, hostAddress_string);
+        Askoheat *askoheat;
 
         if (this->m_askoheats.contains(thing))
         {
             qCDebug(dcAskoma()) << "Setup after reconfiguration";
-
-            //askoheat->deleteLater();
-
             askoheat = this->m_askoheats.take(thing);
             askoheat->m_askomaMacAddress = MacAddress_string;
             askoheat->m_askomaHostAddress = hostAddress_string;
         }
         else
         {
-            //Askoheat *askoheat = new Askoheat(MacAddress_string, hostAddress_string);
             askoheat = new Askoheat(MacAddress_string, hostAddress_string);
         }
                 
@@ -507,7 +503,7 @@ void IntegrationPluginAskoma::executeAction(ThingActionInfo *info)
 
                 QNetworkReply *reply =  hardwareManager()->networkManager()->put(request, data);
 
-                qCDebug(dcAskoma()) << "Writing heating power: " << askoheat->m_heatingPower.toUInt() << " [W]";
+                qCDebug(dcAskoma()) << "Execute action: Writing heating power: " << askoheat->m_heatingPower.toUInt() << " [W]";
 
                 connect(reply, &QNetworkReply::finished, this, [=]()
                 {
@@ -515,11 +511,13 @@ void IntegrationPluginAskoma::executeAction(ThingActionInfo *info)
 
                     if (reply->error() != QNetworkReply::NoError) 
                     {
+                        qCWarningg(dcAskoma()) << "Execute action: A HTTP error occurred:" << reply->errorString();
                         info->thing()->setStateValue(askoheatConnectedStateTypeId, false);
                         info->finish(Thing::ThingErrorHardwareFailure);
                         return;
                     }
 
+                    qCWarning(dcAskoma()) << "Execute action: Writing heating power finished successfully.";
                     askoheat->m_heatingPower = heatingPower;
                     info->thing()->setStateValue(askoheatHeatingPowerStateTypeId, askoheat->m_heatingPower.toUInt());
                     info->thing()->setStateValue(askoheatConnectedStateTypeId, true);
@@ -609,7 +607,7 @@ void IntegrationPluginAskoma::setHeatingPower(Thing *thing)
     request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
     QByteArray data = doc.toJson(QJsonDocument::JsonFormat::Compact);
 
-    qCDebug(dcAskoma()) << "Writing heating power: " << askoheat->m_heatingPower.toUInt() << " [W]";
+    qCDebug(dcAskoma()) << "Plugin timer: Writing heating power: " << askoheat->m_heatingPower.toUInt() << " [W]";
 
     QNetworkReply *reply = hardwareManager()->networkManager()->put(request, data);
 
@@ -619,7 +617,11 @@ void IntegrationPluginAskoma::setHeatingPower(Thing *thing)
 
         if (reply->error() != QNetworkReply::NoError) 
         {
-            qCWarning(dcAskoma()) << "Writing heating power was not successful!";
+            qCWarningg(dcAskoma()) << "Plugin timer: A HTTP error occurred:" << reply->errorString();
+        }
+        else
+        {
+            qCWarning(dcAskoma()) << "Plugin Timer: Writing heating power finished successfully.";
         }
     });
 }
