@@ -425,7 +425,14 @@ void IntegrationPluginAskoma::postSetupThing(Thing *thing)
 
                 if(askoheat->m_power)
                 {
-                    this->setHeatingPower(thing);
+                    if(askoheat->m_heatingPower.toUInt() == 0)
+                    {
+                        qCDebug(dcAskoma()) << "Plugin timer: Current heating power is 0 W. No put request necessary.";
+                    }
+                    else
+                    {
+                        this->setHeatingPower(thing);
+                    }
                 }
             });
         }
@@ -482,49 +489,22 @@ void IntegrationPluginAskoma::executeAction(ThingActionInfo *info)
         }
         else if (info->action().actionTypeId() == askoheatHeatingPowerActionTypeId)
         {
-            if(askoheat->m_power)
+            if (askoheat->m_power)
             {
-                // Write setpoint value
                 QString heatingPower = info->action().paramValue(askoheatHeatingPowerActionHeatingPowerParamTypeId).toString();
+                info->thing()->setStateValue(askoheatHeatingPowerStateTypeId, askoheat->m_heatingPower.toUInt());
+                info->finish(Thing::ThingErrorNoError);
 
-                QJsonDocument doc;
-                QJsonObject obj;
-                obj["MODBUS_EMA_LOAD_SETPOINT_VALUE"] = heatingPower;
-                doc.setObject(obj);
+                qCDebug(dcAskoma()) << "Executing action: set heating power: " << heatingPower.toUInt() << " [W]";
 
-                QUrl url;
-                url.setScheme("http");
-                url.setHost(askoheat->m_askomaHostAddress);
-                url.setPath("/");
-
-                QNetworkRequest request(url);
-                request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
-                QByteArray data = doc.toJson(QJsonDocument::JsonFormat::Compact);
-
-                QNetworkReply *reply =  hardwareManager()->networkManager()->put(request, data);
-
-                qCDebug(dcAskoma()) << "Execute action: Writing heating power: " << askoheat->m_heatingPower.toUInt() << " [W]";
-
-                connect(reply, &QNetworkReply::finished, this, [=]()
+                if (heatingPower == askoheat->m_heatingPower)
                 {
-                    reply->deleteLater();
+                    return;
+                }
+                
+                askoheat->m_heatingPower = heatingPower;
 
-                    if (reply->error() != QNetworkReply::NoError) 
-                    {
-                        qCWarning(dcAskoma()) << "Execute action: A HTTP error occurred:" << reply->errorString();
-                        info->thing()->setStateValue(askoheatConnectedStateTypeId, false);
-                        qCDebug(dcAskoma()) << "Execute action: info->finish()";
-                        info->finish(Thing::ThingErrorHardwareFailure);
-                        qCDebug(dcAskoma()) << "Execute action: return";
-                        return;
-                    }
-
-                    qCDebug(dcAskoma()) << "Execute action: Writing heating power finished successfully.";
-                    askoheat->m_heatingPower = heatingPower;
-                    info->thing()->setStateValue(askoheatHeatingPowerStateTypeId, askoheat->m_heatingPower.toUInt());
-                    info->thing()->setStateValue(askoheatConnectedStateTypeId, true);
-                    info->finish(Thing::ThingErrorNoError);
-                });
+                this->setHeatingPower(info->thing());
             }
             else
             {
@@ -535,50 +515,17 @@ void IntegrationPluginAskoma::executeAction(ThingActionInfo *info)
         else if(info->action().actionTypeId() == askoheatPowerActionTypeId)
         {
             askoheat->m_power = info->action().paramValue(askoheatPowerActionPowerParamTypeId).toBool();
-
             info->thing()->setStateValue(askoheatPowerStateTypeId, askoheat->m_power);
+            info->finish(Thing::ThingErrorNoError); 
 
             qCDebug(dcAskoma()) << "Set power" << askoheat->m_power;
                 
             if(!askoheat->m_power)
             {
-                QJsonDocument doc;
-                QJsonObject obj;
-                obj["MODBUS_EMA_LOAD_SETPOINT_VALUE"] = "0";
-                doc.setObject(obj);
+                askoheat->m_heatingPower = "0";
+                info->thing()->setStateValue(askoheatHeatingPowerStateTypeId, 0);
 
-                QUrl url;
-                url.setScheme("http");
-                url.setHost(askoheat->m_askomaHostAddress);
-                url.setPath("/");
-
-                QNetworkRequest request(url);
-                request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
-                QByteArray data = doc.toJson(QJsonDocument::JsonFormat::Compact);
-
-                QNetworkReply *reply =  hardwareManager()->networkManager()->put(request, data);
-
-                connect(reply, &QNetworkReply::finished, this, [=]()
-                {
-                    reply->deleteLater();
-
-                    if (reply->error() != QNetworkReply::NoError) 
-                    {
-                        info->thing()->setStateValue(askoheatConnectedStateTypeId, false);
-                        info->finish(Thing::ThingErrorHardwareFailure);
-                        return;
-                    }
-
-                    askoheat->m_heatingPower = "0";
-                    info->thing()->setStateValue(askoheatHeatingPowerStateTypeId, askoheat->m_heatingPower.toUInt());
-                    info->thing()->setStateValue(askoheatConnectedStateTypeId, true);
-
-                    info->finish(Thing::ThingErrorNoError);
-                });
-            }
-            else
-            {                
-                info->finish(Thing::ThingErrorNoError); 
+                this->setHeatingPower(info->thing());
             }
         }
     }
@@ -589,12 +536,6 @@ void IntegrationPluginAskoma::setHeatingPower(Thing *thing)
     Askoheat *askoheat = this->m_askoheats.value(thing);
     
     // Write setpoint value
-    if(askoheat->m_heatingPower.toUInt() == 0)
-    {
-        qCDebug(dcAskoma()) << "Current heating power is 0 W. No put request necessary.";
-        return;
-    }
-
     QJsonDocument doc;
     QJsonObject obj;
     obj["MODBUS_EMA_LOAD_SETPOINT_VALUE"] = askoheat->m_heatingPower;
@@ -609,7 +550,7 @@ void IntegrationPluginAskoma::setHeatingPower(Thing *thing)
     request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
     QByteArray data = doc.toJson(QJsonDocument::JsonFormat::Compact);
 
-    qCDebug(dcAskoma()) << "Plugin timer: Writing heating power: " << askoheat->m_heatingPower.toUInt() << " [W]";
+    qCDebug(dcAskoma()) << "Writing heating power: " << askoheat->m_heatingPower.toUInt() << " [W]";
 
     QNetworkReply *reply = hardwareManager()->networkManager()->put(request, data);
 
@@ -619,11 +560,11 @@ void IntegrationPluginAskoma::setHeatingPower(Thing *thing)
 
         if (reply->error() != QNetworkReply::NoError) 
         {
-            qCWarning(dcAskoma()) << "Plugin timer: A HTTP error occurred:" << reply->errorString();
+            qCWarning(dcAskoma()) << "Writing heating power failed due to a HTTP error:" << reply->errorString();
         }
         else
         {
-            qCDebug(dcAskoma()) << "Plugin Timer: Writing heating power finished successfully.";
+            qCDebug(dcAskoma()) << "Writing heating power finished successfully.";
         }
     });
 }
