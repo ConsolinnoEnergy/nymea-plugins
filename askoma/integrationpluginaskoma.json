@@ -59,11 +59,12 @@
                         {
                             "id": "e38d063a-7465-4700-aa7a-a6943285157e",
                             "name": "currentPower",
-                            "displayName": "Active power",
+                            "displayName": "Current power consumption",
                             "displayNameEvent": "Power consumtion changed",
                             "type": "double",
                             "unit": "Watt",
                             "defaultValue": 0,
+                            "suggestLogging": true,
                             "cached": false
                         },
                         {
