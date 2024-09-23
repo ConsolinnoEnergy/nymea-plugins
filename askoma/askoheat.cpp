@@ -46,10 +46,7 @@ void Askoheat::onGetEMA(QNetworkReply *reply, Thing *thing)
     {
         qCDebug(dcAskoma()) << "Update: Requested EMA data and a HTTP error occurred:" << reply->errorString();
         thing->setStateValue(askoheatConnectedStateTypeId, false);
-        /* If the connection is lost, we reset the current power to 0. */
-        // this->m_heaterLoad = 0;
-        // thing->setStateValue(askoheatCurrentPowerStateTypeId, 0);
-        // thing->setStateValue(askoheatHeaterLoadStateTypeId, 0);
+        /* TODO: set state values to default. */
         return;
     }
 
@@ -87,6 +84,7 @@ void Askoheat::onGetEMA(QNetworkReply *reply, Thing *thing)
         qint16 new_loadFeedinValue   = map["MODBUS_EMA_LOAD_FEEDIN_VALUE"].toInt();
         quint16 new_emergencyMode    = map["MODBUS_EMA_EMERGENCY_MODE"].toUInt();
         quint16 new_heatPumpRequest  = map["MODBUS_EMA_HEAT_PUMP_REQUEST"].toUInt();
+        float new_currentPower       = map["MODBUS_EMA_HEATER_LOAD"].toDouble();
         float new_analogInputFloat   = map["MODBUS_EMA_ANALOG_INPUT_FLOAT"].toDouble();
         float new_temperatureSensor0 = map["MODBUS_EMA_TEMPERATURE_FLOAT_SENSOR0"].toDouble();
         float new_temperatureSensor1 = map["MODBUS_EMA_TEMPERATURE_FLOAT_SENSOR1"].toDouble();
@@ -132,10 +130,14 @@ void Askoheat::onGetEMA(QNetworkReply *reply, Thing *thing)
             thing->setStateValue(askoheatAnyErrorOccuredStateTypeId, (this->m_status & 32768));
         }
         
+        if(this->m_currentPower != new_currentPower)
+        {
+            this->m_currentPower = new_currentPower;
+            thing->setStateValue(askoheatCurrentPowerStateTypeId, this->m_currentPower);
+        }
         if(this->m_heaterLoad != new_heaterLoad)
         {
             this->m_heaterLoad = new_heaterLoad;
-            thing->setStateValue(askoheatCurrentPowerStateTypeId, this->m_heaterLoad);
             thing->setStateValue(askoheatHeaterLoadStateTypeId, this->m_heaterLoad);
         }
         if(this->m_heaterStep != new_heaterStep)

@@ -38,6 +38,7 @@ public:
     bool m_pthAvailable = false;
     bool m_power = false;
     float m_totalEnergyConsumed = 0.0;
+    float m_currentPower = 0.0;
     quint16 m_status = 0;
     quint16 m_heaterLoad = 0;
     quint16 m_heaterStep = 0;

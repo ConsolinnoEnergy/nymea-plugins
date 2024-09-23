@@ -346,7 +346,7 @@ void IntegrationPluginAskoma::setupThing(ThingSetupInfo *info)
                 thing->setStateValue(askoheatTemperatureLimitReachedStateTypeId, (askoheat->m_status & 16384));
                 thing->setStateValue(askoheatAnyErrorOccuredStateTypeId, (askoheat->m_status & 32768));
 
-                thing->setStateValue(askoheatCurrentPowerStateTypeId, askoheat->m_heaterLoad);
+                thing->setStateValue(askoheatCurrentPowerStateTypeId, askoheat->m_currentPower);
                 thing->setStateValue(askoheatHeaterLoadStateTypeId, askoheat->m_heaterLoad);
                 thing->setStateValue(askoheatHeaterStepStateTypeId, askoheat->m_heaterStep);
                 thing->setStateValue(askoheatSetpointValueStateTypeId, askoheat->m_loadSetpointValue);
