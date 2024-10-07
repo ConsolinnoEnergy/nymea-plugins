@@ -120,6 +120,7 @@ private:
     QNetworkRequest buildStatusRequest(Thing *thing);
     QHostAddress getHostAddress(Thing *thing);
     ApiVersion getApiVersion(Thing *thing);
+    void disableCharging(Thing *thing);
 
     // Outlier detection
     bool isOutlier(const QList<float>& list);

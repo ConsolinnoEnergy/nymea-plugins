@@ -540,7 +540,7 @@ IntegrationPluginGoECharger::ApiVersion IntegrationPluginGoECharger::getApiVersi
 void IntegrationPluginGoECharger::updateV1(Thing *thing, const QVariantMap &statusMap)
 {
     // Parse status map and update states...
-    thing->setStateValue(goeHomePowerStateTypeId, (statusMap.value("alw").toUInt() == 0 ? false : true));
+    // thing->setStateValue(goeHomePowerStateTypeId, (statusMap.value("alw").toUInt() == 0 ? false : true));
 
     CarState carState = static_cast<CarState>(statusMap.value("car").toUInt());
     switch (carState) {
@@ -566,7 +566,14 @@ void IntegrationPluginGoECharger::updateV1(Thing *thing, const QVariantMap &stat
         break;
     }
 
-    thing->setStateValue(goeHomeChargingStateTypeId, carState == CarStateCharging && thing->stateValue(goeHomePowerStateTypeId).toBool() == true);
+    thing->setStateValue(goeHomeChargingStateTypeId, carState == CarStateCharging);
+
+    if (thing->stateValue(goeHomeChargingStateTypeId).toBool() == true &&
+        thing->stateValue(goeHomePowerStateTypeId).toBool() == false) 
+    {
+        // disable charging
+        disableCharging(thing);
+    }
 
     Access accessStatus = static_cast<Access>(statusMap.value("ast").toUInt());
     switch (accessStatus) {
@@ -1152,8 +1159,8 @@ void IntegrationPluginGoECharger::reconfigureMqttChannelV1(Thing *thing, const Q
 void IntegrationPluginGoECharger::updateV2(Thing *thing, const QVariantMap &statusMap)
 {
     qCDebug(dcGoECharger()) << "Update V2:" << qUtf8Printable(QJsonDocument::fromVariant(statusMap).toJson());
-    if (statusMap.contains("alw"))
-        thing->setStateValue(goeHomePowerStateTypeId, (statusMap.value("alw").toUInt() == 0 ? false : true));
+    // if (statusMap.contains("alw"))
+    //     thing->setStateValue(goeHomePowerStateTypeId, (statusMap.value("alw").toUInt() == 0 ? false : true));
 
     if (statusMap.contains("car")) {
         CarState carState = static_cast<CarState>(statusMap.value("car").toUInt());
@@ -1180,7 +1187,14 @@ void IntegrationPluginGoECharger::updateV2(Thing *thing, const QVariantMap &stat
             break;
         }
 
-        thing->setStateValue(goeHomeChargingStateTypeId, carState == CarStateCharging && thing->stateValue(goeHomePowerStateTypeId).toBool() == true);
+        thing->setStateValue(goeHomeChargingStateTypeId, carState == CarStateCharging);
+    }
+
+    if (thing->stateValue(goeHomeChargingStateTypeId).toBool() == true &&
+        thing->stateValue(goeHomePowerStateTypeId).toBool() == false) 
+    {
+        // disable charging
+        disableCharging(thing);
     }
 
     if (statusMap.contains("ast")) {
@@ -1745,6 +1759,65 @@ void IntegrationPluginGoECharger::markAsConnected(Thing *thing)
     if (!thing->stateValue("connected").toBool()) {
         qCDebug(dcGoECharger()) << thing << "connected";
         thing->setStateValue("connected", true);
+    }
+}
+
+void IntegrationPluginGoECharger::disableCharging(Thing *thing)
+{
+    qCDebug(dcGoECharger()) << "Disable charging, as it is not enabled in the App.";
+    ApiVersion apiVersion = getApiVersion(thing);
+    QHostAddress address = getHostAddress(thing);
+
+    if (thing->thingClassId() != goeHomeThingClassId) {
+        qCWarning(dcGoECharger()) << thing << "is not of class goeHomeThingClassId.";
+        return;
+    }
+
+    if (!thing->stateValue("connected").toBool()) {
+        qCWarning(dcGoECharger()) << thing << "failed to execute action. The device seems not to be connected.";
+        return;
+    }
+
+    switch (apiVersion) {
+        case ApiVersion1:
+            // code here
+            break;
+        case ApiVersion2:
+            // Warning: using QUrlQuery not always works here due to standard mixing from go-e:
+            // The url query has to be JSON encoded, i.e. <url>/set?fna="mein charger"
+            QUrlQuery configuration;
+            // 0 neutral (prefere on), 1 off, 2 on force
+            configuration.addQueryItem("frc", "1");
+            QNetworkRequest request = buildConfigurationRequestV2(address, configuration);
+            QNetworkReply *reply = hardwareManager()->networkManager()->get(request);
+            connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
+            connect(reply, &QNetworkReply::finished, thing, [=](){
+                if (reply->error() != QNetworkReply::NoError) {
+                    qCWarning(dcGoECharger()) << "Disable charging failed for" << thing->name() << "HTTP error:" << reply->errorString() << reply->readAll() << "Request was:" << request.url().toString();
+                    // info->finish(Thing::ThingErrorHardwareNotAvailable, QT_TR_NOOP("The wallbox does not seem to be reachable."));
+                    return;
+                }
+
+                QByteArray data = reply->readAll();
+                QJsonParseError error;
+                QJsonDocument jsonDoc = QJsonDocument::fromJson(data, &error);
+                if (error.error != QJsonParseError::NoError) {
+                    qCWarning(dcGoECharger()) << "Disable charging failed for" << thing->name() << "Parsing data failed:" << qUtf8Printable(data) << error.errorString() << "Request was:" << request.url().toString();
+                    // info->finish(Thing::ThingErrorHardwareFailure, QT_TR_NOOP("The wallbox returned invalid data."));
+                    return;
+                }
+
+                QVariantMap responseCode = jsonDoc.toVariant().toMap();
+                if (responseCode.value("frc", false).toBool()) {
+                    qCDebug(dcGoECharger()) << "Disable charging successfull";
+                    thing->setStateValue("power", false);
+                    // info->finish(Thing::ThingErrorNoError);
+                } else {
+                    qCWarning(dcGoECharger()) << "Action finished with error:" << responseCode.value("frc").toString();
+                    // info->finish(Thing::ThingErrorHardwareFailure);
+                }
+            });
+            break;
     }
 }
 
