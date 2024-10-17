@@ -274,9 +274,9 @@
                         },
                         {
                             "id": "96687caa-f972-4f43-b5b4-f6f4dca15ee4",
-                            "name": "power",
-                            "displayName": "Power",
-                            "displayNameAction": "Power",
+                            "name": "externalControl",
+                            "displayName": "External control",
+                            "displayNameAction": "External control",
                             "type": "bool",
                             "unit": "None",
                             "defaultValue": false,

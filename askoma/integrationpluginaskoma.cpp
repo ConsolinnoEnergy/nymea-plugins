@@ -361,7 +361,7 @@ void IntegrationPluginAskoma::setupThing(ThingSetupInfo *info)
                 thing->setStateValue(askoheatTemperatureSensor4StateTypeId, askoheat->m_temperatureSensor4);
                 thing->setStateValue(askoheatTotalEnergyConsumedStateTypeId, askoheat->m_totalEnergyConsumed);
 
-                info->thing()->setStateValue(askoheatPowerStateTypeId, askoheat->m_power);
+                info->thing()->setStateValue(askoheatExternalControlStateTypeId, askoheat->m_externalControl);
                 info->thing()->setStateValue(askoheatHeatingPowerStateTypeId, askoheat->m_heatingPower.toUInt());
 
                 this->m_askoheats.insert(info->thing(), askoheat);
@@ -423,7 +423,7 @@ void IntegrationPluginAskoma::postSetupThing(Thing *thing)
                     });
                 }
 
-                if(askoheat->m_power)
+                if(askoheat->m_externalControl)
                 {
                     if(askoheat->m_heatingPower.toUInt() == 0)
                     {
@@ -489,7 +489,7 @@ void IntegrationPluginAskoma::executeAction(ThingActionInfo *info)
         }
         else if (info->action().actionTypeId() == askoheatHeatingPowerActionTypeId)
         {
-            if (askoheat->m_power)
+            if (askoheat->m_externalControl)
             {
                 QString heatingPower = info->action().paramValue(askoheatHeatingPowerActionHeatingPowerParamTypeId).toString();
                 info->thing()->setStateValue(askoheatHeatingPowerStateTypeId, heatingPower.toUInt());
@@ -508,19 +508,19 @@ void IntegrationPluginAskoma::executeAction(ThingActionInfo *info)
             }
             else
             {
-                qCWarning(dcAskoma()) << "Heating power not set because power is turned off.";
+                qCWarning(dcAskoma()) << "Heating power not set because external control is turned off.";
                 info->finish(Thing::ThingErrorNoError);
             }
         }
-        else if(info->action().actionTypeId() == askoheatPowerActionTypeId)
+        else if(info->action().actionTypeId() == askoheatExternalControlActionTypeId)
         {
-            askoheat->m_power = info->action().paramValue(askoheatPowerActionPowerParamTypeId).toBool();
-            info->thing()->setStateValue(askoheatPowerStateTypeId, askoheat->m_power);
+            askoheat->m_externalControl = info->action().paramValue(askoheatExternalControlActionExternalControlParamTypeId).toBool();
+            info->thing()->setStateValue(askoheatExternalControlStateTypeId, askoheat->m_externalControl);
             info->finish(Thing::ThingErrorNoError); 
 
-            qCDebug(dcAskoma()) << "Set power" << askoheat->m_power;
+            qCDebug(dcAskoma()) << "Set external control" << askoheat->m_externalControl;
                 
-            if(!askoheat->m_power)
+            if(!askoheat->m_externalControl)
             {
                 askoheat->m_heatingPower = "0";
                 info->thing()->setStateValue(askoheatHeatingPowerStateTypeId, 0);

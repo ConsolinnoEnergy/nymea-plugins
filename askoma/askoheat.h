@@ -36,7 +36,7 @@ public:
 
     /* This data is polled periodically from the heating rod. */
     bool m_pthAvailable = false;
-    bool m_power = false;
+    bool m_externalControl = false;
     float m_totalEnergyConsumed = 0.0;
     float m_currentPower = 0.0;
     quint16 m_status = 0;
