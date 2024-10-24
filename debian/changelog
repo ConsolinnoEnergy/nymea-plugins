@@ -1,6 +1,7 @@
 nymea-plugins (1.7.106-1) buster focal jammy; urgency=medium
  * updated easee integration
  * EMH SMGW as main meter
+ * fix askoheat segfault
 
  -- Leonhard Heizinger <l.heizinger@consolinno.de> Tue, 02 Jul 2024 7:50:53 +0200
 
