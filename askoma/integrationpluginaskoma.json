@@ -59,11 +59,12 @@
                         {
                             "id": "e38d063a-7465-4700-aa7a-a6943285157e",
                             "name": "currentPower",
-                            "displayName": "Active power",
-                            "displayNameEvent": "Power consumtion changed",
+                            "displayName": "Current power consumption",
+                            "displayNameEvent": "Power consumption changed",
                             "type": "double",
                             "unit": "Watt",
                             "defaultValue": 0,
+                            "suggestLogging": true,
                             "cached": false
                         },
                         {
@@ -273,9 +274,9 @@
                         },
                         {
                             "id": "96687caa-f972-4f43-b5b4-f6f4dca15ee4",
-                            "name": "power",
-                            "displayName": "Power",
-                            "displayNameAction": "Power",
+                            "name": "externalControl",
+                            "displayName": "External control",
+                            "displayNameAction": "External control",
                             "type": "bool",
                             "unit": "None",
                             "defaultValue": false,
