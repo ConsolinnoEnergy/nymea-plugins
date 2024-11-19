@@ -115,9 +115,9 @@ void IntegrationPluginAskoma::discoverThings(ThingDiscoveryInfo *info)
             QVariantMap map = jsonDoc.toVariant().toMap();
 
             qCDebug(dcAskoma()) << "Discovery: Reading json from" << networkDeviceInfo.address().toString() << ":\n"
-                                << jsonDoc.toString();
+                                << jsonDoc;
 
-            if (map.contains("DATETIME") && map.contains("MODBUS_PAR_ID") && map.contains("MODBUS_PAR_TYPE")) 
+            if (map.contains("ASKOHEAT_PLUS_INFO") || map.contains("DATETIME") || map.contains("SOFTWARE_VERSION"))
             {
                 // Ok, seems to be a Askoheat+ we are talking to... add to the discovery results...
                 qCDebug(dcAskoma()) << "Discovery: --> Found Askoheat+ on" << networkDeviceInfo;
