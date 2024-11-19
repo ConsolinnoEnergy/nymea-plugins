@@ -81,6 +81,8 @@ void IntegrationPluginAskoma::discoverThings(ThingDiscoveryInfo *info)
             this->l_pendingReplies.removeAll(reply);
             reply->deleteLater();
 
+            qCDebug(dcAskoma()) << "Discovery: Reply finished for" << networkDeviceInfo.address().toString();
+
             // Check HTTP reply
             if (reply->error() != QNetworkReply::NoError) 
             {
@@ -88,6 +90,8 @@ void IntegrationPluginAskoma::discoverThings(ThingDiscoveryInfo *info)
                                     << "and a HTTP error occurred:" << reply->errorString() << "Continue...";
                 return;
             }
+
+            qCDebug(dcAskoma()) << "Discovery: Reading reply from" << networkDeviceInfo.address().toString();
 
             QByteArray data = reply->readAll();
 
@@ -110,11 +114,18 @@ void IntegrationPluginAskoma::discoverThings(ThingDiscoveryInfo *info)
 
             QVariantMap map = jsonDoc.toVariant().toMap();
 
+            qCDebug(dcAskoma()) << "Discovery: Reading json from" << networkDeviceInfo.address().toString() << ":\n"
+                                << jsonDoc.toString();
+
             if (map.contains("DATETIME") && map.contains("MODBUS_PAR_ID") && map.contains("MODBUS_PAR_TYPE")) 
             {
                 // Ok, seems to be a Askoheat+ we are talking to... add to the discovery results...
                 qCDebug(dcAskoma()) << "Discovery: --> Found Askoheat+ on" << networkDeviceInfo;
                 this->m_discoveryResults.append(networkDeviceInfo);
+            }
+            else
+            {
+                qCDebug(dcAskoma()) << "Discovery: Expected fields not found in json received from" << networkDeviceInfo.address().toString();
             }
         });
     });
