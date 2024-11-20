@@ -1,4 +1,4 @@
-nymea-plugins (1.7.107) buster focal jammy; urgency=medium
+nymea-plugins (1.7.107-1) buster focal jammy; urgency=medium
 
  * Fix for goe-charger not stopping properly
  * fix askoheat segfault
