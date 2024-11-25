@@ -31,13 +31,14 @@ public:
     
     void onGetEMA(QNetworkReply *reply, Thing *thing);
     void onGetPTH(QNetworkReply *reply, Thing *thing);
+    void setStateValues(struct askoheatData data, Thing *thing);
+    void setDefaultValues(Thing *thing);
 
-    QString m_askomaMacAddress = "";
-    QString m_askomaHostAddress = "";
-
+    /* This data is polled periodically from the heating rod. */
     bool m_pthAvailable = false;
-    bool m_power = false;
+    bool m_externalControl = false;
     float m_totalEnergyConsumed = 0.0;
+    float m_currentPower = 0.0;
     quint16 m_status = 0;
     quint16 m_heaterLoad = 0;
     quint16 m_heaterStep = 0;
@@ -51,7 +52,13 @@ public:
     float m_temperatureSensor2 = 0.0;
     float m_temperatureSensor3 = 0.0;
     float m_temperatureSensor4 = 0.0;
+
+    /* These values are only set in setupThing(). */
+    QString m_askomaMacAddress = "";
+    QString m_askomaHostAddress = "";
     QString m_firmwareVersion = "0.0.0";
+
+    /* The heating power comes from the EMS. */
     QString m_heatingPower = "0";
 };
 

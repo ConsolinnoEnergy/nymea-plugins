@@ -1,3 +1,11 @@
+nymea-plugins (1.7.107-1) buster focal jammy; urgency=medium
+
+ * Fix for goe-charger not stopping properly
+ * fix askoheat segfault
+ * add debug output to askoma
+
+ -- Leonhard Heizinger <l.heizinger@consolinno.de>  Fri, 08 Nov 2024 11:19:21 +0100
+
 nymea-plugins (1.7.106-1) buster focal jammy; urgency=medium
  * updated easee integration
  * EMH SMGW as main meter
